@@ -30,21 +30,51 @@ const LABELED_DOTS = [
 ]
 // UNLABELED spatial reference dots — guides without giving away answers
 const UNLABELED_DOTS = [
-  { lat: 6.5774, lng: 3.3212 }, // Airport area
-  { lat: 6.5555, lng: 3.3560 }, // Isolo
-  { lat: 6.5888, lng: 3.3968 }, // Mile 12
-  { lat: 6.6400, lng: 3.4800 }, // Agric Ikorodu
-  { lat: 6.5633, lng: 3.6153 }, // Egbin area
-  { lat: 6.5500, lng: 3.8800 }, // Ejirin
+  // Eti-Osa (large, VI to Ajah)
   { lat: 6.4350, lng: 3.5500 }, // Ajah
   { lat: 6.4698, lng: 3.6015 }, // Lekki Phase 1
   { lat: 6.4393, lng: 3.5372 }, // LCC area
+  { lat: 6.4330, lng: 3.4580 }, // Toll gate area
+  // Ibeju-Lekki (very large, 4 pts)
+  { lat: 6.4528, lng: 3.9652 }, // Free Zone
+  { lat: 6.4250, lng: 3.7550 }, // La Campagne area
+  { lat: 6.4200, lng: 3.6350 }, // Eleko area
+  { lat: 6.4314, lng: 4.0055 }, // Dangote area
+  // Epe (large, 3 pts)
+  { lat: 6.5500, lng: 3.8800 }, // Ejirin
+  { lat: 6.5200, lng: 3.8500 }, // Lekki Lagoon
+  { lat: 6.5700, lng: 4.0200 }, // Eastern Epe
+  // Ikorodu (large, 3 pts)
+  { lat: 6.6400, lng: 3.4800 }, // Agric
+  { lat: 6.5633, lng: 3.6153 }, // Egbin area
+  { lat: 6.6600, lng: 3.5400 }, // Northern Ikorodu
+  // Badagry (very large, 4 pts)
+  { lat: 6.4350, lng: 2.9000 }, // Creek area
+  { lat: 6.3950, lng: 2.7500 }, // Seme border
+  { lat: 6.4100, lng: 2.8500 }, // Mangroves
+  { lat: 6.4250, lng: 3.0500 }, // Eastern Badagry
+  // Alimosho (largest pop, 3 pts)
   { lat: 6.5800, lng: 3.2700 }, // Idimu
   { lat: 6.5600, lng: 3.2450 }, // Ikotun
+  { lat: 6.6300, lng: 3.2400 }, // Ipaja
+  // Ojo (3 pts)
   { lat: 6.4268, lng: 3.2537 }, // Alaba area
-  { lat: 6.3950, lng: 2.7500 }, // Seme border
-  { lat: 6.4900, lng: 3.4500 }, // Lagoon
-  { lat: 6.5200, lng: 3.8500 }, // Lekki Lagoon
+  { lat: 6.4400, lng: 3.2100 }, // Trade Fair
+  { lat: 6.4900, lng: 3.1600 }, // Iba area
+  // Ifako-Ijaye (2 pts)
+  { lat: 6.6900, lng: 3.2800 }, // Alagbado
+  { lat: 6.6550, lng: 3.3300 }, // Akute road
+  // Agege (2 pts)
+  { lat: 6.6400, lng: 3.3200 }, // Pen Cinema area
+  { lat: 6.6050, lng: 3.3100 }, // Dopemu
+  // Ikeja (2 pts)
+  { lat: 6.5774, lng: 3.3212 }, // Airport
+  { lat: 6.6200, lng: 3.3600 }, // Allen area
+  // Mainland misc
+  { lat: 6.5555, lng: 3.3560 }, // Isolo
+  { lat: 6.5888, lng: 3.3968 }, // Mile 12
+  // Natural features
+  { lat: 6.4900, lng: 3.4500 }, // Lagos Lagoon
   { lat: 6.5100, lng: 3.1000 }, // Ologe Lagoon
 ]
 
@@ -154,12 +184,15 @@ export default function GameScreen() {
       {/* Legend sidebar (hidden by default) */}
       <div className={`legend-sidebar ${legendOpen ? 'open' : ''}`}>
         <div className="legend-section">
-          <h4>Map Layers</h4>
+          <h4>Base Map</h4>
           <label className="layer-option">
-            <input type="radio" name="base" checked={activeLayers.includes('topo')} onChange={() => setActiveLayers(['topo'])} /> Clean (No Labels)
+            <input type="radio" name="base" checked={activeLayers.includes('topo')} onChange={() => setActiveLayers(['topo'])} /> Clean Topographic
           </label>
           <label className="layer-option">
-            <input type="radio" name="base" checked={activeLayers.includes('terrain')} onChange={() => setActiveLayers(['terrain'])} /> Topographic
+            <input type="radio" name="base" checked={activeLayers.includes('light')} onChange={() => setActiveLayers(['light'])} /> Minimal Light
+          </label>
+          <label className="layer-option">
+            <input type="radio" name="base" checked={activeLayers.includes('terrain')} onChange={() => setActiveLayers(['terrain'])} /> Terrain (with labels)
           </label>
           <label className="layer-option">
             <input type="radio" name="base" checked={activeLayers.includes('satellite')} onChange={() => setActiveLayers(['satellite'])} /> Satellite

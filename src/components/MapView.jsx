@@ -15,6 +15,7 @@ const correctIcon = L.divIcon({ className: 'correct-marker', iconSize: [24, 24],
 
 const TILES = {
   topo: { url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png', attr: '© CartoDB © OpenStreetMap' },
+  light: { url: 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', attr: '© CartoDB © OpenStreetMap' },
   terrain: { url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', attr: '© OpenTopoMap' },
   satellite: { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attr: '© Esri' },
 }
