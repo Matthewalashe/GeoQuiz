@@ -1,17 +1,26 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { submitWaitlist } from '../lib/supabase.js'
 
 export default function About() {
   const [waitlistForm, setWaitlistForm] = useState({ name: '', email: '', role: '', message: '' })
   const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState(null)
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
-    // Store locally for now — Supabase integration later
-    const existing = JSON.parse(localStorage.getItem('geoquiz_waitlist') || '[]')
-    existing.push({ ...waitlistForm, date: new Date().toISOString() })
-    localStorage.setItem('geoquiz_waitlist', JSON.stringify(existing))
-    setSubmitted(true)
+    setSubmitting(true)
+    setError(null)
+    try {
+      await submitWaitlist(waitlistForm)
+      setSubmitted(true)
+    } catch (err) {
+      setError('Something went wrong. Please try again.')
+      console.error(err)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -185,9 +194,10 @@ export default function About() {
                 onChange={e => setWaitlistForm({ ...waitlistForm, message: e.target.value })}
                 placeholder="Any features you'd like to see?" />
             </div>
-            <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
-              Join Waitlist →
+            <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={submitting}>
+              {submitting ? 'Submitting...' : 'Join Waitlist →'}
             </button>
+            {error && <p style={{ color: 'var(--red)', marginTop: '0.75rem', fontSize: '0.85rem' }}>{error}</p>}
           </form>
         )}
       </div>

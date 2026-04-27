@@ -34,22 +34,6 @@ export function getGrade(totalScore, maxScore) {
   return { label: 'Keep Exploring 🗺️', cls: 'grade-poor' };
 }
 
-// Leaderboard (localStorage)
-const LB_KEY = 'geoquiz_leaderboard';
-
-export function getLeaderboard() {
-  try {
-    return JSON.parse(localStorage.getItem(LB_KEY) || '[]');
-  } catch { return []; }
-}
-
-export function saveToLeaderboard(entry) {
-  const lb = getLeaderboard();
-  lb.push({ ...entry, date: new Date().toISOString() });
-  lb.sort((a, b) => b.score - a.score);
-  localStorage.setItem(LB_KEY, JSON.stringify(lb.slice(0, 50)));
-}
-
 export function formatDistance(km) {
   if (km < 1) return `${Math.round(km * 1000)} m`;
   return `${km.toFixed(1)} km`;

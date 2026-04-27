@@ -1,6 +1,7 @@
 import { useLocation, useNavigate, Link } from 'react-router-dom'
-import { useEffect } from 'react'
-import { getGrade, getScoreClass, formatDistance, saveToLeaderboard } from '../engine/scoring.js'
+import { useState, useEffect } from 'react'
+import { getGrade, getScoreClass, formatDistance } from '../engine/scoring.js'
+import { submitScore } from '../lib/supabase.js'
 import { ResultsMap } from './MapView.jsx'
 
 export default function ResultsScreen() {
@@ -8,16 +9,36 @@ export default function ResultsScreen() {
   const navigate = useNavigate()
   const data = location.state
 
+  const [playerName, setPlayerName] = useState(() => localStorage.getItem('geoquiz_player') || '')
+  const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+
   useEffect(() => {
-    if (!data) { navigate('/', { replace: true }); return }
-    saveToLeaderboard({
-      score: data.totalScore,
-      maxScore: data.maxScore,
-      questionCount: data.questionCount,
-      categories: data.config?.categories || [],
-      difficulty: data.config?.difficulty || 'all',
-    })
+    if (!data) navigate('/', { replace: true })
   }, [data, navigate])
+
+  async function handleSaveScore() {
+    if (!playerName.trim() || !data) return
+    setSaving(true)
+    localStorage.setItem('geoquiz_player', playerName.trim())
+    try {
+      await submitScore({
+        playerName: playerName.trim(),
+        score: data.totalScore,
+        maxScore: data.maxScore,
+        questionCount: data.questionCount,
+        categories: data.config?.categories || [],
+        difficulty: data.config?.difficulty || 'all',
+      })
+      setSaved(true)
+    } catch (err) {
+      console.error('Save score error:', err)
+      // Still mark as saved since localStorage fallback works
+      setSaved(true)
+    } finally {
+      setSaving(false)
+    }
+  }
 
   if (!data) return null
 
@@ -49,6 +70,42 @@ export default function ResultsScreen() {
           </div>
         </div>
       </div>
+
+      {/* Save score */}
+      {!saved ? (
+        <div className="save-score-panel card card-accent-top" style={{ maxWidth: 450, margin: '1.5rem auto', textAlign: 'center', padding: '1.5rem' }}>
+          <h3 style={{ marginBottom: '0.75rem' }}>Save Your Score</h3>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+            Enter your name to appear on the leaderboard
+          </p>
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <input
+              type="text"
+              value={playerName}
+              onChange={e => setPlayerName(e.target.value)}
+              placeholder="Your name"
+              maxLength={30}
+              style={{
+                flex: 1, padding: '0.7rem 0.75rem',
+                border: '3px solid var(--border)',
+                fontFamily: 'var(--font-body)', fontSize: '1rem',
+                background: 'var(--bg)',
+              }}
+            />
+            <button
+              className="btn btn-primary"
+              onClick={handleSaveScore}
+              disabled={!playerName.trim() || saving}
+            >
+              {saving ? '...' : 'Save'}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div style={{ textAlign: 'center', margin: '1rem 0', color: 'var(--primary)', fontWeight: 600 }}>
+          ✅ Score saved as "{playerName}"!
+        </div>
+      )}
 
       <div className="results-map-wrap">
         <ResultsMap results={results} />
