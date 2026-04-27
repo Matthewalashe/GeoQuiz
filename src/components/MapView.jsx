@@ -55,7 +55,7 @@ function LagosBoundary() {
   )
 }
 
-export default function MapView({ onMapClick, userPin, correctPin, activeLayers, referenceDots = [], distanceKm }) {
+export default function MapView({ onMapClick, userPin, correctPin, activeLayers, referenceDots = [], unlabeledDots = [], distanceKm }) {
   const baseLayer = activeLayers.find(l => ['topo', 'terrain', 'satellite'].includes(l)) || 'topo'
   const tile = TILES[baseLayer]
 
@@ -68,7 +68,7 @@ export default function MapView({ onMapClick, userPin, correctPin, activeLayers,
       {/* Official Lagos State boundary */}
       <LagosBoundary />
 
-      {/* Labeled reference points */}
+      {/* Labeled LGA reference points */}
       {referenceDots.map((dot, i) => (
         <CircleMarker key={`ref-${i}`} center={[dot.lat, dot.lng]} radius={4}
           pathOptions={{ color: '#333', weight: 1.5, fillColor: '#555', fillOpacity: 0.7 }}>
@@ -76,6 +76,12 @@ export default function MapView({ onMapClick, userPin, correctPin, activeLayers,
             {dot.name}
           </Tooltip>
         </CircleMarker>
+      ))}
+
+      {/* Unlabeled spatial guide dots */}
+      {unlabeledDots.map((dot, i) => (
+        <CircleMarker key={`unl-${i}`} center={[dot.lat, dot.lng]} radius={3}
+          pathOptions={{ color: '#888', weight: 1, fillColor: '#aaa', fillOpacity: 0.45 }} />
       ))}
 
       {userPin && <Marker position={[userPin.lat, userPin.lng]} icon={userIcon} />}
