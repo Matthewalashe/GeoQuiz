@@ -486,6 +486,16 @@ a:hover { text-decoration: underline; }
 }
 .leaflet-control-zoom { border: none !important; box-shadow: none !important; }
 
+/* Reference point labels */
+.ref-label {
+  background: transparent !important; border: none !important;
+  box-shadow: none !important; padding: 0 !important;
+  font-family: var(--font-head) !important; font-size: 0.65rem !important;
+  font-weight: 600 !important; color: #444 !important;
+  letter-spacing: 0.02em !important; white-space: nowrap !important;
+}
+.ref-label::before { display: none !important; }
+
 /* ---- ABOUT PAGE ---- */
 .about-page { padding: 3rem 2rem; max-width: 1000px; margin: 0 auto; }
 .about-section { margin-bottom: 3rem; }

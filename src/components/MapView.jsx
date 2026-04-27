@@ -68,10 +68,14 @@ export default function MapView({ onMapClick, userPin, correctPin, activeLayers,
       {/* Official Lagos State boundary */}
       <LagosBoundary />
 
-      {/* Unlabeled reference dots */}
+      {/* Labeled reference points */}
       {referenceDots.map((dot, i) => (
-        <CircleMarker key={`ref-${i}`} center={[dot.lat, dot.lng]} radius={3.5}
-          pathOptions={{ color: '#666', weight: 1, fillColor: '#999', fillOpacity: 0.5 }} />
+        <CircleMarker key={`ref-${i}`} center={[dot.lat, dot.lng]} radius={4}
+          pathOptions={{ color: '#333', weight: 1.5, fillColor: '#555', fillOpacity: 0.7 }}>
+          <Tooltip permanent direction="right" offset={[6, 0]} className="ref-label">
+            {dot.name}
+          </Tooltip>
+        </CircleMarker>
       ))}
 
       {userPin && <Marker position={[userPin.lat, userPin.lng]} icon={userIcon} />}
