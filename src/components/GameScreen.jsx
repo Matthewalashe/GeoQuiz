@@ -4,18 +4,58 @@ import { getFilteredQuestions, pickRandomQuestions } from '../data/questions.js'
 import { haversineDistance, calculateScore, getScoreClass, formatDistance } from '../engine/scoring.js'
 import MapView from './MapView.jsx'
 
-// Major Lagos reference points (unlabeled dots on map)
+// Reference points covering all 20 LGAs — labeled on map for guided guessing
 const REFERENCE_DOTS = [
+  // Lagos Island & surroundings (small LGAs, 1-2 pts)
   { lat: 6.4541, lng: 3.3947, name: 'Lagos Island' },
-  { lat: 6.6018, lng: 3.3515, name: 'Ikeja' },
   { lat: 6.4281, lng: 3.4219, name: 'Victoria Island' },
-  { lat: 6.5158, lng: 3.3895, name: 'UNILAG area' },
-  { lat: 6.4318, lng: 2.8819, name: 'Badagry' },
-  { lat: 6.5854, lng: 3.9834, name: 'Epe' },
-  { lat: 6.6194, lng: 3.5105, name: 'Ikorodu' },
+  { lat: 6.4488, lng: 3.4328, name: 'Ikoyi' },
+  // Mainland core (small LGAs)
+  { lat: 6.4969, lng: 3.3469, name: 'Surulere' },
+  { lat: 6.4969, lng: 3.3715, name: 'Yaba' },
+  { lat: 6.5326, lng: 3.3488, name: 'Mushin' },
+  { lat: 6.5392, lng: 3.3773, name: 'Shomolu' },
+  { lat: 6.4579, lng: 3.3319, name: 'Ajegunle' },
   { lat: 6.4488, lng: 3.3586, name: 'Apapa' },
+  { lat: 6.4558, lng: 3.2931, name: 'Festac Town' },
+  // Northern mainland
+  { lat: 6.6018, lng: 3.3515, name: 'Ikeja' },
   { lat: 6.5774, lng: 3.3212, name: 'Airport' },
-  { lat: 6.4698, lng: 3.6015, name: 'Lekki' },
+  { lat: 6.6194, lng: 3.3281, name: 'Agege' },
+  { lat: 6.6747, lng: 3.3115, name: 'Ifako-Ijaye' },
+  { lat: 6.5562, lng: 3.3223, name: 'Oshodi' },
+  { lat: 6.5555, lng: 3.3560, name: 'Isolo' },
+  // Kosofe
+  { lat: 6.5848, lng: 3.4048, name: 'Ketu' },
+  { lat: 6.5888, lng: 3.3968, name: 'Mile 12' },
+  // Eastern LGAs (large, 3-4 pts)
+  { lat: 6.6194, lng: 3.5105, name: 'Ikorodu Town' },
+  { lat: 6.6400, lng: 3.4800, name: 'Agric (Ikorodu)' },
+  { lat: 6.5633, lng: 3.6153, name: 'Egbin' },
+  { lat: 6.5854, lng: 3.9834, name: 'Epe Town' },
+  { lat: 6.5500, lng: 3.8800, name: 'Ejirin (Epe)' },
+  { lat: 6.5200, lng: 3.8500, name: 'Lekki Lagoon' },
+  // Ibeju-Lekki (large LGA, 4 pts)
+  { lat: 6.4650, lng: 3.6910, name: 'Ibeju-Lekki' },
+  { lat: 6.4350, lng: 3.5500, name: 'Ajah' },
+  { lat: 6.4528, lng: 3.9652, name: 'Lekki Free Zone' },
+  { lat: 6.4250, lng: 3.7550, name: 'La Campagne' },
+  // Lekki corridor
+  { lat: 6.4698, lng: 3.6015, name: 'Lekki Phase 1' },
+  { lat: 6.4393, lng: 3.5372, name: 'LCC' },
+  // Alimosho (largest pop, 3 pts)
+  { lat: 6.6105, lng: 3.2589, name: 'Egbeda' },
+  { lat: 6.5800, lng: 3.2700, name: 'Idimu' },
+  { lat: 6.5600, lng: 3.2450, name: 'Ikotun' },
+  // Ojo (2 pts)
+  { lat: 6.4756, lng: 3.1842, name: 'Ojo' },
+  { lat: 6.4268, lng: 3.2537, name: 'Alaba Market' },
+  // Badagry (large, 3 pts)
+  { lat: 6.4318, lng: 2.8819, name: 'Badagry Town' },
+  { lat: 6.4350, lng: 2.9000, name: 'Badagry Creek' },
+  { lat: 6.3950, lng: 2.7500, name: 'Seme Border' },
+  // Natural features
+  { lat: 6.4900, lng: 3.4500, name: 'Lagos Lagoon' },
 ]
 
 export default function GameScreen() {
@@ -35,6 +75,9 @@ export default function GameScreen() {
   const [userPin, setUserPin] = useState(null)
   const [legendOpen, setLegendOpen] = useState(false)
   const [activeLayers, setActiveLayers] = useState(['topo'])
+  const [timeLeft, setTimeLeft] = useState(config?.timer || 0)
+
+  const timerEnabled = config?.timer > 0
 
   useEffect(() => {
     if (!config) return
@@ -43,12 +86,51 @@ export default function GameScreen() {
     setQuestions(picked)
   }, [config])
 
+  // Timer countdown
+  useEffect(() => {
+    if (!timerEnabled || phase !== 'placing') return
+    setTimeLeft(config.timer)
+    const interval = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(interval)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [currentIdx, phase === 'placing', timerEnabled])
+
+  // Auto-submit when timer hits 0
+  useEffect(() => {
+    if (!timerEnabled || phase !== 'placing' || timeLeft > 0) return
+    handleTimeout()
+  }, [timeLeft])
+
   const currentQ = questions[currentIdx]
 
   const handleMapClick = useCallback((latlng) => {
     if (phase !== 'placing') return
     setUserPin(latlng)
   }, [phase])
+
+  function handleTimeout() {
+    if (!currentQ) return
+    if (userPin) {
+      confirmPin()
+    } else {
+      // No pin placed — score 0
+      setResults(prev => [...prev, {
+        question: currentQ,
+        userPin: { lat: 0, lng: 0 },
+        distance: 999,
+        score: 0,
+        timedOut: true,
+      }])
+      setPhase('feedback')
+    }
+  }
 
   function confirmPin() {
     if (!userPin || !currentQ) return
@@ -136,6 +218,17 @@ export default function GameScreen() {
         {/* Question */}
         <div className="question-panel">
           <div className="q-counter">Question {currentIdx + 1} of {questions.length}</div>
+          {timerEnabled && phase === 'placing' && (
+            <div className="timer-bar-wrap">
+              <div className="timer-bar" style={{
+                width: `${(timeLeft / config.timer) * 100}%`,
+                background: timeLeft <= 10 ? 'var(--red)' : 'var(--primary)',
+              }} />
+              <span className="timer-text" style={{ color: timeLeft <= 10 ? 'var(--red)' : 'var(--text-secondary)' }}>
+                ⏱️ {timeLeft}s
+              </span>
+            </div>
+          )}
           <div className="q-category">{currentQ.categoryLabel}</div>
           <h3>{currentQ.question}</h3>
           {phase === 'placing' && (

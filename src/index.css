@@ -496,6 +496,19 @@ a:hover { text-decoration: underline; }
 }
 .ref-label::before { display: none !important; }
 
+/* Timer bar */
+.timer-bar-wrap {
+  position: relative; height: 22px; background: var(--bg-alt);
+  border: 2px solid var(--border); margin: 0.5rem 0;
+}
+.timer-bar {
+  height: 100%; transition: width 1s linear, background 0.3s;
+}
+.timer-text {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  font-family: var(--font-head); font-size: 0.7rem; font-weight: 700;
+}
+
 /* ---- ABOUT PAGE ---- */
 .about-page { padding: 3rem 2rem; max-width: 1000px; margin: 0 auto; }
 .about-section { margin-bottom: 3rem; }

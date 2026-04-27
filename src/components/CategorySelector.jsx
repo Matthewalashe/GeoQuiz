@@ -9,6 +9,13 @@ const DIFFICULTIES = [
   { id: 'intermediate', label: '🟡 Intermediate' },
   { id: 'expert', label: '🔴 Expert' },
 ]
+const TIMER_OPTIONS = [
+  { id: 0, label: 'No Timer' },
+  { id: 30, label: '30s' },
+  { id: 45, label: '45s' },
+  { id: 60, label: '60s' },
+  { id: 90, label: '90s' },
+]
 
 export default function CategorySelector() {
   const navigate = useNavigate()
@@ -18,6 +25,7 @@ export default function CategorySelector() {
   const [selectedCats, setSelectedCats] = useState(preselected ? [preselected] : [])
   const [difficulty, setDifficulty] = useState('all')
   const [questionCount, setQuestionCount] = useState(10)
+  const [timer, setTimer] = useState(0)
 
   const available = getFilteredQuestions(selectedCats, difficulty)
 
@@ -34,7 +42,7 @@ export default function CategorySelector() {
   }
 
   function startGame() {
-    if (available.length < 10) {
+    if (available.length < 5) {
       alert('Not enough questions for this selection. Try adding more categories or changing difficulty.')
       return
     }
@@ -42,6 +50,7 @@ export default function CategorySelector() {
       categories: selectedCats,
       difficulty,
       count: Math.min(questionCount, available.length),
+      timer,
     }
     navigate('/game', { state: config })
   }
@@ -49,7 +58,7 @@ export default function CategorySelector() {
   return (
     <section className="selector">
       <h2>Configure Your Quiz</h2>
-      <p className="subtitle">Pick categories, difficulty, and how many questions you want.</p>
+      <p className="subtitle">Pick categories, difficulty, timer, and how many questions you want.</p>
 
       <div className="selector-section">
         <label>Categories (pick one or more)</label>
@@ -87,7 +96,27 @@ export default function CategorySelector() {
       </div>
 
       <div className="selector-section">
-        <label>Number of Questions (min 10)</label>
+        <label>⏱️ Timer per Question</label>
+        <div className="option-grid">
+          {TIMER_OPTIONS.map(t => (
+            <button
+              key={t.id}
+              className={`option-chip ${timer === t.id ? 'selected' : ''}`}
+              onClick={() => setTimer(t.id)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        {timer > 0 && (
+          <p className="mt-1" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+            You'll have {timer} seconds per question. Unanswered = 0 points.
+          </p>
+        )}
+      </div>
+
+      <div className="selector-section">
+        <label>Number of Questions (min 5)</label>
         <div className="option-grid">
           {QUESTION_COUNTS.map(n => (
             <button

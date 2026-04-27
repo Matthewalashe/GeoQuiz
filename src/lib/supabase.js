@@ -10,7 +10,6 @@ export const supabase = supabaseUrl && supabaseAnonKey
 // ---- Waitlist ----
 export async function submitWaitlist({ name, email, role, message }) {
   if (!supabase) {
-    // Fallback to localStorage
     const existing = JSON.parse(localStorage.getItem('geoquiz_waitlist') || '[]')
     existing.push({ name, email, role, message, created_at: new Date().toISOString() })
     localStorage.setItem('geoquiz_waitlist', JSON.stringify(existing))
@@ -18,6 +17,23 @@ export async function submitWaitlist({ name, email, role, message }) {
   }
   const { error } = await supabase.from('waitlist').insert([{ name, email, role, message }])
   if (error) throw error
+
+  // Send email notification (fire-and-forget)
+  try {
+    await fetch('https://formsubmit.co/ajax/donghinny91@gmail.com', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        _subject: '🗺️ New GeoQuiz Waitlist Signup!',
+        Name: name,
+        Email: email,
+        Role: role || 'Not specified',
+        Message: message || 'None',
+        _template: 'table',
+      }),
+    })
+  } catch { /* email failure is non-critical */ }
+
   return { success: true }
 }
 
