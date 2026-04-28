@@ -338,8 +338,11 @@ export function getFilteredQuestions(categoryIds, difficulty) {
   return filtered;
 }
 
-export function pickRandomQuestions(pool, count) {
-  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+export function pickRandomQuestions(pool, count, seed) {
+  // Seeded shuffle for Daily Challenge (same questions for everyone)
+  function seededRandom(s) { s = Math.sin(s) * 10000; return s - Math.floor(s); }
+  let s = seed || Math.random() * 99999;
+  const shuffled = [...pool].sort(() => { s++; return seededRandom(s) - 0.5; });
   return shuffled.slice(0, Math.min(count, shuffled.length));
 }
 

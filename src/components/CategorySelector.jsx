@@ -55,10 +55,31 @@ export default function CategorySelector() {
     navigate('/game', { state: config })
   }
 
+  function startDailyChallenge() {
+    // Seed from today's date — everyone gets the same questions
+    const today = new Date().toISOString().slice(0, 10) // "2026-04-28"
+    const seed = today.split('-').reduce((a, b) => a * 31 + parseInt(b), 0)
+    const config = {
+      categories: [],
+      difficulty: 'all',
+      count: 10,
+      timer: 45,
+      daily: true,
+      seed,
+    }
+    navigate('/game', { state: config })
+  }
+
   return (
     <section className="selector">
       <h2>Configure Your Quiz</h2>
       <p className="subtitle">Pick categories, difficulty, timer, and how many questions you want.</p>
+
+      {/* Daily Challenge */}
+      <button className="daily-challenge-btn" onClick={startDailyChallenge}>
+        🏆 Daily Challenge — {new Date().toLocaleDateString('en-NG', { weekday: 'long', month: 'short', day: 'numeric' })}
+        <br /><span style={{ fontSize: '0.8rem', fontWeight: 400, color: 'var(--text-secondary)' }}>10 questions · 45s timer · Same for everyone today</span>
+      </button>
 
       <div className="selector-section">
         <label>Categories (pick one or more)</label>

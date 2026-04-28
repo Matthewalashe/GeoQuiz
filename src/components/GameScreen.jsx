@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { getFilteredQuestions, pickRandomQuestions } from '../data/questions.js'
 import { haversineDistance, calculateScore, getScoreClass, formatDistance } from '../engine/scoring.js'
 import MapView from './MapView.jsx'
+import Onboarding from './Onboarding.jsx'
 
 // LABELED reference points — LGA names only (these are NOT quiz answers)
 const LABELED_DOTS = [
@@ -96,13 +97,16 @@ export default function GameScreen() {
   const [legendOpen, setLegendOpen] = useState(false)
   const [activeLayers, setActiveLayers] = useState(['topo'])
   const [timeLeft, setTimeLeft] = useState(config?.timer || 0)
+  const [streak, setStreak] = useState(0)
+  const [bestStreak, setBestStreak] = useState(0)
+  const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem('geoquiz_onboarded'))
 
   const timerEnabled = config?.timer > 0
 
   useEffect(() => {
     if (!config) return
     const pool = getFilteredQuestions(config.categories, config.difficulty)
-    const picked = pickRandomQuestions(pool, config.count)
+    const picked = pickRandomQuestions(pool, config.count, config.seed)
     setQuestions(picked)
   }, [config])
 
@@ -162,14 +166,24 @@ export default function GameScreen() {
     else if (currentQ.category === 'nature') tolerance = 1.5
     const score = calculateScore(dist, tolerance)
     setTotalScore(prev => prev + score)
+    // Streak: 60+ points keeps streak alive
+    if (score >= 60) {
+      setStreak(prev => { const n = prev + 1; if (n > bestStreak) setBestStreak(n); return n })
+    } else {
+      setStreak(0)
+    }
     setResults(prev => [...prev, { question: currentQ, userPin: { ...userPin }, distance: dist, score }])
     setPhase('feedback')
   }
 
   function nextQuestion() {
     if (currentIdx + 1 >= questions.length) {
+      // Save session stats
+      const prev = JSON.parse(localStorage.getItem('geoquiz_sessions') || '[]')
+      prev.push({ date: new Date().toISOString(), score: totalScore, max: questions.length * 100, streak: bestStreak })
+      localStorage.setItem('geoquiz_sessions', JSON.stringify(prev.slice(-50)))
       navigate('/results', {
-        state: { results: [...results], totalScore, maxScore: questions.length * 100, questionCount: questions.length, config },
+        state: { results: [...results], totalScore, maxScore: questions.length * 100, questionCount: questions.length, config, bestStreak },
       })
       return
     }
@@ -203,6 +217,7 @@ export default function GameScreen() {
 
   return (
     <div className="game-screen">
+      {showOnboarding && <Onboarding onComplete={() => setShowOnboarding(false)} />}
       {/* Legend sidebar (hidden by default) */}
       <div className={`legend-sidebar ${legendOpen ? 'open' : ''}`}>
         {/* Navigation */}
@@ -298,10 +313,13 @@ export default function GameScreen() {
           )}
         </div>
 
-        {/* Score */}
+        {/* Score + Streak */}
         <div className="score-tracker">
           <span className="score-label">Score</span>
           <span className="score-value">{totalScore}</span>
+          {streak >= 3 && (
+            <span className="streak-badge">🔥 {streak} streak!</span>
+          )}
         </div>
 
         {/* Feedback (after pin confirmed) */}

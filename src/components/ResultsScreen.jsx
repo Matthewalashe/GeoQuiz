@@ -148,6 +148,10 @@ export default function ResultsScreen() {
             <div className="stat-label">Perfect Pins</div>
           </div>
           <div className="stat-item">
+            <div className="stat-value" style={{ fontSize: '1.3rem' }}>{data.bestStreak || 0}</div>
+            <div className="stat-label">🔥 Best Streak</div>
+          </div>
+          <div className="stat-item">
             <div className="stat-value" style={{ fontSize: '1.3rem' }}>{results.length}</div>
             <div className="stat-label">Questions</div>
           </div>
