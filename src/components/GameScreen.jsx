@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { getFilteredQuestions, pickRandomQuestions } from '../data/questions.js'
+import { getFilteredQuestions, getQuestionsByRegion, pickRandomQuestions, REGIONS } from '../data/questions.js'
 import { haversineDistance, calculateScore, getScoreClass, formatDistance } from '../engine/scoring.js'
 import { playCorrect, playWrong, playPinDrop, playTick, playTimeUp, playStreak, vibrate } from '../engine/audio.js'
 import MapView from './MapView.jsx'
@@ -106,7 +106,9 @@ export default function GameScreen() {
 
   useEffect(() => {
     if (!config) return
-    const pool = getFilteredQuestions(config.categories, config.difficulty)
+    const pool = config.region
+      ? getQuestionsByRegion(config.region, config.categories, config.difficulty)
+      : getFilteredQuestions(config.categories, config.difficulty)
     const picked = pickRandomQuestions(pool, config.count, config.seed)
     setQuestions(picked)
   }, [config])
@@ -293,9 +295,11 @@ export default function GameScreen() {
           userPin={userPin}
           correctPin={phase === 'feedback' ? { lat: currentQ.answer.lat, lng: currentQ.answer.lng } : null}
           activeLayers={activeLayers}
-          referenceDots={LABELED_DOTS}
-          unlabeledDots={UNLABELED_DOTS}
+          referenceDots={config?.region === 'abuja' ? [] : LABELED_DOTS}
+          unlabeledDots={config?.region === 'abuja' ? [] : UNLABELED_DOTS}
           distanceKm={lastResult?.distance}
+          mapCenter={config?.region ? (REGIONS.find(r => r.id === config.region)?.center) : undefined}
+          mapZoom={config?.region ? (REGIONS.find(r => r.id === config.region)?.zoom) : undefined}
         />
       </div>
 

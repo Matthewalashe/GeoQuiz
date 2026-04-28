@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { CATEGORIES, getFilteredQuestions } from '../data/questions.js'
+import { CATEGORIES, REGIONS, getFilteredQuestions, getQuestionsByRegion } from '../data/questions.js'
 
 const QUESTION_COUNTS = [10, 15, 20, 25, 30]
 const DIFFICULTIES = [
@@ -26,8 +26,9 @@ export default function CategorySelector() {
   const [difficulty, setDifficulty] = useState('all')
   const [questionCount, setQuestionCount] = useState(10)
   const [timer, setTimer] = useState(0)
+  const [region, setRegion] = useState('lagos')
 
-  const available = getFilteredQuestions(selectedCats, difficulty)
+  const available = getQuestionsByRegion(region, selectedCats, difficulty)
 
   useEffect(() => {
     if (preselected && !selectedCats.includes(preselected)) {
@@ -51,6 +52,7 @@ export default function CategorySelector() {
       difficulty,
       count: Math.min(questionCount, available.length),
       timer,
+      region,
     }
     navigate('/game', { state: config })
   }
@@ -80,6 +82,18 @@ export default function CategorySelector() {
         🏆 Daily Challenge — {new Date().toLocaleDateString('en-NG', { weekday: 'long', month: 'short', day: 'numeric' })}
         <br /><span style={{ fontSize: '0.8rem', fontWeight: 400, color: 'var(--text-secondary)' }}>10 questions · 45s timer · Same for everyone today</span>
       </button>
+
+      {/* Region Selector */}
+      <div className="selector-section">
+        <label>Region</label>
+        <div className="option-grid">
+          {REGIONS.map(r => (
+            <button key={r.id} className={`option-chip ${region === r.id ? 'selected' : ''}`} onClick={() => setRegion(r.id)}>
+              {r.icon} {r.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="selector-section">
         <label>Categories (pick one or more)</label>

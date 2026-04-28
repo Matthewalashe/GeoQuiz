@@ -28,12 +28,12 @@ function ClickHandler({ onClick }) {
   return null
 }
 
-function ResetView({ trigger }) {
+function ResetView({ trigger, center, zoom }) {
   const map = useMap()
   const prev = useRef(trigger)
   useEffect(() => {
-    if (trigger !== prev.current) { map.setView(LAGOS_CENTER, LAGOS_ZOOM); prev.current = trigger }
-  }, [trigger, map])
+    if (trigger !== prev.current) { map.setView(center || LAGOS_CENTER, zoom || LAGOS_ZOOM); prev.current = trigger }
+  }, [trigger, map, center, zoom])
   return null
 }
 
@@ -56,15 +56,17 @@ function LagosBoundary() {
   )
 }
 
-export default function MapView({ onMapClick, userPin, correctPin, activeLayers, referenceDots = [], unlabeledDots = [], distanceKm }) {
+export default function MapView({ onMapClick, userPin, correctPin, activeLayers, referenceDots = [], unlabeledDots = [], distanceKm, mapCenter, mapZoom }) {
+  const center = mapCenter || LAGOS_CENTER
+  const zoom = mapZoom || LAGOS_ZOOM
   const baseLayer = activeLayers.find(l => ['topo', 'terrain', 'satellite'].includes(l)) || 'topo'
   const tile = TILES[baseLayer]
 
   return (
-    <MapContainer center={LAGOS_CENTER} zoom={LAGOS_ZOOM} className="game-map" zoomControl={true} attributionControl={false}>
+    <MapContainer center={center} zoom={zoom} className="game-map" zoomControl={true} attributionControl={false}>
       <TileLayer url={tile.url} attribution={tile.attr} key={baseLayer} />
       <ClickHandler onClick={onMapClick} />
-      <ResetView trigger={correctPin ? 'fb' : 'place'} />
+      <ResetView trigger={correctPin ? 'fb' : 'place'} center={center} zoom={zoom} />
 
       {/* Official Lagos State boundary */}
       <LagosBoundary />

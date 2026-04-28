@@ -346,4 +346,28 @@ export function pickRandomQuestions(pool, count, seed) {
   return shuffled.slice(0, Math.min(count, shuffled.length));
 }
 
+// Region support
+import ABUJA_Q from './questions-abuja.js'
+
+export const REGIONS = [
+  { id: 'lagos', label: 'Lagos', icon: '🌊', center: [6.5, 3.4], zoom: 11 },
+  { id: 'abuja', label: 'Abuja FCT', icon: '🏛️', center: [9.06, 7.49], zoom: 12 },
+  { id: 'all', label: 'All Nigeria', icon: '🇳🇬', center: [7.5, 5.5], zoom: 7 },
+]
+
+const ALL_Q = [...Q, ...ABUJA_Q.map(q => ({ ...q, region: 'abuja' }))]
+// Tag Lagos questions
+Q.forEach(q => { q.region = 'lagos' })
+
+export function getQuestionsByRegion(region, categoryIds, difficulty) {
+  let pool = region === 'all' ? ALL_Q : ALL_Q.filter(q => q.region === region)
+  if (categoryIds && categoryIds.length > 0) {
+    pool = pool.filter(q => categoryIds.includes(q.category))
+  }
+  if (difficulty && difficulty !== 'all') {
+    pool = pool.filter(q => q.difficulty === difficulty)
+  }
+  return pool
+}
+
 export default Q;
