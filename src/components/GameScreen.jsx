@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getFilteredQuestions, pickRandomQuestions } from '../data/questions.js'
 import { haversineDistance, calculateScore, getScoreClass, formatDistance } from '../engine/scoring.js'
+import { playCorrect, playWrong, playPinDrop, playTick, playTimeUp, playStreak, vibrate } from '../engine/audio.js'
 import MapView from './MapView.jsx'
 import Onboarding from './Onboarding.jsx'
 
@@ -120,6 +121,7 @@ export default function GameScreen() {
           clearInterval(interval)
           return 0
         }
+        if (prev <= 6) playTick() // tick last 5 seconds
         return prev - 1
       })
     }, 1000)
@@ -136,11 +138,13 @@ export default function GameScreen() {
 
   const handleMapClick = useCallback((latlng) => {
     if (phase !== 'placing') return
+    playPinDrop()
     setUserPin(latlng)
   }, [phase])
 
   function handleTimeout() {
     if (!currentQ) return
+    playTimeUp(); vibrate([100, 50, 100])
     if (userPin) {
       confirmPin()
     } else {
@@ -168,8 +172,10 @@ export default function GameScreen() {
     setTotalScore(prev => prev + score)
     // Streak: 60+ points keeps streak alive
     if (score >= 60) {
-      setStreak(prev => { const n = prev + 1; if (n > bestStreak) setBestStreak(n); return n })
+      playCorrect(); vibrate([50])
+      setStreak(prev => { const n = prev + 1; if (n > bestStreak) setBestStreak(n); if (n >= 3) playStreak(); return n })
     } else {
+      playWrong(); vibrate([30, 50, 30])
       setStreak(0)
     }
     setResults(prev => [...prev, { question: currentQ, userPin: { ...userPin }, distance: dist, score }])
