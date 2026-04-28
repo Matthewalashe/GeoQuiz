@@ -781,3 +781,25 @@ a:hover { text-decoration: underline; }
 .onboarding-emoji { font-size: 3rem; margin-bottom: 0.5rem; }
 .onboarding-title { font-family: var(--font-head); font-size: 1.3rem; font-weight: 700; margin-bottom: 0.3rem; }
 .onboarding-desc { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.4; }
+
+/* ---- CHALLENGE ---- */
+.challenge-page {
+  max-width: 520px; margin: 3rem auto; padding: 0 1rem; text-align: center;
+}
+.challenge-card { padding: 2rem; }
+.challenge-details {
+  border: 2px solid var(--border); padding: 1rem; margin: 1rem 0;
+  background: var(--bg);
+}
+.challenge-detail-row {
+  display: flex; justify-content: space-between; padding: 0.4rem 0;
+  border-bottom: 1px solid var(--border); font-size: 0.9rem;
+}
+.challenge-detail-row:last-child { border-bottom: none; }
+.challenge-result-banner {
+  border: 3px solid var(--border); padding: 1rem; margin: 1rem 0;
+  text-align: center; font-family: var(--font-head);
+}
+.challenge-result-banner.win { border-color: #FFD700; background: #FFFDF5; }
+.challenge-result-banner.lose { border-color: var(--red); background: #fef2f2; }
+.challenge-result-banner.tie { border-color: var(--primary); background: #f0fdf4; }

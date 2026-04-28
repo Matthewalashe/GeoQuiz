@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { getGrade, getScoreClass, formatDistance } from '../engine/scoring.js'
 import { submitScore, fetchLeaderboard } from '../lib/supabase.js'
 import { ResultsMap } from './MapView.jsx'
+import { encodeChallenge } from './Challenge.jsx'
 
 // Achievement rank system
 function getRank(pct, totalPerfects) {
@@ -132,6 +133,17 @@ export default function ResultsScreen() {
           <div className="rank-subtitle">{rank.subtitle}</div>
         </div>
 
+        {/* Challenge comparison */}
+        {data.config?.challenge && (
+          <div className={`challenge-result-banner ${totalScore > data.config.challenge.opponentScore ? 'win' : totalScore < data.config.challenge.opponentScore ? 'lose' : 'tie'}`}>
+            {totalScore > data.config.challenge.opponentScore
+              ? `🎉 You beat ${data.config.challenge.opponentName}! (${data.config.challenge.opponentScore} pts)`
+              : totalScore < data.config.challenge.opponentScore
+              ? `😤 ${data.config.challenge.opponentName} wins with ${data.config.challenge.opponentScore} pts. Try again!`
+              : `🤝 It's a tie with ${data.config.challenge.opponentName}! Both scored ${totalScore}`}
+          </div>
+        )}
+
         <div className="results-total">
           {totalScore} <span className="out-of">/ {maxScore}</span>
         </div>
@@ -221,6 +233,11 @@ export default function ResultsScreen() {
 
       <div className="results-actions">
         <Link to="/play" className="btn btn-primary">Play Again 🎮</Link>
+        <button className="btn btn-outline" onClick={() => {
+          const code = encodeChallenge(data.config, totalScore, playerName || 'Anonymous')
+          const url = `${window.location.origin}/challenge?code=${code}`
+          navigator.clipboard.writeText(url).then(() => alert('Challenge link copied! Share it with a friend ⚔️')).catch(() => prompt('Copy this challenge link:', url))
+        }}>Challenge a Friend ⚔️</button>
         <Link to="/leaderboard" className="btn btn-outline">Leaderboard 🏆</Link>
         <Link to="/" className="btn btn-outline">Home</Link>
       </div>
