@@ -126,8 +126,9 @@ export default function Dashboard() {
         </>
       )}
 
-      <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+      <div style={{ textAlign: 'center', marginTop: '2rem', display: 'flex', justifyContent: 'center', gap: '1rem' }}>
         <Link to="/play" className="btn btn-primary">Keep Playing 🎮</Link>
+        <Link to="/achievements" className="btn btn-outline">🏆 Achievements</Link>
       </div>
     </section>
   )

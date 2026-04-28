@@ -4,6 +4,7 @@ import { getFilteredQuestions, getQuestionsByRegion, pickRandomQuestions, REGION
 import { haversineDistance, calculateScore, getScoreClass, formatDistance } from '../engine/scoring.js'
 import { playCorrect, playWrong, playPinDrop, playTick, playTimeUp, playStreak, vibrate } from '../engine/audio.js'
 import { SponsoredBanner } from './SponsoredBanner.jsx'
+import { trackAchievement } from './Achievements.jsx'
 import MapView from './MapView.jsx'
 import Onboarding from './Onboarding.jsx'
 
@@ -202,6 +203,12 @@ export default function GameScreen() {
         if (r.score >= 60) cs[cat].correct++
       })
       localStorage.setItem('geoquiz_cat_stats', JSON.stringify(cs))
+      // Track achievements
+      if (config?.region === 'abuja') trackAchievement('abujaGames', 1)
+      if (config?.mode === 'blitz') {
+        const pct = Math.round((totalScore / (questions.length * 100)) * 100)
+        trackAchievement('blitzHighPct', pct)
+      }
       navigate('/results', {
         state: { results: [...results], totalScore, maxScore: questions.length * 100, questionCount: questions.length, config, bestStreak },
       })

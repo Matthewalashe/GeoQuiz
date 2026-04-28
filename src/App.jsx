@@ -8,6 +8,7 @@ import Leaderboard from './components/Leaderboard.jsx'
 import About from './components/About.jsx'
 import Challenge from './components/Challenge.jsx'
 import Dashboard from './components/Dashboard.jsx'
+import Achievements from './components/Achievements.jsx'
 import InstallPrompt from './components/InstallPrompt.jsx'
 
 export default function App() {
@@ -28,6 +29,7 @@ export default function App() {
           <Route path="/about" element={<About />} />
           <Route path="/challenge" element={<Challenge />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/achievements" element={<Achievements />} />
         </Routes>
       </main>
       {!isGamePage && (
