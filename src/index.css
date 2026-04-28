@@ -871,3 +871,73 @@ a:hover { text-decoration: underline; }
 .rg-bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
 .rg-score { font-weight: 700; font-family: var(--font-head); min-width: 60px; text-align: right; }
 .rg-streak { font-size: 0.8rem; }
+
+/* ---- INSTALL BANNER ---- */
+.install-banner {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999;
+  background: linear-gradient(135deg, #008751, #00a86b);
+  color: #fff; padding: 1rem 1.25rem;
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
+  animation: slideUp 0.4s ease;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.install-content { display: flex; align-items: center; gap: 0.75rem; }
+.install-icon { font-size: 1.8rem; }
+.install-content p { font-size: 0.8rem; opacity: 0.85; margin: 0; }
+.install-actions { display: flex; gap: 0.5rem; align-items: center; }
+.install-actions .btn-sm { font-size: 0.85rem; padding: 0.4rem 1rem; background: #fff; color: #008751; border: none; font-weight: 700; cursor: pointer; }
+.btn-dismiss { background: none; border: none; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 0.8rem; }
+
+/* ---- SPONSORED PIN (in-game) ---- */
+.sponsored-banner {
+  margin-top: 0.75rem; padding: 0.75rem; border: 2px solid #FFD700;
+  background: linear-gradient(135deg, #FFFDF5 0%, #FFF9E6 100%);
+  position: relative;
+}
+.sponsored-label {
+  position: absolute; top: -8px; right: 8px;
+  background: #FFD700; color: #333; font-size: 0.65rem; font-weight: 700;
+  padding: 2px 6px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.sponsored-brand { font-weight: 700; font-family: var(--font-head); font-size: 0.95rem; margin-bottom: 0.3rem; }
+.sponsored-msg { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem; }
+.sponsored-cta {
+  display: inline-block; padding: 0.35rem 0.8rem; background: #008751;
+  color: #fff; font-size: 0.8rem; font-weight: 600; text-decoration: none;
+  border: none; cursor: pointer; transition: background 0.15s;
+}
+.sponsored-cta:hover { background: #006b40; }
+
+/* ---- SPONSORED RESULT CARD (Journey Card) ---- */
+.journey-card {
+  border: 3px solid var(--border); margin: 1.5rem 0; overflow: hidden;
+  background: var(--surface);
+}
+.journey-header {
+  padding: 1rem; background: linear-gradient(135deg, #008751, #00a86b);
+  color: #fff; font-family: var(--font-head);
+}
+.journey-header h4 { margin: 0 0 0.3rem; }
+.journey-route { font-size: 0.85rem; opacity: 0.85; }
+.journey-sponsors { padding: 1rem; }
+.journey-sponsor-item {
+  display: flex; gap: 0.75rem; align-items: center;
+  padding: 0.75rem 0; border-bottom: 1px solid var(--border);
+}
+.journey-sponsor-item:last-child { border-bottom: none; }
+.journey-sponsor-icon { font-size: 1.5rem; min-width: 36px; text-align: center; }
+.journey-sponsor-info { flex: 1; }
+.journey-sponsor-name { font-weight: 700; font-size: 0.9rem; }
+.journey-sponsor-msg { font-size: 0.8rem; color: var(--text-secondary); margin: 0.15rem 0 0.4rem; }
+.journey-sponsor-actions { display: flex; gap: 0.4rem; }
+.journey-sponsor-actions a, .journey-sponsor-actions button {
+  font-size: 0.75rem; padding: 0.25rem 0.6rem; border: 1.5px solid var(--border);
+  background: var(--bg); cursor: pointer; text-decoration: none; color: var(--text-primary);
+  font-weight: 600;
+}
+.journey-sponsor-actions a:hover, .journey-sponsor-actions button:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+.journey-footer {
+  padding: 0.5rem 1rem; background: var(--bg); font-size: 0.75rem;
+  color: var(--text-secondary); text-align: center;
+}

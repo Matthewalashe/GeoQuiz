@@ -8,6 +8,7 @@ import Leaderboard from './components/Leaderboard.jsx'
 import About from './components/About.jsx'
 import Challenge from './components/Challenge.jsx'
 import Dashboard from './components/Dashboard.jsx'
+import InstallPrompt from './components/InstallPrompt.jsx'
 
 export default function App() {
   const location = useLocation()
@@ -16,6 +17,7 @@ export default function App() {
   return (
     <div className={`app ${isGamePage ? 'fullscreen-game' : ''}`}>
       {!isGamePage && <Header />}
+      <InstallPrompt />
       <main className={isGamePage ? 'app-main-full' : 'app-main'}>
         <Routes>
           <Route path="/" element={<Landing />} />

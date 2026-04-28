@@ -2,15 +2,25 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GeoQuiz — Master Lagos Geography</title>
-    <meta name="description" content="An interactive map-based quiz platform to master Lagos geography. Test your knowledge of LGAs, landmarks, markets, bridges, and more." />
-    <meta name="author" content="GeoQuiz" />
-    <meta property="og:title" content="GeoQuiz — Master Lagos Geography" />
-    <meta property="og:description" content="Drop pins, identify locations, and prove your Lagos GIS knowledge. Built for students and professionals." />
+    <link rel="icon" type="image/png" href="/icon-192.png" />
+    <link rel="apple-touch-icon" href="/icon-512.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#008751" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <title>GeoQuiz — Explore Naija 🗺️</title>
+    <meta name="description" content="Test your knowledge of Nigerian geography! Pin locations on the map, compete with friends, and explore Lagos, Abuja & beyond." />
+    <meta name="author" content="visitnaija.online" />
+    <meta property="og:title" content="GeoQuiz — Explore Naija" />
+    <meta property="og:description" content="Drop pins, score points, climb the leaderboard. How well do you know Nigeria?" />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://visitnaija.online" />
+    <meta property="og:image" content="https://visitnaija.online/icon-512.png" />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="GeoQuiz — Explore Naija" />
+    <meta name="twitter:description" content="The map-based quiz game for Nigeria lovers. Can you beat your friends?" />
 
     <!-- Google Fonts: Space Grotesk + Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -25,5 +35,12 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {})
+        })
+      }
+    </script>
   </body>
 </html>

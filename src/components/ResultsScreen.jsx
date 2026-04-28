@@ -4,6 +4,7 @@ import { getGrade, getScoreClass, formatDistance } from '../engine/scoring.js'
 import { submitScore, fetchLeaderboard } from '../lib/supabase.js'
 import { ResultsMap } from './MapView.jsx'
 import { encodeChallenge } from './Challenge.jsx'
+import { JourneyCard } from './SponsoredBanner.jsx'
 
 // Achievement rank system
 function getRank(pct, totalPerfects) {
@@ -236,6 +237,9 @@ export default function ResultsScreen() {
         <Link to="/leaderboard" className="btn btn-outline">Leaderboard 🏆</Link>
         <Link to="/" className="btn btn-outline">Home</Link>
       </div>
+
+      {/* Journey Card — Sponsored Discoveries */}
+      <JourneyCard results={data.results} />
 
       {/* Social Share */}
       {(() => {

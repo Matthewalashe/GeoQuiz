@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { getFilteredQuestions, getQuestionsByRegion, pickRandomQuestions, REGIONS } from '../data/questions.js'
 import { haversineDistance, calculateScore, getScoreClass, formatDistance } from '../engine/scoring.js'
 import { playCorrect, playWrong, playPinDrop, playTick, playTimeUp, playStreak, vibrate } from '../engine/audio.js'
+import { SponsoredBanner } from './SponsoredBanner.jsx'
 import MapView from './MapView.jsx'
 import Onboarding from './Onboarding.jsx'
 
@@ -151,6 +152,8 @@ export default function GameScreen() {
       confirmPin()
     } else {
       // No pin placed — score 0
+      setStreak(0)
+      playWrong(); vibrate([30, 50, 30])
       setResults(prev => [...prev, {
         question: currentQ,
         userPin: { lat: 0, lng: 0 },
@@ -357,6 +360,7 @@ export default function GameScreen() {
             <div className="fb-fact">
               {currentQ.funFact && <span>{currentQ.funFact}</span>}
             </div>
+            <SponsoredBanner questionId={currentQ.id} />
             <button className="btn btn-primary btn-sm" onClick={nextQuestion} style={{ width: '100%' }}>
               {currentIdx + 1 >= questions.length ? 'See Results →' : 'Next →'}
             </button>

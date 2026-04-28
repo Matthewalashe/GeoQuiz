@@ -113,6 +113,9 @@ export default function CategorySelector() {
             No category selected = all categories included
           </p>
         )}
+        <p style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 600, marginTop: '0.5rem' }}>
+          📝 {available.length} questions available
+        </p>
       </div>
 
       <div className="selector-section">
