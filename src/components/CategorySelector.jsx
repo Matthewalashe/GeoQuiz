@@ -83,6 +83,16 @@ export default function CategorySelector() {
         <br /><span style={{ fontSize: '0.8rem', fontWeight: 400, color: 'var(--text-secondary)' }}>10 questions · 45s timer · Same for everyone today</span>
       </button>
 
+      {/* Blitz Mode */}
+      <button className="daily-challenge-btn" style={{ background: 'linear-gradient(135deg, #FF6B00, #FF2E00)', borderColor: '#FF2E00' }} onClick={() => {
+        const pool = getQuestionsByRegion(region, [], 'all')
+        const blitzCount = Math.min(30, pool.length)
+        navigate('/game', { state: { categories: [], difficulty: 'all', count: blitzCount, timer: 10, region, mode: 'blitz', totalTimer: 300 } })
+      }}>
+        ⚡ Blitz Mode
+        <br /><span style={{ fontSize: '0.8rem', fontWeight: 400, color: 'rgba(255,255,255,0.8)' }}>30 questions · 5 min total · Race format!</span>
+      </button>
+
       {/* Region Selector */}
       <div className="selector-section">
         <label>Region</label>

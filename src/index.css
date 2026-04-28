@@ -941,3 +941,15 @@ a:hover { text-decoration: underline; }
   padding: 0.5rem 1rem; background: var(--bg); font-size: 0.75rem;
   color: var(--text-secondary); text-align: center;
 }
+
+/* ---- LEADERBOARD TABS ---- */
+.lb-tabs { display: flex; gap: 0; margin-bottom: 1rem; border: 2px solid var(--border); overflow: hidden; }
+.lb-tab {
+  flex: 1; padding: 0.6rem; background: var(--bg); border: none;
+  font-family: var(--font-head); font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; transition: background 0.15s;
+}
+.lb-tab:not(:last-child) { border-right: 2px solid var(--border); }
+.lb-tab.active { background: var(--primary); color: #fff; }
+.lb-tab:hover:not(.active) { background: var(--surface); }
+.lb-champion td { background: linear-gradient(135deg, #FFFDF5, #FFF9E6) !important; font-weight: 700; }

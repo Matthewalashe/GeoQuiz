@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom'
 import { CATEGORIES } from '../data/questions.js'
 import questions from '../data/questions.js'
+import ABUJA_Q from '../data/questions-abuja.js'
 
 export default function Landing() {
-  const totalQ = questions.length
+  const totalQ = questions.length + ABUJA_Q.length
   const catCount = CATEGORIES.length
   const lgaCount = questions.filter(q => q.category === 'lgas').length
 
@@ -26,11 +27,11 @@ export default function Landing() {
         <div className="hero-badge">🗺️ Interactive Map Quiz</div>
         <h1>
           <span className="hero-sub">How well do you know</span>
-          <span className="hero-main">Lagos<span className="accent">?</span></span>
+          <span className="hero-main">Nigeria<span className="accent">?</span></span>
         </h1>
         <p className="hero-desc">
-          Drop pins on the map. Test your spatial knowledge of LGAs, landmarks, markets, bridges, and hidden corners of Lagos State.
-          Built for <strong>GIS students</strong> and <strong>professionals</strong>.
+          Drop pins on the map. Test your knowledge of Lagos, Abuja & beyond — LGAs, landmarks, markets, bridges, and hidden gems.
+          Built for <strong>explorers</strong>, <strong>students</strong> and <strong>professionals</strong>.
         </p>
 
         <div className="hero-actions">
@@ -101,11 +102,18 @@ export default function Landing() {
         })}
       </div>
 
+      {/* VisitLagos Cross-Promo */}
+      <div className="card card-accent-top" style={{ maxWidth: '600px', margin: '2rem auto', padding: '1.5rem', textAlign: 'center' }}>
+        <p style={{ fontSize: '1.1rem', fontWeight: 700, fontFamily: 'var(--font-head)', marginBottom: '0.5rem' }}>🌍 Explore More of Nigeria</p>
+        <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>Discover attractions, events, and hidden gems across Nigeria on our companion platform.</p>
+        <a href="https://visitnaija.online" target="_blank" rel="noopener noreferrer" className="btn btn-outline">Visit visitnaija.online →</a>
+      </div>
+
       {/* CTA */}
       <div className="landing-cta">
         <div className="cta-inner">
           <h2>Ready to test your knowledge?</h2>
-          <p>Challenge yourself with {totalQ}+ questions about Lagos geography, culture, and infrastructure.</p>
+          <p>Challenge yourself with {totalQ}+ questions across Lagos & Abuja — geography, culture, and infrastructure.</p>
           <Link to="/play" className="btn btn-primary btn-lg">Start Quiz →</Link>
         </div>
       </div>

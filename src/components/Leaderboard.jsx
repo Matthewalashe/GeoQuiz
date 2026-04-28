@@ -5,6 +5,7 @@ import { fetchLeaderboard, submitWaitlist, getWaitlistCount } from '../lib/supab
 export default function Leaderboard() {
   const [entries, setEntries] = useState([])
   const [loading, setLoading] = useState(true)
+  const [tab, setTab] = useState('all') // 'all' | 'week' | 'month'
   const [waitlistCount, setWaitlistCount] = useState(0)
 
   // Waitlist form state
@@ -16,7 +17,7 @@ export default function Leaderboard() {
   const [wlDone, setWlDone] = useState(false)
 
   useEffect(() => {
-    fetchLeaderboard(30)
+    fetchLeaderboard(50)
       .then(data => setEntries(data))
       .catch(err => console.error('Leaderboard fetch error:', err))
       .finally(() => setLoading(false))
@@ -26,6 +27,22 @@ export default function Leaderboard() {
   function formatDate(dateStr) {
     return new Date(dateStr).toLocaleDateString('en-NG', { month: 'short', day: 'numeric', year: 'numeric' })
   }
+
+  // Filter by time period
+  const now = Date.now()
+  const filtered = entries.filter(e => {
+    if (tab === 'all') return true
+    const created = new Date(e.created_at).getTime()
+    if (tab === 'week') return now - created < 7 * 24 * 60 * 60 * 1000
+    if (tab === 'month') return now - created < 30 * 24 * 60 * 60 * 1000
+    return true
+  }).slice(0, 30)
+
+  const TABS = [
+    { id: 'all', label: '🏆 All Time' },
+    { id: 'week', label: '📅 This Week' },
+    { id: 'month', label: '📆 This Month' },
+  ]
 
   async function handleWaitlist(e) {
     e.preventDefault()
@@ -47,11 +64,26 @@ export default function Leaderboard() {
       <h2>Leaderboard</h2>
       <p className="subtitle">Top scores from all GeoQuiz players</p>
 
+      {/* Season tabs */}
+      <div className="lb-tabs">
+        {TABS.map(t => (
+          <button key={t.id} className={`lb-tab ${tab === t.id ? 'active' : ''}`} onClick={() => setTab(t.id)}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'week' && (
+        <div style={{ textAlign: 'center', margin: '0.5rem 0', fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 600 }}>
+          🔄 Resets every Monday — climb to #1!
+        </div>
+      )}
+
       {loading ? (
         <div className="lb-empty">Loading scores...</div>
-      ) : entries.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <div className="lb-empty">
-          <p>No scores yet. Be the first!</p>
+          <p>{tab === 'all' ? 'No scores yet. Be the first!' : 'No scores this period. Be the first!'}</p>
           <Link to="/play" className="btn btn-primary mt-2">Play Now</Link>
         </div>
       ) : (
@@ -67,12 +99,12 @@ export default function Leaderboard() {
             </tr>
           </thead>
           <tbody>
-            {entries.map((entry, i) => (
-              <tr key={entry.id || i}>
+            {filtered.map((entry, i) => (
+              <tr key={entry.id || i} className={i === 0 ? 'lb-champion' : ''}>
                 <td className="rank">
-                  {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
+                  {i === 0 ? '👑' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
                 </td>
-                <td style={{ fontWeight: 600 }}>{entry.player_name}</td>
+                <td style={{ fontWeight: 600 }}>{entry.player_name}{i === 0 && tab !== 'all' ? ' 🔥' : ''}</td>
                 <td className="lb-score">{entry.score}<span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>/{entry.max_score}</span></td>
                 <td>{entry.question_count}</td>
                 <td style={{ textTransform: 'capitalize' }}>{entry.difficulty || 'all'}</td>
@@ -83,8 +115,9 @@ export default function Leaderboard() {
         </table>
       )}
 
-      <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '2rem' }}>
         <Link to="/play" className="btn btn-primary">Play Again 🎮</Link>
+        <Link to="/play?mode=blitz" className="btn btn-outline">⚡ Blitz Mode</Link>
       </div>
 
       {/* ---- WAITLIST ---- */}
