@@ -7,6 +7,7 @@ import ResultsScreen from './components/ResultsScreen.jsx'
 import Leaderboard from './components/Leaderboard.jsx'
 import About from './components/About.jsx'
 import Challenge from './components/Challenge.jsx'
+import Dashboard from './components/Dashboard.jsx'
 
 export default function App() {
   const location = useLocation()
@@ -24,6 +25,7 @@ export default function App() {
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/about" element={<About />} />
           <Route path="/challenge" element={<Challenge />} />
+          <Route path="/dashboard" element={<Dashboard />} />
         </Routes>
       </main>
       {!isGamePage && (

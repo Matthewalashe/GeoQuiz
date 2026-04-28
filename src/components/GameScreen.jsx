@@ -188,6 +188,15 @@ export default function GameScreen() {
       const prev = JSON.parse(localStorage.getItem('geoquiz_sessions') || '[]')
       prev.push({ date: new Date().toISOString(), score: totalScore, max: questions.length * 100, streak: bestStreak })
       localStorage.setItem('geoquiz_sessions', JSON.stringify(prev.slice(-50)))
+      // Save per-category stats for Dashboard
+      const cs = JSON.parse(localStorage.getItem('geoquiz_cat_stats') || '{}')
+      results.forEach(r => {
+        const cat = r.question.category
+        if (!cs[cat]) cs[cat] = { correct: 0, total: 0 }
+        cs[cat].total++
+        if (r.score >= 60) cs[cat].correct++
+      })
+      localStorage.setItem('geoquiz_cat_stats', JSON.stringify(cs))
       navigate('/results', {
         state: { results: [...results], totalScore, maxScore: questions.length * 100, questionCount: questions.length, config, bestStreak },
       })
