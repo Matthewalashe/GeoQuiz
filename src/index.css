@@ -501,27 +501,111 @@ a:hover { text-decoration: underline; }
   border: 3px solid var(--border); border-radius: 50%;
 }
 
+/* ---- SIDEBAR NAV ---- */
+.sidebar-nav {
+  display: flex; flex-direction: column; gap: 0.4rem; padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--border);
+}
+.sidebar-nav-btn {
+  padding: 0.5rem 0.75rem; border: 2px solid var(--border); background: var(--surface);
+  font-family: var(--font-head); font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; text-align: left; transition: background 0.15s;
+}
+.sidebar-nav-btn:hover { background: var(--bg); }
+.sidebar-quit { color: var(--red); border-color: var(--red); }
+.sidebar-quit:hover { background: #fef2f2; }
+
 /* ---- RESPONSIVE ---- */
 @media (max-width: 768px) {
-  .header { padding: 0.75rem 1rem; }
-  .header-nav { gap: 1rem; }
-  .header-nav a { font-size: 0.8rem; }
-  .landing { padding: 2rem 1rem; }
+  .header { padding: 0.5rem 1rem; }
+  .header-nav { gap: 0.75rem; }
+  .header-nav a { font-size: 0.75rem; }
+  .landing { padding: 1.5rem 1rem; }
   .category-grid { grid-template-columns: 1fr; }
-  .stats-bar { gap: 1.5rem; }
-  .stat-value { font-size: 1.8rem; }
-  .results-map-wrap { height: 280px; }
+  .stats-bar { gap: 1rem; }
+  .stat-value { font-size: 1.5rem; }
+  .results-map-wrap { height: 220px; }
+  .results-header { padding: 1rem; }
+  .rank-badge { padding: 0.75rem 1rem; }
+  .rank-title { font-size: 1.3rem; }
+  .encouragement-bar { font-size: 0.8rem; padding: 0.5rem 0.75rem; }
+  .results-breakdown { padding: 0 0.5rem; }
+  .result-card { padding: 0.75rem; }
+  .results-actions { gap: 0.5rem; }
+  .results-actions .btn { font-size: 0.8rem; padding: 0.6rem 1rem; }
+  .leaderboard { padding: 1.5rem 1rem; }
+  .lb-table th { font-size: 0.7rem; padding: 0.5rem 0.3rem; }
+  .lb-table td { padding: 0.5rem 0.3rem; font-size: 0.8rem; }
+  .waitlist-section { margin-top: 2rem; }
+
+  /* Game screen mobile — 70% map, 30% panel */
   .game-screen { flex-direction: column; }
-  .game-map-area { height: 55%; }
-  .game-right-panel { width: 100%; min-width: unset; height: 45%; border-left: none; border-top: var(--border-w) solid var(--border); }
+  .game-map-area { height: 65%; min-height: 55vh; }
+  .game-right-panel {
+    width: 100%; min-width: unset; height: 35%;
+    border-left: none; border-top: 2px solid var(--border);
+    overflow-y: auto;
+  }
+  .question-panel { padding: 0.6rem 0.75rem; }
+  .question-panel h3 { font-size: 0.95rem; }
+  .q-counter { font-size: 0.7rem; }
+  .q-category { font-size: 0.65rem; margin-bottom: 0.2rem; }
+  .q-actions { margin-top: 0.3rem; }
+  .score-tracker { padding: 0.3rem 0.75rem; }
+  .feedback-panel { padding: 0.6rem 0.75rem; }
+  .fb-name { font-size: 0.85rem; }
+  .fb-desc { font-size: 0.75rem; }
+  .fb-fact { font-size: 0.7rem; }
   .legend-sidebar { width: 240px; }
   .legend-toggle.shifted { left: 240px; }
+  .legend-toggle { top: 8px; width: 32px; height: 32px; font-size: 1rem; }
 }
 
 @media (max-width: 480px) {
-  .header-logo { font-size: 1.2rem; }
-  .btn { padding: 0.6rem 1.2rem; font-size: 0.85rem; }
-  .btn-lg { padding: 0.8rem 1.5rem; font-size: 1rem; }
+  .header-logo { font-size: 1.1rem; }
+  .btn { padding: 0.5rem 1rem; font-size: 0.8rem; }
+  .btn-lg { padding: 0.7rem 1.2rem; font-size: 0.9rem; }
+  .game-map-area { height: 68%; min-height: 58vh; }
+  .game-right-panel { height: 32%; }
+  .question-panel h3 { font-size: 0.85rem; line-height: 1.2; }
+  .lb-table th:nth-child(4), .lb-table td:nth-child(4),
+  .lb-table th:nth-child(5), .lb-table td:nth-child(5) { display: none; }
+}
+
+/* ---- ACHIEVEMENT MODALS ---- */
+.achievement-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.achievement-modal {
+  background: var(--surface); border: var(--border-w) solid var(--border);
+  box-shadow: var(--shadow); padding: 2rem; max-width: 420px; width: 90%;
+  text-align: center; position: relative; animation: modalSlide 0.5s ease-out;
+}
+@keyframes modalSlide {
+  from { transform: translateY(-40px) scale(0.9); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+.achievement-modal.gold {
+  border-color: #FFD700; box-shadow: 0 0 30px rgba(255,215,0,0.4), var(--shadow);
+  background: linear-gradient(145deg, #FFFDF5 0%, #FFF8E1 100%);
+}
+.achievement-modal.top3 {
+  border-color: var(--primary); box-shadow: 0 0 20px rgba(0,135,81,0.3), var(--shadow);
+}
+.achievement-emoji { font-size: 3.5rem; margin-bottom: 0.5rem; }
+.achievement-title {
+  font-family: var(--font-head); font-size: 1.6rem; font-weight: 700; margin-bottom: 0.3rem;
+}
+.achievement-subtitle {
+  font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.4;
+}
+.confetti-burst { animation: burst 0.6s ease-out; }
+@keyframes burst {
+  0% { transform: scale(0); } 50% { transform: scale(1.2); } 100% { transform: scale(1); }
 }
 
 /* ---- LEAFLET OVERRIDES ---- */

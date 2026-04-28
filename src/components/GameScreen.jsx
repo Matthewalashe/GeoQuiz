@@ -155,7 +155,12 @@ export default function GameScreen() {
   function confirmPin() {
     if (!userPin || !currentQ) return
     const dist = haversineDistance(userPin.lat, userPin.lng, currentQ.answer.lat, currentQ.answer.lng)
-    const score = calculateScore(dist)
+    // Tolerance for large-area features (LGAs, roads, rivers)
+    let tolerance = 0
+    if (currentQ.category === 'lgas') tolerance = 2
+    else if (currentQ.category === 'transport') tolerance = 1
+    else if (currentQ.category === 'nature') tolerance = 1.5
+    const score = calculateScore(dist, tolerance)
     setTotalScore(prev => prev + score)
     setResults(prev => [...prev, { question: currentQ, userPin: { ...userPin }, distance: dist, score }])
     setPhase('feedback')
@@ -179,10 +184,34 @@ export default function GameScreen() {
 
   const lastResult = results[results.length - 1]
 
+  // Tolerance for polygon/line features
+  function getTolerance(q) {
+    if (q.category === 'lgas') return 2;        // LGAs are large areas
+    if (q.category === 'transport') return 1;   // Roads/bridges are lines
+    if (q.category === 'nature') return 1.5;    // Rivers, lagoons, coastlines
+    if (q.category === 'health' && q.id.includes('he-07')) return 1; // expressway
+    return 0;
+  }
+
+  function handleQuit() {
+    if (results.length > 0) {
+      const ok = window.confirm(`You've answered ${results.length}/${questions.length} questions (Score: ${totalScore}). Are you sure you want to quit?\n\nYour progress will be lost.`)
+      if (!ok) return
+    }
+    navigate('/')
+  }
+
   return (
     <div className="game-screen">
       {/* Legend sidebar (hidden by default) */}
       <div className={`legend-sidebar ${legendOpen ? 'open' : ''}`}>
+        {/* Navigation */}
+        <div className="legend-section sidebar-nav">
+          <button className="sidebar-nav-btn" onClick={() => navigate('/')}>🏠 Home</button>
+          <button className="sidebar-nav-btn" onClick={() => navigate('/play')}>⚙️ New Quiz</button>
+          <button className="sidebar-nav-btn sidebar-quit" onClick={handleQuit}>✕ Quit Game</button>
+        </div>
+
         <div className="legend-section">
           <h4>Base Map</h4>
           <label className="layer-option">
@@ -200,8 +229,8 @@ export default function GameScreen() {
         </div>
         <div className="legend-section">
           <h4>LGA Reference Points</h4>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-            Labeled dots mark LGA areas. Unlabeled dots are additional spatial guides.
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+            Labeled dots mark LGAs. Unlabeled dots are spatial guides.
           </p>
           {LABELED_DOTS.map((d, i) => (
             <div className="legend-item" key={i}>
@@ -211,17 +240,20 @@ export default function GameScreen() {
           ))}
         </div>
         <div className="legend-section">
-          <h4>Scoring Guide</h4>
-          <div className="legend-item"><span className="legend-dot" style={{ background: 'var(--primary)' }} /> &lt; 1 km = 100 pts</div>
-          <div className="legend-item"><span className="legend-dot" style={{ background: '#2D6A4F' }} /> 1-3 km = 80 pts</div>
-          <div className="legend-item"><span className="legend-dot" style={{ background: 'var(--yellow)' }} /> 3-5 km = 60 pts</div>
-          <div className="legend-item"><span className="legend-dot" style={{ background: 'var(--blue)' }} /> 5-10 km = 40 pts</div>
-          <div className="legend-item"><span className="legend-dot" style={{ background: 'var(--red)' }} /> 10-20 km = 20 pts</div>
-          <div className="legend-item"><span className="legend-dot" style={{ background: '#999' }} /> &gt; 20 km = 5 pts</div>
+          <h4>Scoring</h4>
+          <div className="legend-item"><span className="legend-dot" style={{ background: 'var(--primary)' }} /> &lt; 1 km = 100</div>
+          <div className="legend-item"><span className="legend-dot" style={{ background: '#2D6A4F' }} /> 1-3 km = 80</div>
+          <div className="legend-item"><span className="legend-dot" style={{ background: 'var(--yellow)' }} /> 3-5 km = 60</div>
+          <div className="legend-item"><span className="legend-dot" style={{ background: 'var(--blue)' }} /> 5-10 km = 40</div>
+          <div className="legend-item"><span className="legend-dot" style={{ background: 'var(--red)' }} /> 10-20 km = 20</div>
+          <div className="legend-item"><span className="legend-dot" style={{ background: '#999' }} /> &gt; 20 km = 5</div>
+          <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
+            💡 LGAs, roads & water features have extra tolerance.
+          </p>
         </div>
       </div>
-      <button className={`legend-toggle ${legendOpen ? 'shifted' : ''}`} onClick={() => setLegendOpen(!legendOpen)} title="Legend & Layers">
-        {legendOpen ? '◀' : '▶'}
+      <button className={`legend-toggle ${legendOpen ? 'shifted' : ''}`} onClick={() => setLegendOpen(!legendOpen)} title="Menu">
+        {legendOpen ? '◀' : '☰'}
       </button>
 
       {/* Map area */}
@@ -241,7 +273,7 @@ export default function GameScreen() {
       <div className="game-right-panel">
         {/* Question */}
         <div className="question-panel">
-          <div className="q-counter">Question {currentIdx + 1} of {questions.length}</div>
+          <div className="q-counter">Q{currentIdx + 1}/{questions.length}</div>
           {timerEnabled && phase === 'placing' && (
             <div className="timer-bar-wrap">
               <div className="timer-bar" style={{
@@ -260,7 +292,7 @@ export default function GameScreen() {
               {userPin ? (
                 <button className="btn btn-primary btn-sm" onClick={confirmPin}>Confirm Pin ✓</button>
               ) : (
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>👆 Click the map to drop your pin</p>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>👆 Tap the map to drop your pin</p>
               )}
             </div>
           )}
@@ -282,20 +314,14 @@ export default function GameScreen() {
             <div className="fb-name">📍 {currentQ.answer.name}</div>
             <div className="fb-desc">{currentQ.answer.description}</div>
             <div className="fb-fact">
-              {currentQ.hint && <span>{currentQ.hint} </span>}
               {currentQ.funFact && <span>{currentQ.funFact}</span>}
             </div>
-            <div className="fb-coords">
-              📐 Correct: {currentQ.answer.lat.toFixed(4)}°N, {currentQ.answer.lng.toFixed(4)}°E
-              <br/>📌 Your pin: {lastResult.userPin.lat.toFixed(4)}°N, {lastResult.userPin.lng.toFixed(4)}°E
-            </div>
             <button className="btn btn-primary btn-sm" onClick={nextQuestion} style={{ width: '100%' }}>
-              {currentIdx + 1 >= questions.length ? 'See Results →' : 'Next Question →'}
+              {currentIdx + 1 >= questions.length ? 'See Results →' : 'Next →'}
             </button>
           </div>
         )}
 
-        {/* Empty space filler when no feedback */}
         {phase === 'placing' && <div className="panel-spacer" />}
       </div>
     </div>
