@@ -803,3 +803,43 @@ a:hover { text-decoration: underline; }
 .challenge-result-banner.win { border-color: #FFD700; background: #FFFDF5; }
 .challenge-result-banner.lose { border-color: var(--red); background: #fef2f2; }
 .challenge-result-banner.tie { border-color: var(--primary); background: #f0fdf4; }
+
+/* ---- SOCIAL SHARE ---- */
+.share-section { text-align: center; margin: 1.5rem 0; }
+.share-section h4 { font-family: var(--font-head); margin-bottom: 0.75rem; }
+.share-icons { display: flex; gap: 0.6rem; justify-content: center; flex-wrap: wrap; }
+.share-btn {
+  width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+  text-decoration: none; background: var(--surface);
+}
+.share-btn:hover { transform: scale(1.15); box-shadow: 0 3px 10px rgba(0,0,0,0.15); }
+.share-btn.whatsapp { color: #25D366; border-color: #25D366; }
+.share-btn.whatsapp:hover { background: #25D366; color: #fff; }
+.share-btn.x-twitter { color: #000; border-color: #000; }
+.share-btn.x-twitter:hover { background: #000; color: #fff; }
+.share-btn.facebook { color: #1877F2; border-color: #1877F2; }
+.share-btn.facebook:hover { background: #1877F2; color: #fff; }
+.share-btn.snapchat { color: #FFFC00; border-color: #FFFC00; background: #FFFC00; }
+.share-btn.snapchat:hover { background: #ffe600; }
+.share-btn.pinterest { color: #E60023; border-color: #E60023; }
+.share-btn.pinterest:hover { background: #E60023; color: #fff; }
+.share-btn.copy-link { color: var(--text-secondary); }
+.share-btn.copy-link:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+/* ---- RAINBOW PROGRESS BAR ---- */
+.game-progress-wrap {
+  width: 100%; height: 6px; background: var(--border); position: relative;
+  overflow: hidden;
+}
+.game-progress-fill {
+  height: 100%; transition: width 0.4s ease;
+  background: linear-gradient(90deg, #FF0000, #FF7F00, #FFFF00, #00FF00, #0000FF, #4B0082, #9400D3);
+  background-size: 300% 100%;
+  animation: rainbowShift 3s linear infinite;
+}
+@keyframes rainbowShift {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}

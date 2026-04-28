@@ -233,14 +233,45 @@ export default function ResultsScreen() {
 
       <div className="results-actions">
         <Link to="/play" className="btn btn-primary">Play Again 🎮</Link>
-        <button className="btn btn-outline" onClick={() => {
-          const code = encodeChallenge(data.config, totalScore, playerName || 'Anonymous')
-          const url = `${window.location.origin}/challenge?code=${code}`
-          navigator.clipboard.writeText(url).then(() => alert('Challenge link copied! Share it with a friend ⚔️')).catch(() => prompt('Copy this challenge link:', url))
-        }}>Challenge a Friend ⚔️</button>
         <Link to="/leaderboard" className="btn btn-outline">Leaderboard 🏆</Link>
         <Link to="/" className="btn btn-outline">Home</Link>
       </div>
+
+      {/* Social Share */}
+      {(() => {
+        const code = encodeChallenge(data.config, totalScore, playerName || 'Anonymous')
+        const challengeUrl = `${window.location.origin}/challenge?code=${code}`
+        const shareText = `🗺️ I scored ${totalScore}/${maxScore} (${pct}%) on GeoQuiz Lagos!${data.bestStreak >= 3 ? ` 🔥${data.bestStreak} streak!` : ''} Can you beat me?`
+        const fullText = encodeURIComponent(shareText + '\n' + challengeUrl)
+        const urlEnc = encodeURIComponent(challengeUrl)
+        return (
+          <div className="share-section">
+            <h4>⚔️ Challenge a Friend</h4>
+            <div className="share-icons">
+              <a href={`https://wa.me/?text=${fullText}`} target="_blank" rel="noopener noreferrer" className="share-btn whatsapp" title="WhatsApp">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              </a>
+              <a href={`https://twitter.com/intent/tweet?text=${fullText}`} target="_blank" rel="noopener noreferrer" className="share-btn x-twitter" title="X (Twitter)">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+              </a>
+              <a href={`https://www.facebook.com/sharer/sharer.php?u=${urlEnc}&quote=${encodeURIComponent(shareText)}`} target="_blank" rel="noopener noreferrer" className="share-btn facebook" title="Facebook">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+              </a>
+              <a href={`https://www.snapchat.com/scan?attachmentUrl=${urlEnc}`} target="_blank" rel="noopener noreferrer" className="share-btn snapchat" title="Snapchat">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M12.206.793c.99 0 4.347.276 5.93 3.821.529 1.193.403 3.219.299 4.847l-.003.06c-.012.18-.022.345-.03.51.075.045.203.09.401.09.147-.008.302-.042.464-.09a.966.966 0 01.294-.044c.193 0 .37.056.53.166a.67.67 0 01.285.55.733.733 0 01-.439.66 4.038 4.038 0 01-.645.242c-.18.06-.403.134-.618.21a1.666 1.666 0 00-.572.335c-.093.108-.126.238-.094.385.06.278.181.544.343.8.578.912 1.381 1.52 2.39 1.86a2.6 2.6 0 00.498.12c.217.03.362.172.362.383a.656.656 0 01-.108.332c-.39.587-1.164.954-2.298 1.09a9.16 9.16 0 00-.146.684c-.03.145-.06.292-.132.34-.105.072-.297.108-.582.108-.157 0-.34-.015-.54-.04a5.953 5.953 0 00-.837-.06c-.24 0-.455.012-.645.036a3.47 3.47 0 00-.744.21 4.04 4.04 0 00-.878.543c-.768.595-1.534 1.277-3.092 1.277-.068 0-.133-.003-.198-.007a4.15 4.15 0 01-.197.007c-1.559 0-2.324-.682-3.092-1.277a4.04 4.04 0 00-.878-.543 3.466 3.466 0 00-.744-.21 7.095 7.095 0 00-.645-.036c-.305 0-.597.025-.836.06-.2.025-.384.04-.54.04-.31 0-.49-.04-.583-.108-.07-.048-.101-.195-.132-.34a9.06 9.06 0 00-.145-.684c-1.134-.136-1.91-.503-2.298-1.09a.656.656 0 01-.108-.332c0-.21.145-.353.362-.383a2.6 2.6 0 00.498-.12c1.009-.34 1.812-.948 2.39-1.86.162-.256.283-.522.343-.8.032-.147-.001-.277-.094-.385a1.666 1.666 0 00-.572-.335 9.023 9.023 0 01-.618-.21 4.04 4.04 0 01-.645-.242.733.733 0 01-.439-.66.67.67 0 01.285-.55c.16-.11.337-.166.53-.166.11 0 .207.015.293.044.162.048.317.082.464.09.198 0 .326-.045.401-.09a22.372 22.372 0 01-.033-.57c-.104-1.628-.23-3.654.3-4.847C7.86 1.069 11.216.793 12.206.793z"/></svg>
+              </a>
+              <a href={`https://pinterest.com/pin/create/button/?url=${urlEnc}&description=${encodeURIComponent(shareText)}`} target="_blank" rel="noopener noreferrer" className="share-btn pinterest" title="Pinterest">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.162-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.72-.359-1.781c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738a.36.36 0 01.083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.631-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12.017 24c6.624 0 11.99-5.367 11.99-11.988C24.007 5.367 18.641 0 12.017 0z"/></svg>
+              </a>
+              <button className="share-btn copy-link" title="Copy Link" onClick={() => {
+                navigator.clipboard.writeText(challengeUrl).then(() => alert('Link copied!')).catch(() => prompt('Copy:', challengeUrl))
+              }}>
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+              </button>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Gold push */}
       {pct < 100 && (

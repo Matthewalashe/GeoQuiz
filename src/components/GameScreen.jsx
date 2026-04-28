@@ -286,6 +286,10 @@ export default function GameScreen() {
 
       {/* Right panel */}
       <div className="game-right-panel">
+        {/* Rainbow progress bar */}
+        <div className="game-progress-wrap">
+          <div className="game-progress-fill" style={{ width: `${((currentIdx + (phase === 'feedback' ? 1 : 0)) / questions.length) * 100}%` }} />
+        </div>
         {/* Question */}
         <div className="question-panel">
           <div className="q-counter">Q{currentIdx + 1}/{questions.length}</div>
