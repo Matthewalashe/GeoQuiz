@@ -25,3 +25,5 @@ dist-ssr
 *.sw?
 
 .vercel
+
+deploy.ps1
