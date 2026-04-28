@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import Header from './components/Header.jsx'
 import Landing from './components/Landing.jsx'
 import CategorySelector from './components/CategorySelector.jsx'
@@ -8,10 +8,13 @@ import Leaderboard from './components/Leaderboard.jsx'
 import About from './components/About.jsx'
 
 export default function App() {
+  const location = useLocation()
+  const isGamePage = location.pathname === '/game'
+
   return (
-    <div className="app">
-      <Header />
-      <main className="app-main">
+    <div className={`app ${isGamePage ? 'fullscreen-game' : ''}`}>
+      {!isGamePage && <Header />}
+      <main className={isGamePage ? 'app-main-full' : 'app-main'}>
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/play" element={<CategorySelector />} />
@@ -21,14 +24,16 @@ export default function App() {
           <Route path="/about" element={<About />} />
         </Routes>
       </main>
-      <footer className="app-footer">
-        <p>
-          GeoQuiz v1.0 — Lagos Edition &nbsp;|&nbsp;
-          By <a href="https://wa.me/2348184495633" target="_blank" rel="noopener noreferrer">WhiteArts Technologies</a> &nbsp;|&nbsp;
-          Conceived by LASPIC &nbsp;|&nbsp;
-          <a href="mailto:donghinny91@gmail.com">Contact</a>
-        </p>
-      </footer>
+      {!isGamePage && (
+        <footer className="app-footer">
+          <p>
+            GeoQuiz v1.0 — Lagos Edition &nbsp;|&nbsp;
+            By <a href="https://wa.me/2348184495633" target="_blank" rel="noopener noreferrer">WhiteArts Technologies</a> &nbsp;|&nbsp;
+            Conceived by LASPIC &nbsp;|&nbsp;
+            <a href="mailto:donghinny91@gmail.com">Contact</a>
+          </p>
+        </footer>
+      )}
     </div>
   )
 }

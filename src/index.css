@@ -243,6 +243,8 @@ a:hover { text-decoration: underline; }
 .selector-actions { display: flex; gap: 1rem; margin-top: 2rem; }
 
 /* ---- GAME SCREEN ---- */
+.app-main-full { padding: 0; }
+.fullscreen-game .game-screen { height: 100vh; }
 .game-screen { position: relative; height: calc(100vh - 62px); width: 100%; display: flex; }
 .game-map-area { flex: 1; height: 100%; position: relative; }
 .game-map { width: 100%; height: 100%; z-index: 1; }
@@ -422,6 +424,36 @@ a:hover { text-decoration: underline; }
 }
 .results-actions { display: flex; gap: 1rem; justify-content: center; margin-top: 2rem; flex-wrap: wrap; }
 
+/* Rank badges */
+.rank-badge {
+  text-align: center; padding: 1.25rem 2rem; margin-bottom: 1rem;
+  border: var(--border-w) solid var(--border); box-shadow: var(--shadow-sm);
+  animation: badgeReveal 0.6s ease-out;
+}
+@keyframes badgeReveal {
+  0% { transform: scale(0.7); opacity: 0; }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.rank-title { font-family: var(--font-head); font-size: 1.8rem; font-weight: 700; margin-bottom: 0.3rem; }
+.rank-subtitle { font-size: 0.9rem; color: var(--text-secondary); }
+.rank-yousabi { background: linear-gradient(135deg, #008751 0%, #00a863 50%, #F4A100 100%); color: #fff; }
+.rank-yousabi .rank-subtitle { color: rgba(255,255,255,0.85); }
+.rank-grandmaster { background: linear-gradient(135deg, #FFD700, #F4A100); }
+.rank-top { background: var(--primary); color: #fff; }
+.rank-top .rank-subtitle { color: rgba(255,255,255,0.85); }
+.rank-pro { background: #003F88; color: #fff; }
+.rank-pro .rank-subtitle { color: rgba(255,255,255,0.85); }
+.rank-navigator { background: var(--surface); }
+.rank-explorer { background: var(--bg); }
+.rank-rookie { background: var(--bg); }
+.rank-tourist { background: var(--bg); }
+.results-pct { font-family: var(--font-head); font-size: 1.2rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.5rem; }
+.encouragement-bar {
+  margin-top: 1rem; padding: 0.75rem 1.25rem; background: var(--primary-light);
+  border-left: 4px solid var(--primary); font-size: 0.9rem; text-align: center;
+}
+
 /* ---- LEADERBOARD ---- */
 .leaderboard { padding: 3rem 2rem; max-width: 700px; margin: 0 auto; }
 .leaderboard h2 { margin-bottom: 0.5rem; }
@@ -436,6 +468,21 @@ a:hover { text-decoration: underline; }
 .lb-table .rank { font-family: var(--font-head); font-weight: 700; }
 .lb-table .lb-score { font-family: var(--font-head); font-weight: 700; color: var(--primary); }
 .lb-empty { text-align: center; padding: 3rem; color: var(--text-secondary); }
+
+/* Waitlist on leaderboard */
+.waitlist-section {
+  margin-top: 3rem; padding-top: 2rem; border-top: var(--border-w) solid var(--border);
+}
+.waitlist-section h3 { margin-bottom: 0.5rem; }
+.waitlist-form {
+  display: flex; flex-direction: column; gap: 0.75rem; max-width: 500px; margin-top: 1rem;
+}
+.waitlist-form input, .waitlist-form select, .waitlist-form textarea {
+  padding: 0.7rem 0.75rem; border: 3px solid var(--border);
+  font-family: var(--font-body); font-size: 0.95rem; background: var(--bg);
+}
+.waitlist-form select { cursor: pointer; }
+.waitlist-form textarea { resize: vertical; }
 
 /* ---- PIN MARKER ---- */
 .pin-marker {

@@ -1,20 +1,45 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { fetchLeaderboard } from '../lib/supabase.js'
+import { fetchLeaderboard, submitWaitlist, getWaitlistCount } from '../lib/supabase.js'
 
 export default function Leaderboard() {
   const [entries, setEntries] = useState([])
   const [loading, setLoading] = useState(true)
+  const [waitlistCount, setWaitlistCount] = useState(0)
+
+  // Waitlist form state
+  const [wlName, setWlName] = useState('')
+  const [wlEmail, setWlEmail] = useState('')
+  const [wlRole, setWlRole] = useState('')
+  const [wlMsg, setWlMsg] = useState('')
+  const [wlSaving, setWlSaving] = useState(false)
+  const [wlDone, setWlDone] = useState(false)
 
   useEffect(() => {
     fetchLeaderboard(30)
       .then(data => setEntries(data))
       .catch(err => console.error('Leaderboard fetch error:', err))
       .finally(() => setLoading(false))
+    getWaitlistCount().then(c => setWaitlistCount(c))
   }, [])
 
   function formatDate(dateStr) {
     return new Date(dateStr).toLocaleDateString('en-NG', { month: 'short', day: 'numeric', year: 'numeric' })
+  }
+
+  async function handleWaitlist(e) {
+    e.preventDefault()
+    if (!wlName.trim() || !wlEmail.trim()) return
+    setWlSaving(true)
+    try {
+      await submitWaitlist({ name: wlName.trim(), email: wlEmail.trim(), role: wlRole, message: wlMsg })
+      setWlDone(true)
+    } catch (err) {
+      console.error('Waitlist error:', err)
+      setWlDone(true)
+    } finally {
+      setWlSaving(false)
+    }
   }
 
   return (
@@ -59,7 +84,45 @@ export default function Leaderboard() {
       )}
 
       <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
-        <Link to="/play" className="btn btn-primary">Play Again</Link>
+        <Link to="/play" className="btn btn-primary">Play Again 🎮</Link>
+      </div>
+
+      {/* ---- WAITLIST ---- */}
+      <div className="waitlist-section">
+        <h3>📬 Join the Waitlist</h3>
+        <p className="subtitle">Be the first to know when we launch new features, states, and competitions.</p>
+        {waitlistCount > 0 && (
+          <p style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600, marginBottom: '1rem' }}>
+            🎉 {waitlistCount} people have already joined!
+          </p>
+        )}
+
+        {wlDone ? (
+          <div className="card card-accent-top" style={{ textAlign: 'center', padding: '1.5rem' }}>
+            <p style={{ fontSize: '1.2rem', fontWeight: 700 }}>✅ You're on the list!</p>
+            <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>We'll notify you when exciting updates drop.</p>
+          </div>
+        ) : (
+          <form className="waitlist-form" onSubmit={handleWaitlist}>
+            <input type="text" placeholder="Your name *" value={wlName} onChange={e => setWlName(e.target.value)} required />
+            <input type="email" placeholder="Email address *" value={wlEmail} onChange={e => setWlEmail(e.target.value)} required />
+            <select value={wlRole} onChange={e => setWlRole(e.target.value)}>
+              <option value="">Your role (optional)</option>
+              <option value="student">Student</option>
+              <option value="geographer">Geographer</option>
+              <option value="planner">Town Planner</option>
+              <option value="surveyor">Surveyor</option>
+              <option value="architect">Architect</option>
+              <option value="engineer">Engineer</option>
+              <option value="educator">Educator</option>
+              <option value="other">Other</option>
+            </select>
+            <textarea placeholder="What features would you like? (optional)" value={wlMsg} onChange={e => setWlMsg(e.target.value)} rows={3} />
+            <button type="submit" className="btn btn-primary" disabled={wlSaving}>
+              {wlSaving ? 'Joining...' : 'Join Waitlist →'}
+            </button>
+          </form>
+        )}
       </div>
     </section>
   )
