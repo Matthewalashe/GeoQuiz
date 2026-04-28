@@ -888,6 +888,10 @@ a:hover { text-decoration: underline; }
 .install-actions { display: flex; gap: 0.5rem; align-items: center; }
 .install-actions .btn-sm { font-size: 0.85rem; padding: 0.4rem 1rem; background: #fff; color: #008751; border: none; font-weight: 700; cursor: pointer; }
 .btn-dismiss { background: none; border: none; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 0.8rem; }
+/* iOS install banner */
+.install-banner-ios { padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); }
+.ios-steps { font-size: 0.85rem !important; opacity: 1 !important; }
+.ios-share-icon { display: inline-flex; color: #4FC3F7; }
 
 /* ---- SPONSORED PIN (in-game) ---- */
 .sponsored-banner {
