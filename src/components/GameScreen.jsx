@@ -169,11 +169,26 @@ export default function GameScreen() {
   function confirmPin() {
     if (!userPin || !currentQ) return
     const dist = haversineDistance(userPin.lat, userPin.lng, currentQ.answer.lat, currentQ.answer.lng)
-    // Tolerance for large-area features (LGAs, roads, rivers)
-    let tolerance = 0
-    if (currentQ.category === 'lgas') tolerance = 2
-    else if (currentQ.category === 'transport') tolerance = 1
-    else if (currentQ.category === 'nature') tolerance = 1.5
+    // Tolerance: how far (km) the pin can be and still count as "on target"
+    // Per-question override > category default
+    let tolerance = currentQ.toleranceRadius || 0
+    if (!currentQ.toleranceRadius) {
+      const catTolerances = {
+        lgas: 3,          // LGAs are large areas
+        transport: 1.5,   // bridges, roads span distance
+        nature: 1.5,      // lagoons, rivers, mangroves
+        education: 0.8,   // university campuses are large
+        tourism: 0.5,     // parks, resorts have area
+        culture: 0.5,     // heritage sites, galleries
+        industry: 0.5,    // industrial zones
+        islands: 0.5,     // beaches, waterfront areas
+        health: 0.3,      // hospitals, specific buildings
+        markets: 0.3,     // markets have boundaries
+        landmarks: 0.2,   // specific monuments
+        history: 0.3,     // historical sites
+      }
+      tolerance = catTolerances[currentQ.category] || 0.3
+    }
     const score = calculateScore(dist, tolerance)
     setTotalScore(prev => prev + score)
     // Streak: 60+ points keeps streak alive

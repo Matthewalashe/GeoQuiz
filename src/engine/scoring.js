@@ -10,14 +10,14 @@ export function haversineDistance(lat1, lng1, lat2, lng2) {
 function toRad(deg) { return (deg * Math.PI) / 180; }
 
 // Score based on distance (Lagos scale — city-level precision)
-// tolerance: extra km allowed for polygon/line features (LGAs, roads, bridges)
+// tolerance: extra km allowed for large-area features
 export function calculateScore(distanceKm, tolerance = 0) {
   const d = Math.max(0, distanceKm - tolerance);
-  if (d < 1) return 100;
-  if (d < 3) return 80;
-  if (d < 5) return 60;
-  if (d < 10) return 40;
-  if (d < 20) return 20;
+  if (d < 0.5) return 100;
+  if (d < 1.5) return 80;
+  if (d < 3) return 60;
+  if (d < 6) return 40;
+  if (d < 15) return 20;
   return 5;
 }
 

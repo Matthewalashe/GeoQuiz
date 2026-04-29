@@ -47,10 +47,15 @@ export default function CategorySelector() {
       alert('Not enough questions for this selection. Try adding more categories or changing difficulty.')
       return
     }
+    const actualCount = Math.min(questionCount, available.length)
+    if (actualCount < questionCount) {
+      const proceed = confirm(`Only ${available.length} questions available for this selection (you requested ${questionCount}). Play with ${actualCount} questions?`)
+      if (!proceed) return
+    }
     const config = {
       categories: selectedCats,
       difficulty,
-      count: Math.min(questionCount, available.length),
+      count: actualCount,
       timer,
       region,
     }
@@ -176,8 +181,10 @@ export default function CategorySelector() {
             </button>
           ))}
         </div>
-        <p className="mt-1" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-          {available.length} questions available for this selection
+        <p className="mt-1" style={{ fontSize: '0.85rem', color: questionCount > available.length ? 'var(--red)' : 'var(--text-secondary)', fontWeight: questionCount > available.length ? 600 : 400 }}>
+          {questionCount > available.length
+            ? `⚠️ Only ${available.length} available — you'll get ${available.length} questions`
+            : `${available.length} questions available for this selection`}
         </p>
       </div>
 
