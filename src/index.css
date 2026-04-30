@@ -23,7 +23,11 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html { font-size: 16px; scroll-behavior: smooth; }
+html {
+  font-size: 16px; scroll-behavior: smooth;
+  /* iOS: use dynamic viewport height to account for Safari toolbar */
+  height: -webkit-fill-available;
+}
 
 body {
   font-family: var(--font-body);
@@ -31,7 +35,12 @@ body {
   color: var(--text);
   line-height: 1.6;
   min-height: 100vh;
+  min-height: 100dvh; /* iOS Safari: real viewport minus toolbar */
+  min-height: -webkit-fill-available;
   -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent; /* iOS: remove blue tap flash */
+  -webkit-text-size-adjust: 100%; /* iOS: prevent auto text resize */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
 h1, h2, h3, h4 { font-family: var(--font-head); font-weight: 700; line-height: 1.1; }
@@ -46,6 +55,7 @@ a:hover { text-decoration: underline; }
 .header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 1rem 2rem;
+  padding-top: calc(1rem + env(safe-area-inset-top, 0px)); /* iOS notch */
   border-bottom: var(--border-w) solid var(--border);
   background: var(--surface);
   position: sticky; top: 0; z-index: 1000;
@@ -73,6 +83,9 @@ a:hover { text-decoration: underline; }
   box-shadow: var(--shadow-sm); text-transform: uppercase;
   letter-spacing: 0.05em; display: inline-flex; align-items: center;
   gap: 0.5rem; text-decoration: none;
+  -webkit-appearance: none; /* iOS: remove native button styling */
+  border-radius: 0; /* iOS: Safari adds rounded corners */
+  touch-action: manipulation; /* iOS: remove 300ms tap delay */
 }
 .btn:hover { transform: translate(-2px, -2px); box-shadow: 8px 8px 0px #1A1A1A; text-decoration: none; }
 .btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0px #1A1A1A; }
@@ -244,8 +257,12 @@ a:hover { text-decoration: underline; }
 
 /* ---- GAME SCREEN ---- */
 .app-main-full { padding: 0; }
-.fullscreen-game .game-screen { height: 100vh; }
-.game-screen { position: relative; height: calc(100vh - 62px); width: 100%; display: flex; }
+.fullscreen-game .game-screen { height: 100vh; height: 100dvh; }
+.game-screen {
+  position: relative; width: 100%; display: flex;
+  height: calc(100vh - 62px);
+  height: calc(100dvh - 62px); /* iOS Safari: accounts for toolbar */
+}
 .game-map-area { flex: 1; height: 100%; position: relative; }
 .game-map { width: 100%; height: 100%; z-index: 1; }
 
@@ -479,7 +496,8 @@ a:hover { text-decoration: underline; }
 }
 .waitlist-form input, .waitlist-form select, .waitlist-form textarea {
   padding: 0.7rem 0.75rem; border: 3px solid var(--border);
-  font-family: var(--font-body); font-size: 0.95rem; background: var(--bg);
+  font-family: var(--font-body); font-size: 1rem; background: var(--bg);
+  -webkit-appearance: none; border-radius: 0; /* iOS: prevent zoom + remove styling */
 }
 .waitlist-form select { cursor: pointer; }
 .waitlist-form textarea { resize: vertical; }
@@ -586,9 +604,9 @@ a:hover { text-decoration: underline; }
 
   /* Game screen: 75% map, 25% panel */
   .game-screen { flex-direction: column; }
-  .game-map-area { height: 70vh; min-height: 60vh; }
+  .game-map-area { height: 70vh; height: 70dvh; min-height: 55vh; }
   .game-right-panel {
-    width: 100%; min-width: unset; height: 30vh;
+    width: 100%; min-width: unset; height: 30vh; height: 30dvh;
     border-left: none; border-top: 2px solid var(--border);
     overflow-y: auto; -webkit-overflow-scrolling: touch;
   }
@@ -660,8 +678,8 @@ a:hover { text-decoration: underline; }
   .btn-lg { padding: 0.6rem 1rem; font-size: 0.85rem; }
 
   /* Game: maximize map on small screens */
-  .game-map-area { height: 72vh; min-height: 62vh; }
-  .game-right-panel { height: 28vh; }
+  .game-map-area { height: 72vh; height: 72dvh; min-height: 58vh; }
+  .game-right-panel { height: 28vh; height: 28dvh; }
   .question-panel h3 { font-size: 0.82rem; }
 
   /* Hide less-important leaderboard columns */
