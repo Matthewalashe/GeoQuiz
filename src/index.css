@@ -698,6 +698,108 @@ a:hover { text-decoration: underline; }
   from { transform: translateY(-40px) scale(0.9); opacity: 0; }
   to { transform: translateY(0) scale(1); opacity: 1; }
 }
+
+/* ---- GAME LOADING SCREEN ---- */
+.game-loading-overlay {
+  position: absolute; inset: 0; z-index: 100;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0a0a0a 100%);
+  display: flex; align-items: center; justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+.game-loading-content {
+  text-align: center; padding: 2rem; max-width: 400px; width: 90%;
+}
+.loading-icon {
+  font-size: 4rem; margin-bottom: 1rem;
+  animation: float 2s ease-in-out infinite;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+.loading-title {
+  font-family: var(--font-head); color: #fff; font-size: 1.6rem;
+  margin-bottom: 0.4rem;
+}
+.loading-subtitle {
+  color: rgba(255,255,255,0.6); font-size: 0.9rem; margin-bottom: 1.5rem;
+}
+/* Neon rainbow glow bar */
+.neon-bar-wrap {
+  height: 6px; border-radius: 3px; overflow: hidden;
+  background: rgba(255,255,255,0.1); position: relative;
+}
+.neon-bar {
+  height: 100%; border-radius: 3px; transition: width 0.3s ease;
+  background: linear-gradient(90deg, #ff0080, #ff8c00, #40e0d0, #7b68ee, #ff0080);
+  background-size: 300% 100%;
+  animation: neonShift 1.5s linear infinite;
+  box-shadow:
+    0 0 8px rgba(255,0,128,0.6),
+    0 0 20px rgba(255,140,0,0.4),
+    0 0 40px rgba(64,224,208,0.3);
+}
+@keyframes neonShift {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}
+.loading-tip {
+  color: rgba(255,255,255,0.5); font-size: 0.8rem; margin-top: 1rem;
+  transition: opacity 0.3s ease;
+}
+
+/* ---- QUIT MODAL ---- */
+.quit-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+.quit-modal {
+  background: var(--surface); border: var(--border-w) solid var(--border);
+  box-shadow: var(--shadow); padding: 2rem; max-width: 380px; width: 90%;
+  text-align: center; animation: modalSlide 0.3s ease-out;
+}
+.quit-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+.quit-modal h3 {
+  font-family: var(--font-head); font-size: 1.4rem; margin-bottom: 0.75rem;
+}
+.quit-modal p { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.25rem; }
+.quit-warning {
+  color: var(--red) !important; font-weight: 600; font-size: 0.85rem !important;
+  margin-top: 0.5rem !important; margin-bottom: 1rem !important;
+}
+.quit-actions { display: flex; gap: 0.75rem; justify-content: center; margin-top: 1rem; }
+.quit-actions .btn { flex: 1; min-height: 44px; }
+.quit-confirm { color: var(--red) !important; border-color: var(--red) !important; }
+.quit-confirm:hover { background: #fef2f2 !important; }
+
+/* ---- LANDING SPONSOR CARDS ---- */
+.landing-sponsors {
+  max-width: 700px; margin: 2rem auto; padding: 1.5rem 0;
+}
+.landing-sponsor-grid {
+  display: flex; flex-direction: column; gap: 0.6rem;
+}
+.landing-sponsor-card {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.75rem 1rem; background: var(--surface);
+  border: 2px solid var(--border); text-decoration: none; color: inherit;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.landing-sponsor-card:hover {
+  transform: translateY(-2px); box-shadow: var(--shadow-sm);
+  text-decoration: none;
+}
+.ls-icon { font-size: 1.5rem; flex-shrink: 0; }
+.ls-info { flex: 1; min-width: 0; }
+.ls-brand { font-weight: 700; font-family: var(--font-head); font-size: 0.85rem; }
+.ls-msg { font-size: 0.75rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ls-cta {
+  flex-shrink: 0; font-size: 0.75rem; font-weight: 600; color: var(--primary);
+  white-space: nowrap;
+}
+
 .achievement-modal.gold {
   border-color: #FFD700; box-shadow: 0 0 30px rgba(255,215,0,0.4), var(--shadow);
   background: linear-gradient(145deg, #FFFDF5 0%, #FFF8E1 100%);

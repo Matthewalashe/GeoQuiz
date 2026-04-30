@@ -95,7 +95,7 @@ export default function GameScreen() {
   const [currentIdx, setCurrentIdx] = useState(0)
   const [totalScore, setTotalScore] = useState(0)
   const [results, setResults] = useState([])
-  const [phase, setPhase] = useState('placing')
+  const [phase, setPhase] = useState('loading') // loading → placing → feedback
   const [userPin, setUserPin] = useState(null)
   const [legendOpen, setLegendOpen] = useState(false)
   const [activeLayers, setActiveLayers] = useState(['topo'])
@@ -103,6 +103,8 @@ export default function GameScreen() {
   const [streak, setStreak] = useState(0)
   const [bestStreak, setBestStreak] = useState(0)
   const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem('geoquiz_onboarded'))
+  const [showQuitModal, setShowQuitModal] = useState(false)
+  const [loadProgress, setLoadProgress] = useState(0)
 
   const timerEnabled = config?.timer > 0
 
@@ -113,7 +115,30 @@ export default function GameScreen() {
       : getFilteredQuestions(config.categories, config.difficulty)
     const picked = pickRandomQuestions(pool, config.count, config.seed)
     setQuestions(picked)
+    // Loading screen with progress
+    let progress = 0
+    const loadInterval = setInterval(() => {
+      progress += Math.random() * 15 + 5
+      if (progress >= 100) {
+        progress = 100
+        clearInterval(loadInterval)
+        setTimeout(() => setPhase('placing'), 300)
+      }
+      setLoadProgress(Math.min(progress, 100))
+    }, 200)
+    return () => clearInterval(loadInterval)
   }, [config])
+
+  // Prevent accidental browser back/refresh during gameplay
+  useEffect(() => {
+    if (phase === 'loading') return
+    const handler = (e) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [phase])
 
   // Timer countdown
   useEffect(() => {
@@ -251,14 +276,55 @@ export default function GameScreen() {
 
   function handleQuit() {
     if (results.length > 0) {
-      const ok = window.confirm(`You've answered ${results.length}/${questions.length} questions (Score: ${totalScore}). Are you sure you want to quit?\n\nYour progress will be lost.`)
-      if (!ok) return
+      setShowQuitModal(true)
+    } else {
+      navigate('/')
     }
-    navigate('/')
   }
 
   return (
     <div className="game-screen">
+      {/* Loading screen */}
+      {phase === 'loading' && (
+        <div className="game-loading-overlay">
+          <div className="game-loading-content">
+            <div className="loading-icon">🗺️</div>
+            <h2 className="loading-title">Preparing Your Quiz</h2>
+            <p className="loading-subtitle">
+              {config?.mode === 'blitz' ? '⚡ Blitz Mode — Race against time!' 
+                : config?.daily ? '🏆 Daily Challenge — Same for everyone today!' 
+                : `${config?.count || 10} questions · ${config?.region === 'abuja' ? 'Abuja FCT' : config?.region === 'all' ? 'All Nigeria' : 'Lagos'}`}
+            </p>
+            <div className="neon-bar-wrap">
+              <div className="neon-bar" style={{ width: `${loadProgress}%` }} />
+            </div>
+            <p className="loading-tip">
+              {loadProgress < 40 ? '📍 Loading map tiles...' 
+                : loadProgress < 70 ? '🎯 Shuffling questions...' 
+                : loadProgress < 95 ? '🏁 Almost ready...' 
+                : '✅ Let\'s go!'}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Quit confirmation modal */}
+      {showQuitModal && (
+        <div className="quit-overlay" onClick={() => setShowQuitModal(false)}>
+          <div className="quit-modal" onClick={e => e.stopPropagation()}>
+            <div className="quit-icon">⚠️</div>
+            <h3>Quit Game?</h3>
+            <p>You've answered <strong>{results.length}/{questions.length}</strong> questions</p>
+            <p>Current score: <strong>{totalScore}</strong></p>
+            <p className="quit-warning">Your progress will be lost.</p>
+            <div className="quit-actions">
+              <button className="btn btn-primary" onClick={() => setShowQuitModal(false)}>Keep Playing</button>
+              <button className="btn btn-outline quit-confirm" onClick={() => navigate('/')}>Quit Game</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showOnboarding && <Onboarding onComplete={() => setShowOnboarding(false)} />}
       {/* Legend sidebar (hidden by default) */}
       <div className={`legend-sidebar ${legendOpen ? 'open' : ''}`}>
