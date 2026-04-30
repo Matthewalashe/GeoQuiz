@@ -121,6 +121,7 @@ export default function Leaderboard() {
                   <div className="lb-card-meta">{entry.question_count}Q · {formatDate(entry.created_at)}</div>
                 </div>
                 <div className="lb-card-score">
+                  <span className="lb-card-pts">{entry.score}</span>
                   <span className="lb-card-pct">{pct}%</span>
                 </div>
               </div>
