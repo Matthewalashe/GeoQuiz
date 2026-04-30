@@ -2,7 +2,11 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getXPData, getLevel, getLevelProgress, getLevelTitle, getXPToNextLevel } from '../engine/xp.js'
 
-const AVATARS = ['🧭', '🗺️', '🌍', '🎯', '⚡', '🔥', '🌟', '🏆', '👑', '🛰️', '🎓', '🧑‍🚀', '🦁', '🐊', '🦅']
+const AVATARS = [
+  '🧭', '🗺️', '🌍', '🎯', '⚡', '🔥', '🌟', '🏆', '👑', '🛰️',
+  '🎓', '🧑‍🚀', '🦁', '🐊', '🦅', '🐺', '🦊', '🐯', '🦈', '🐉',
+  '🎮', '🎲', '🧩', '🏅', '💎', '🚀', '⭐', '🌙', '🎪', '🗿',
+]
 
 const JOURNEY_STOPS = [
   { level: 1, name: 'Tafawa Balewa Sq.', color: '#00ff88' },

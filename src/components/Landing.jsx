@@ -83,6 +83,38 @@ export default function Landing() {
         </div>
         <p style={{ textAlign: 'center', fontSize: '0.6rem', color: 'var(--text-secondary)', marginTop: '0.4rem' }}>Sponsored</p>
       </div>
+
+      {/* City Discovery Cards */}
+      <div className="discover-section">
+        <h3 className="discover-title">Explore the City</h3>
+        <div className="discover-grid">
+          {[
+            { icon: '🍽️', label: 'Restaurants', tag: 'Food & Dining' },
+            { icon: '🏨', label: 'Hotels', tag: 'Stay' },
+            { icon: '🏖️', label: 'Beaches', tag: 'Relax' },
+            { icon: '🌳', label: 'Parks', tag: 'Nature' },
+            { icon: '🏛️', label: 'Museums', tag: 'Culture' },
+            { icon: '🚌', label: 'BRT Stops', tag: 'Transit' },
+            { icon: '🎬', label: 'Cinemas', tag: 'Movies' },
+            { icon: '🚕', label: 'Cab Stands', tag: 'Rides' },
+            { icon: '🛍️', label: 'Malls', tag: 'Shopping' },
+            { icon: '🎵', label: 'Concerts', tag: 'Events' },
+            { icon: '🏪', label: 'Markets', tag: 'Local' },
+            { icon: '💪', label: 'Gyms', tag: 'Fitness' },
+            { icon: '🏦', label: 'Banks', tag: 'Finance' },
+            { icon: '📶', label: 'Free WiFi', tag: 'Internet' },
+            { icon: '⚽', label: 'Stadiums', tag: 'Sports' },
+            { icon: '🍻', label: 'Bars & Clubs', tag: 'Nightlife' },
+          ].map(d => (
+            <div key={d.label} className="discover-card">
+              <span className="discover-card-icon">{d.icon}</span>
+              <span className="discover-card-label">{d.label}</span>
+              <span className="discover-card-tag">{d.tag}</span>
+            </div>
+          ))}
+        </div>
+        <p className="discover-hint">Coming soon — explore and discover places near you</p>
+      </div>
     </section>
   )
 }
