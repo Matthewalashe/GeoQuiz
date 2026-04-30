@@ -1,4 +1,4 @@
-const CACHE = 'geoquiz-v3'
+const CACHE = 'geoquiz-v5'
 const ASSETS = ['/', '/index.html']
 
 self.addEventListener('install', e => {
@@ -16,7 +16,6 @@ self.addEventListener('activate', e => {
 })
 
 self.addEventListener('fetch', e => {
-  // Network-first for API calls, cache-first for static assets
   if (e.request.url.includes('supabase') || e.request.method !== 'GET') return
 
   e.respondWith(

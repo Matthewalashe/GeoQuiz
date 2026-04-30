@@ -122,11 +122,14 @@ a:hover { text-decoration: underline; }
     transform: scale(1.08); text-decoration: none;
     box-shadow: 0 -6px 18px rgba(0,135,81,0.4);
   }
-  .tab-center-icon { font-size: 1.4rem; line-height: 1; }
+  .tab-center-icon { line-height: 1; display: flex; }
+  .tab-icon { display: flex; align-items: center; justify-content: center; }
 
   /* Body padding for bottom tab bar */
   .app-main { padding-bottom: 75px; }
-  .app-footer { padding-bottom: 70px; }
+
+  /* Hide footer on mobile — tab bar replaces it */
+  .app-footer { display: none; }
 }
 
 /* ---- XP BADGE (Header) ---- */
@@ -787,6 +790,108 @@ a:hover { text-decoration: underline; }
 .sidebar-nav-btn:hover { background: var(--bg); }
 .sidebar-quit { color: var(--red); border-color: var(--red); }
 .sidebar-quit:hover { background: #fef2f2; }
+
+/* ---- LEADERBOARD CARDS ---- */
+.lb-player-rank {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.85rem 1rem; margin-bottom: 1.25rem;
+  background: linear-gradient(135deg, #0d3320, #1a1a2e);
+  border: 3px solid var(--primary); color: #fff;
+}
+.lb-rank-pos { font-family: var(--font-head); font-size: 1.8rem; font-weight: 700; color: #40e0d0; }
+.lb-rank-info { flex: 1; }
+.lb-rank-name { font-family: var(--font-head); font-weight: 700; }
+.lb-rank-score { font-size: 0.8rem; color: rgba(255,255,255,0.6); }
+.lb-rank-msg { font-size: 0.75rem; color: rgba(255,255,255,0.5); text-align: right; }
+
+.lb-card-list { display: flex; flex-direction: column; gap: 0.4rem; }
+.lb-card {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.55rem 0.75rem; border: 2px solid var(--border);
+  background: var(--surface); transition: transform 0.1s;
+}
+.lb-card-top { border-color: var(--primary); }
+.lb-card-me { background: #f0fdf4; border-color: var(--primary); border-width: 3px; }
+.lb-card-rank { font-family: var(--font-head); font-weight: 700; font-size: 0.85rem; min-width: 2.5rem; color: var(--text-secondary); }
+.lb-card-top .lb-card-rank { color: var(--primary); }
+.lb-card-info { flex: 1; min-width: 0; }
+.lb-card-name { font-family: var(--font-head); font-weight: 600; font-size: 0.85rem; }
+.lb-card-meta { font-size: 0.7rem; color: var(--text-secondary); }
+.lb-card-score { text-align: right; }
+.lb-card-pct { font-family: var(--font-head); font-weight: 700; font-size: 1rem; color: var(--primary); }
+
+/* ---- JOURNEY DASHBOARD ---- */
+.journey-hero {
+  background: linear-gradient(135deg, #0a0a0a 0%, #0d3320 60%, #1a1a2e 100%);
+  color: #fff; padding: 1.5rem; margin: -0.5rem -0.5rem 1.5rem; border: 3px solid var(--border);
+}
+.journey-title-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+.journey-emoji { font-size: 2.5rem; }
+.journey-heading { font-family: var(--font-head); font-size: 1.5rem; margin: 0; }
+.journey-subtitle { font-size: 0.85rem; color: rgba(255,255,255,0.5); }
+
+.journey-xp-bar {
+  height: 8px; border-radius: 4px; background: rgba(255,255,255,0.15); overflow: hidden; margin-bottom: 0.35rem;
+}
+.journey-xp-fill {
+  height: 100%; border-radius: 4px; transition: width 0.8s ease;
+  background: linear-gradient(90deg, var(--primary), #40e0d0);
+  box-shadow: 0 0 10px rgba(64,224,208,0.5);
+}
+.journey-xp-info { display: flex; justify-content: space-between; font-size: 0.75rem; color: rgba(255,255,255,0.5); margin-bottom: 1rem; }
+
+.journey-streak-row { display: flex; justify-content: space-around; }
+.journey-stat { text-align: center; }
+.journey-stat-val { font-family: var(--font-head); font-size: 1.3rem; font-weight: 700; }
+.journey-stat-lbl { font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* Journey Map */
+.journey-map { margin-bottom: 2rem; }
+.journey-map-title { margin-bottom: 0.25rem; }
+.journey-next-hint { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem; }
+
+.journey-path {
+  display: flex; flex-direction: column; align-items: center; gap: 0;
+  position: relative; padding: 0.5rem 0;
+}
+.journey-node-wrap {
+  display: flex; flex-direction: column; align-items: center; position: relative;
+}
+.journey-node {
+  width: 56px; height: 56px; border: 3px solid #ccc;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: var(--surface); transition: all 0.3s; position: relative; z-index: 2;
+}
+.journey-node.reached { box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+.journey-node.current {
+  width: 64px; height: 64px; border-width: 4px;
+  box-shadow: 0 0 16px rgba(0,135,81,0.4);
+  animation: journeyPulse 2s ease-in-out infinite;
+}
+@keyframes journeyPulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(0,135,81,0.3); }
+  50% { box-shadow: 0 0 20px rgba(0,135,81,0.6); }
+}
+.journey-node.locked { opacity: 0.4; }
+.journey-node-icon { font-size: 1.1rem; font-weight: 700; line-height: 1; }
+.journey-node-level { font-size: 0.55rem; font-family: var(--font-head); font-weight: 700; color: var(--text-secondary); }
+
+.journey-node-label {
+  font-size: 0.7rem; font-family: var(--font-head); font-weight: 600;
+  margin-top: 0.2rem; text-align: center; max-width: 120px;
+}
+.locked-label { color: #bbb; font-style: italic; }
+
+.journey-connector {
+  width: 3px; height: 28px; position: relative; z-index: 1;
+}
+.journey-conn-line {
+  width: 100%; height: 100%; background: #ddd;
+}
+.journey-connector.filled .journey-conn-line { background: var(--primary); }
+
+.journey-mastery { margin-top: 1.5rem; }
+.journey-mastery h3 { margin-bottom: 1rem; }
 
 /* ---- COMMUNITY FEED ---- */
 .community {

@@ -1,6 +1,33 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { CATEGORIES } from '../data/questions.js'
+import { getXPData, getLevel, getLevelProgress, getLevelTitle, getXPToNextLevel } from '../engine/xp.js'
+
+// Journey milestones — each level unlocks a "location" on the map
+const JOURNEY_STOPS = [
+  { level: 1, name: 'Tafawa Balewa Square', icon: '◎', color: '#008751' },
+  { level: 2, name: 'Third Mainland Bridge', icon: '◈', color: '#3498db' },
+  { level: 3, name: 'Lekki Toll Gate', icon: '◎', color: '#e67e22' },
+  { level: 4, name: 'National Theatre', icon: '◈', color: '#9b59b6' },
+  { level: 5, name: 'Eko Atlantic', icon: '★', color: '#1abc9c' },
+  { level: 6, name: 'Badagry Heritage', icon: '◎', color: '#e74c3c' },
+  { level: 7, name: 'Ikoyi Club', icon: '◈', color: '#f39c12' },
+  { level: 8, name: 'Computer Village', icon: '◎', color: '#2ecc71' },
+  { level: 9, name: 'Makoko Waterfront', icon: '◈', color: '#3498db' },
+  { level: 10, name: 'Victoria Island', icon: '★', color: '#e91e63' },
+  { level: 12, name: 'Apapa Wharf', icon: '◎', color: '#795548' },
+  { level: 14, name: 'Obalende Market', icon: '◈', color: '#ff5722' },
+  { level: 16, name: 'Ikeja City Mall', icon: '◎', color: '#673ab7' },
+  { level: 18, name: 'Ajah Roundabout', icon: '◈', color: '#00bcd4' },
+  { level: 20, name: 'Lagos Island', icon: '★', color: '#FFD700' },
+  { level: 23, name: 'Banana Island', icon: '◎', color: '#4caf50' },
+  { level: 26, name: 'Elegushi Beach', icon: '◈', color: '#03a9f4' },
+  { level: 30, name: 'Aso Rock (Abuja)', icon: '★', color: '#ff9800' },
+  { level: 35, name: 'Zuma Rock', icon: '◈', color: '#8bc34a' },
+  { level: 40, name: 'Cross River NP', icon: '★', color: '#009688' },
+  { level: 45, name: 'Yankari Reserve', icon: '◈', color: '#cddc39' },
+  { level: 50, name: 'Naija Grandmaster', icon: '★', color: '#FFD700' },
+]
 
 export default function Dashboard() {
   const [sessions, setSessions] = useState([])
@@ -13,6 +40,12 @@ export default function Dashboard() {
     setCatStats(cs)
   }, [])
 
+  const xp = getXPData()
+  const level = getLevel(xp.totalXP)
+  const progress = getLevelProgress(xp.totalXP)
+  const title = getLevelTitle(level)
+  const xpToNext = getXPToNextLevel(xp.totalXP)
+
   const totalGames = sessions.length
   const totalScore = sessions.reduce((s, g) => s + g.score, 0)
   const totalMax = sessions.reduce((s, g) => s + g.max, 0)
@@ -20,7 +53,6 @@ export default function Dashboard() {
   const bestStreak = sessions.reduce((m, g) => Math.max(m, g.streak || 0), 0)
   const perfectGames = sessions.filter(g => g.score === g.max).length
 
-  // Category mastery from catStats
   const mastery = CATEGORIES.map(cat => {
     const s = catStats[cat.id] || { correct: 0, total: 0 }
     const pct = s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0
@@ -28,107 +60,115 @@ export default function Dashboard() {
   }).sort((a, b) => b.pct - a.pct)
 
   const exploredCats = mastery.filter(c => c.total > 0).length
-  const explorePct = Math.round((exploredCats / CATEGORIES.length) * 100)
 
-  // Hue based on percentage
-  const hue = (pct) => `hsl(${(pct / 100) * 120}, 70%, 45%)`
-
-  if (totalGames === 0) {
-    return (
-      <section className="dashboard">
-        <h2>📊 Your Progress</h2>
-        <div className="card card-accent-top" style={{ textAlign: 'center', padding: '2rem' }}>
-          <p style={{ fontSize: '1.2rem', marginBottom: '1rem' }}>No games played yet!</p>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>Play your first quiz to start tracking progress.</p>
-          <Link to="/play" className="btn btn-primary btn-lg">Start Playing 🎮</Link>
-        </div>
-      </section>
-    )
-  }
+  // Find current stop and next stop on journey
+  const currentStopIdx = JOURNEY_STOPS.reduce((acc, stop, i) => (level >= stop.level ? i : acc), 0)
+  const nextStop = JOURNEY_STOPS[currentStopIdx + 1] || null
 
   return (
     <section className="dashboard">
-      <h2>📊 Your Progress</h2>
-      <p className="subtitle">Track your Lagos geography mastery</p>
+      {/* Journey Header */}
+      <div className="journey-hero">
+        <div className="journey-title-row">
+          <span className="journey-emoji">{title.emoji}</span>
+          <div>
+            <h2 className="journey-heading">{title.title}</h2>
+            <div className="journey-subtitle">Level {level} Explorer</div>
+          </div>
+        </div>
+        <div className="journey-xp-bar">
+          <div className="journey-xp-fill" style={{ width: `${progress * 100}%` }} />
+        </div>
+        <div className="journey-xp-info">
+          <span>{xp.totalXP} XP</span>
+          <span>{xpToNext} XP to Lv.{level + 1}</span>
+        </div>
 
-      {/* Overview Stats */}
-      <div className="stats-bar" style={{ marginBottom: '2rem' }}>
-        <div className="stat-item">
-          <div className="stat-value">{totalGames}</div>
-          <div className="stat-label">Games Played</div>
-        </div>
-        <div className="stat-item">
-          <div className="stat-value" style={{ color: hue(avgPct) }}>{avgPct}%</div>
-          <div className="stat-label">Avg Score</div>
-        </div>
-        <div className="stat-item">
-          <div className="stat-value">🔥 {bestStreak}</div>
-          <div className="stat-label">Best Streak</div>
-        </div>
-        <div className="stat-item">
-          <div className="stat-value">🥇 {perfectGames}</div>
-          <div className="stat-label">Perfect Games</div>
+        {/* Streak */}
+        <div className="journey-streak-row">
+          <div className="journey-stat">
+            <div className="journey-stat-val">{xp.streakDays || 0}</div>
+            <div className="journey-stat-lbl">Day Streak</div>
+          </div>
+          <div className="journey-stat">
+            <div className="journey-stat-val">{totalGames}</div>
+            <div className="journey-stat-lbl">Games</div>
+          </div>
+          <div className="journey-stat">
+            <div className="journey-stat-val">{avgPct}%</div>
+            <div className="journey-stat-lbl">Avg Score</div>
+          </div>
+          <div className="journey-stat">
+            <div className="journey-stat-val">{xp.streakFreezes || 0}</div>
+            <div className="journey-stat-lbl">Freezes</div>
+          </div>
         </div>
       </div>
 
-      {/* Exploration Progress */}
-      <div className="card card-accent-top" style={{ marginBottom: '2rem', padding: '1.5rem' }}>
-        <h3 style={{ marginBottom: '0.75rem' }}>🗺️ Lagos Exploration</h3>
-        <div className="game-progress-wrap" style={{ height: '12px', borderRadius: '6px', marginBottom: '0.5rem' }}>
-          <div className="game-progress-fill" style={{ width: `${explorePct}%`, borderRadius: '6px' }} />
+      {/* Journey Map — Candy Crush style path */}
+      <div className="journey-map">
+        <h3 className="journey-map-title">Your Exploration Journey</h3>
+        {nextStop && (
+          <div className="journey-next-hint">
+            Next stop: <strong>{nextStop.name}</strong> at Lv.{nextStop.level}
+          </div>
+        )}
+        <div className="journey-path">
+          {JOURNEY_STOPS.map((stop, i) => {
+            const reached = level >= stop.level
+            const isCurrent = i === currentStopIdx
+            const isLast = i === JOURNEY_STOPS.length - 1
+
+            return (
+              <div key={i} className="journey-node-wrap">
+                <div
+                  className={`journey-node ${reached ? 'reached' : 'locked'} ${isCurrent ? 'current' : ''}`}
+                  style={{ borderColor: reached ? stop.color : '#ccc' }}
+                >
+                  <span className="journey-node-icon" style={{ color: reached ? stop.color : '#bbb' }}>
+                    {stop.icon}
+                  </span>
+                  <span className="journey-node-level">Lv.{stop.level}</span>
+                </div>
+                <div className={`journey-node-label ${reached ? '' : 'locked-label'}`}>
+                  {reached ? stop.name : '???'}
+                </div>
+                {!isLast && (
+                  <div className={`journey-connector ${reached && level >= (JOURNEY_STOPS[i + 1]?.level || 999) ? 'filled' : ''}`}>
+                    <div className="journey-conn-line" />
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
-        <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-          You've explored <strong>{exploredCats}</strong> of <strong>{CATEGORIES.length}</strong> categories ({explorePct}% of Lagos)
-        </p>
       </div>
 
       {/* Category Mastery */}
-      <h3 style={{ marginBottom: '1rem' }}>Category Mastery</h3>
-      <div className="mastery-grid">
-        {mastery.map(cat => (
-          <div key={cat.id} className="mastery-card card">
-            <div className="mastery-header">
-              <span className="mastery-icon">{cat.icon}</span>
-              <span className="mastery-name">{cat.label}</span>
-              <span className="mastery-pct" style={{ color: hue(cat.pct) }}>{cat.pct}%</span>
+      <div className="journey-mastery">
+        <h3>Category Mastery</h3>
+        <div className="mastery-grid">
+          {mastery.map(cat => (
+            <div key={cat.id} className="mastery-card card">
+              <div className="mastery-header">
+                <span className="mastery-icon">{cat.icon}</span>
+                <span className="mastery-name">{cat.label}</span>
+                <span className="mastery-pct" style={{ color: `hsl(${(cat.pct / 100) * 120}, 70%, 45%)` }}>{cat.pct}%</span>
+              </div>
+              <div className="mastery-bar-wrap">
+                <div className="mastery-bar-fill" style={{ width: `${cat.pct}%`, background: `hsl(${(cat.pct / 100) * 120}, 70%, 45%)` }} />
+              </div>
+              <div className="mastery-detail">
+                {cat.total > 0 ? `${cat.correct}/${cat.total} correct` : 'Not explored yet'}
+              </div>
             </div>
-            <div className="mastery-bar-wrap">
-              <div className="mastery-bar-fill" style={{ width: `${cat.pct}%`, background: hue(cat.pct) }} />
-            </div>
-            <div className="mastery-detail">
-              {cat.total > 0
-                ? `${cat.correct}/${cat.total} correct`
-                : 'Not attempted yet'}
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
-      {/* Recent Games */}
-      {sessions.length > 0 && (
-        <>
-          <h3 style={{ marginTop: '2rem', marginBottom: '1rem' }}>Recent Games</h3>
-          <div className="recent-games">
-            {sessions.slice(-10).reverse().map((g, i) => {
-              const gpct = g.max > 0 ? Math.round((g.score / g.max) * 100) : 0
-              return (
-                <div key={i} className="recent-game-row">
-                  <span className="rg-date">{new Date(g.date).toLocaleDateString('en-NG', { month: 'short', day: 'numeric' })}</span>
-                  <div className="rg-bar-wrap">
-                    <div className="rg-bar-fill" style={{ width: `${gpct}%`, background: hue(gpct) }} />
-                  </div>
-                  <span className="rg-score">{g.score}/{g.max}</span>
-                  {g.streak >= 3 && <span className="rg-streak">🔥{g.streak}</span>}
-                </div>
-              )
-            })}
-          </div>
-        </>
-      )}
-
-      <div style={{ textAlign: 'center', marginTop: '2rem', display: 'flex', justifyContent: 'center', gap: '1rem' }}>
-        <Link to="/play" className="btn btn-primary">Keep Playing 🎮</Link>
-        <Link to="/achievements" className="btn btn-outline">🏆 Achievements</Link>
+      <div style={{ textAlign: 'center', marginTop: '2rem', display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+        <Link to="/play" className="btn btn-primary">Keep Exploring</Link>
+        <Link to="/achievements" className="btn btn-outline">Achievements</Link>
       </div>
     </section>
   )
