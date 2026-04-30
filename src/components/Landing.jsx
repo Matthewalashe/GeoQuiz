@@ -3,6 +3,7 @@ import { CATEGORIES } from '../data/questions.js'
 import questions from '../data/questions.js'
 import ABUJA_Q from '../data/questions-abuja.js'
 import { SPONSORS } from '../data/sponsors.js'
+import { SponsorCard } from './SponsoredBanner.jsx'
 
 export default function Landing() {
   const totalQ = questions.length + ABUJA_Q.length
@@ -107,15 +108,8 @@ export default function Landing() {
       <div className="landing-sponsors">
         <h3 style={{ textAlign: 'center', marginBottom: '0.75rem', fontSize: '1rem', color: 'var(--text-secondary)' }}>📍 Featured Discoveries</h3>
         <div className="landing-sponsor-grid">
-          {SPONSORS.slice(0, 3).map(s => (
-            <a key={s.id} href={s.url} target="_blank" rel="noopener noreferrer" className="landing-sponsor-card">
-              <span className="ls-icon">{s.icon}</span>
-              <div className="ls-info">
-                <div className="ls-brand">{s.brand}</div>
-                <div className="ls-msg">{s.message}</div>
-              </div>
-              <span className="ls-cta">{s.cta} →</span>
-            </a>
+          {SPONSORS.filter(s => s.active).slice(0, 3).map(s => (
+            <SponsorCard key={s.id} sponsor={s} />
           ))}
         </div>
         <p style={{ textAlign: 'center', fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>Sponsored</p>

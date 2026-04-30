@@ -116,17 +116,17 @@ export default function GameScreen() {
       : getFilteredQuestions(config.categories, config.difficulty)
     const picked = pickRandomQuestions(pool, config.count, config.seed)
     setQuestions(picked)
-    // Loading screen with progress
+    // Loading screen with progress (~3 seconds)
     let progress = 0
     const loadInterval = setInterval(() => {
-      progress += Math.random() * 15 + 5
+      progress += Math.random() * 5 + 3
       if (progress >= 100) {
         progress = 100
         clearInterval(loadInterval)
-        setTimeout(() => setPhase('placing'), 300)
+        setTimeout(() => setPhase('placing'), 500)
       }
       setLoadProgress(Math.min(progress, 100))
-    }, 200)
+    }, 180)
     return () => clearInterval(loadInterval)
   }, [config])
 
@@ -255,7 +255,7 @@ export default function GameScreen() {
       setLoadProgress(0)
       let progress = 0
       const finishInterval = setInterval(() => {
-        progress += Math.random() * 20 + 10
+        progress += Math.random() * 6 + 3
         if (progress >= 100) {
           progress = 100
           clearInterval(finishInterval)
@@ -263,10 +263,10 @@ export default function GameScreen() {
             navigate('/results', {
               state: { results: [...results], totalScore, maxScore: questions.length * 100, questionCount: questions.length, config, bestStreak },
             })
-          }, 400)
+          }, 500)
         }
         setLoadProgress(Math.min(progress, 100))
-      }, 150)
+      }, 160)
       return
     }
     setCurrentIdx(prev => prev + 1)

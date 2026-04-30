@@ -4,8 +4,9 @@ import { getGrade, getScoreClass, formatDistance } from '../engine/scoring.js'
 import { submitScore, fetchLeaderboard } from '../lib/supabase.js'
 import { ResultsMap } from './MapView.jsx'
 import { encodeChallenge } from './Challenge.jsx'
-import { JourneyCard } from './SponsoredBanner.jsx'
+import { JourneyCard, SponsorCard } from './SponsoredBanner.jsx'
 import { SPONSORS } from '../data/sponsors.js'
+import { awardGameXP, getLevel, getLevelTitle, getLevelProgress, getXPToNextLevel } from '../engine/xp.js'
 
 // Achievement rank system
 function getRank(pct, totalPerfects) {
@@ -34,13 +35,18 @@ export default function ResultsScreen() {
   const [playerName, setPlayerName] = useState(() => localStorage.getItem('geoquiz_player') || '')
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [showAchievement, setShowAchievement] = useState(null) // { type: 'best' | 'top3' | 'gold', position }
+  const [showAchievement, setShowAchievement] = useState(null)
   const [leaderboard, setLeaderboard] = useState([])
+  const [xpResult, setXpResult] = useState(null)
 
   useEffect(() => {
     if (!data) navigate('/', { replace: true })
-    // Fetch leaderboard to check if this is a new best/top3
     fetchLeaderboard(10).then(lb => setLeaderboard(lb)).catch(() => {})
+    // Award XP for this game
+    if (data?.results) {
+      const xp = awardGameXP(data.results, data.config)
+      setXpResult(xp)
+    }
   }, [data, navigate])
 
   async function handleSaveScore() {
@@ -99,6 +105,12 @@ export default function ResultsScreen() {
   const totalPerfects = parseInt(localStorage.getItem('geoquiz_total_perfects') || '0', 10) + perfectCount
   const rank = getRank(pct, totalPerfects)
   const encouragement = getEncouragement(pct)
+
+  // XP display data
+  const xpLevel = xpResult ? getLevel(xpResult.totalXP) : 1
+  const xpTitle = getLevelTitle(xpLevel)
+  const xpProgress = xpResult ? getLevelProgress(xpResult.totalXP) : 0
+  const xpToNext = xpResult ? getXPToNextLevel(xpResult.totalXP) : 500
 
   return (
     <section className="results">
@@ -177,6 +189,35 @@ export default function ResultsScreen() {
         </div>
       </div>
 
+      {/* XP Earned */}
+      {xpResult && (
+        <div className="xp-earned-panel">
+          {xpResult.leveledUp && (
+            <div className="xp-levelup">
+              🎉 LEVEL UP! Level {xpResult.oldLevel} → <strong>Level {xpResult.newLevel}</strong>
+              <span className="xp-new-title">{xpTitle.emoji} {xpTitle.title}</span>
+            </div>
+          )}
+          <div className="xp-earned-header">
+            <span className="xp-earned-label">⚡ XP Earned</span>
+            <span className="xp-earned-total">+{xpResult.totalAwarded} XP</span>
+          </div>
+          <div className="xp-earned-breakdown">
+            {xpResult.correctXP > 0 && <span>✅ Correct: +{xpResult.correctXP}</span>}
+            {xpResult.perfectXP > 0 && <span>🎯 Perfect: +{xpResult.perfectXP}</span>}
+            <span>🏁 Complete: +{xpResult.completionXP}</span>
+            {xpResult.bonusXP > 0 && <span>⭐ Bonus: +{xpResult.bonusXP}</span>}
+          </div>
+          <div className="xp-level-row">
+            <span className="xp-level-label">{xpTitle.emoji} Lv.{xpLevel} {xpTitle.title}</span>
+            <span className="xp-level-next">{xpToNext} XP to Lv.{xpLevel + 1}</span>
+          </div>
+          <div className="xp-bar-results">
+            <div className="xp-bar-fill-results" style={{ width: `${xpProgress * 100}%` }} />
+          </div>
+        </div>
+      )}
+
       {/* Save score */}
       {!saved ? (
         <div className="save-score-panel card card-accent-top" style={{ maxWidth: 420, margin: '1rem auto', textAlign: 'center', padding: '1rem' }}>
@@ -248,14 +289,7 @@ export default function ResultsScreen() {
         <p style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>Places to visit based on areas you explored today</p>
         <div className="results-sponsor-grid">
           {SPONSORS.filter(s => s.active).map(s => (
-            <a key={s.id} href={s.url} target="_blank" rel="noopener noreferrer" className="results-sponsor-card">
-              <span className="rs-icon">{s.icon}</span>
-              <div className="rs-info">
-                <div className="rs-brand">{s.brand}</div>
-                <div className="rs-msg">{s.message}</div>
-              </div>
-              <span className="rs-cta">{s.cta} →</span>
-            </a>
+            <SponsorCard key={s.id} sponsor={s} />
           ))}
         </div>
         <p style={{ textAlign: 'center', fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>Sponsored · Powered by visitnaija.online</p>
