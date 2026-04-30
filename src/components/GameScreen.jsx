@@ -105,6 +105,7 @@ export default function GameScreen() {
   const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem('geoquiz_onboarded'))
   const [showQuitModal, setShowQuitModal] = useState(false)
   const [loadProgress, setLoadProgress] = useState(0)
+  const [pendingNav, setPendingNav] = useState(null) // where to go after quit confirm
 
   const timerEnabled = config?.timer > 0
 
@@ -249,9 +250,23 @@ export default function GameScreen() {
         const pct = Math.round((totalScore / (questions.length * 100)) * 100)
         trackAchievement('blitzHighPct', pct)
       }
-      navigate('/results', {
-        state: { results: [...results], totalScore, maxScore: questions.length * 100, questionCount: questions.length, config, bestStreak },
-      })
+      // Show finishing loading screen before results
+      setPhase('finishing')
+      setLoadProgress(0)
+      let progress = 0
+      const finishInterval = setInterval(() => {
+        progress += Math.random() * 20 + 10
+        if (progress >= 100) {
+          progress = 100
+          clearInterval(finishInterval)
+          setTimeout(() => {
+            navigate('/results', {
+              state: { results: [...results], totalScore, maxScore: questions.length * 100, questionCount: questions.length, config, bestStreak },
+            })
+          }, 400)
+        }
+        setLoadProgress(Math.min(progress, 100))
+      }, 150)
       return
     }
     setCurrentIdx(prev => prev + 1)
@@ -274,24 +289,34 @@ export default function GameScreen() {
     return 0;
   }
 
-  function handleQuit() {
+  function handleQuit(destination = '/') {
+    setPendingNav(destination)
     if (results.length > 0) {
       setShowQuitModal(true)
     } else {
-      navigate('/')
+      navigate(destination)
     }
+  }
+
+  function confirmQuit() {
+    setShowQuitModal(false)
+    navigate(pendingNav || '/')
   }
 
   return (
     <div className="game-screen">
-      {/* Loading screen */}
-      {phase === 'loading' && (
+      {/* Loading screen — before AND after gameplay */}
+      {(phase === 'loading' || phase === 'finishing') && (
         <div className="game-loading-overlay">
           <div className="game-loading-content">
-            <div className="loading-icon">🗺️</div>
-            <h2 className="loading-title">Preparing Your Quiz</h2>
+            <div className="loading-icon">{phase === 'loading' ? '🗺️' : '🏆'}</div>
+            <h2 className="loading-title">
+              {phase === 'loading' ? 'Preparing Your Quiz' : 'Calculating Results'}
+            </h2>
             <p className="loading-subtitle">
-              {config?.mode === 'blitz' ? '⚡ Blitz Mode — Race against time!' 
+              {phase === 'finishing'
+                ? `${results.length} questions · Score: ${totalScore}`
+                : config?.mode === 'blitz' ? '⚡ Blitz Mode — Race against time!' 
                 : config?.daily ? '🏆 Daily Challenge — Same for everyone today!' 
                 : `${config?.count || 10} questions · ${config?.region === 'abuja' ? 'Abuja FCT' : config?.region === 'all' ? 'All Nigeria' : 'Lagos'}`}
             </p>
@@ -299,10 +324,15 @@ export default function GameScreen() {
               <div className="neon-bar" style={{ width: `${loadProgress}%` }} />
             </div>
             <p className="loading-tip">
-              {loadProgress < 40 ? '📍 Loading map tiles...' 
-                : loadProgress < 70 ? '🎯 Shuffling questions...' 
-                : loadProgress < 95 ? '🏁 Almost ready...' 
-                : '✅ Let\'s go!'}
+              {phase === 'finishing'
+                ? (loadProgress < 40 ? '📊 Tallying scores...' 
+                  : loadProgress < 70 ? '🏅 Checking achievements...' 
+                  : loadProgress < 95 ? '🎯 Preparing your results...' 
+                  : '✅ Done!')
+                : (loadProgress < 40 ? '📍 Loading map tiles...' 
+                  : loadProgress < 70 ? '🎯 Shuffling questions...' 
+                  : loadProgress < 95 ? '🏁 Almost ready...' 
+                  : '✅ Let\'s go!')}
             </p>
           </div>
         </div>
@@ -319,7 +349,7 @@ export default function GameScreen() {
             <p className="quit-warning">Your progress will be lost.</p>
             <div className="quit-actions">
               <button className="btn btn-primary" onClick={() => setShowQuitModal(false)}>Keep Playing</button>
-              <button className="btn btn-outline quit-confirm" onClick={() => navigate('/')}>Quit Game</button>
+              <button className="btn btn-outline quit-confirm" onClick={confirmQuit}>Quit Game</button>
             </div>
           </div>
         </div>
@@ -330,9 +360,9 @@ export default function GameScreen() {
       <div className={`legend-sidebar ${legendOpen ? 'open' : ''}`}>
         {/* Navigation */}
         <div className="legend-section sidebar-nav">
-          <button className="sidebar-nav-btn" onClick={() => navigate('/')}>🏠 Home</button>
-          <button className="sidebar-nav-btn" onClick={() => navigate('/play')}>⚙️ New Quiz</button>
-          <button className="sidebar-nav-btn sidebar-quit" onClick={handleQuit}>✕ Quit Game</button>
+          <button className="sidebar-nav-btn" onClick={() => handleQuit('/')}>🏠 Home</button>
+          <button className="sidebar-nav-btn" onClick={() => handleQuit('/play')}>⚙️ New Quiz</button>
+          <button className="sidebar-nav-btn sidebar-quit" onClick={() => handleQuit('/')}>✕ Quit Game</button>
         </div>
 
         <div className="legend-section">

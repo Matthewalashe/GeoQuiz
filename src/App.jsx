@@ -10,6 +10,7 @@ import Challenge from './components/Challenge.jsx'
 import Dashboard from './components/Dashboard.jsx'
 import Achievements from './components/Achievements.jsx'
 import InstallPrompt from './components/InstallPrompt.jsx'
+import PageTransition from './components/PageTransition.jsx'
 
 export default function App() {
   const location = useLocation()
@@ -20,17 +21,19 @@ export default function App() {
       {!isGamePage && <Header />}
       <InstallPrompt />
       <main className={isGamePage ? 'app-main-full' : 'app-main'}>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/play" element={<CategorySelector />} />
-          <Route path="/game" element={<GameScreen />} />
-          <Route path="/results" element={<ResultsScreen />} />
-          <Route path="/leaderboard" element={<Leaderboard />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/challenge" element={<Challenge />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/achievements" element={<Achievements />} />
-        </Routes>
+        <PageTransition>
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/play" element={<CategorySelector />} />
+            <Route path="/game" element={<GameScreen />} />
+            <Route path="/results" element={<ResultsScreen />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/challenge" element={<Challenge />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/achievements" element={<Achievements />} />
+          </Routes>
+        </PageTransition>
       </main>
       {!isGamePage && (
         <footer className="app-footer">

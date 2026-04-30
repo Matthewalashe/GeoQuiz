@@ -5,6 +5,7 @@ import { submitScore, fetchLeaderboard } from '../lib/supabase.js'
 import { ResultsMap } from './MapView.jsx'
 import { encodeChallenge } from './Challenge.jsx'
 import { JourneyCard } from './SponsoredBanner.jsx'
+import { SPONSORS } from '../data/sponsors.js'
 
 // Achievement rank system
 function getRank(pct, totalPerfects) {
@@ -240,6 +241,25 @@ export default function ResultsScreen() {
 
       {/* Journey Card — Sponsored Discoveries */}
       <JourneyCard results={data.results} />
+
+      {/* Discover Nearby — All sponsors */}
+      <div className="results-discover">
+        <h3 style={{ textAlign: 'center', marginBottom: '0.5rem' }}>📍 Discover Near Your Quiz Areas</h3>
+        <p style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>Places to visit based on areas you explored today</p>
+        <div className="results-sponsor-grid">
+          {SPONSORS.filter(s => s.active).map(s => (
+            <a key={s.id} href={s.url} target="_blank" rel="noopener noreferrer" className="results-sponsor-card">
+              <span className="rs-icon">{s.icon}</span>
+              <div className="rs-info">
+                <div className="rs-brand">{s.brand}</div>
+                <div className="rs-msg">{s.message}</div>
+              </div>
+              <span className="rs-cta">{s.cta} →</span>
+            </a>
+          ))}
+        </div>
+        <p style={{ textAlign: 'center', fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>Sponsored · Powered by visitnaija.online</p>
+      </div>
 
       {/* Social Share */}
       {(() => {

@@ -97,6 +97,47 @@ a:hover { text-decoration: underline; }
 .btn-sm { padding: 0.5rem 1rem; font-size: 0.85rem; }
 .btn-lg { padding: 1rem 3rem; font-size: 1.2rem; }
 
+/* ---- PAGE TRANSITIONS ---- */
+.page-transition {
+  animation: pageEnter 0.35s ease-out;
+}
+.page-exit {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.page-enter {
+  animation: pageEnter 0.35s ease-out;
+}
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- RESULTS SPONSOR DISCOVER ---- */
+.results-discover {
+  max-width: 700px; margin: 2rem auto; padding: 1.5rem 0;
+  border-top: 2px solid var(--border);
+}
+.results-sponsor-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem;
+}
+.results-sponsor-card {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.6rem 0.75rem; background: var(--surface);
+  border: 2px solid var(--border); text-decoration: none; color: inherit;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.results-sponsor-card:hover {
+  transform: translateY(-2px); box-shadow: var(--shadow-sm);
+  text-decoration: none;
+}
+.rs-icon { font-size: 1.3rem; flex-shrink: 0; }
+.rs-info { flex: 1; min-width: 0; }
+.rs-brand { font-weight: 700; font-family: var(--font-head); font-size: 0.8rem; }
+.rs-msg { font-size: 0.7rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rs-cta { flex-shrink: 0; font-size: 0.7rem; font-weight: 600; color: var(--primary); white-space: nowrap; }
+
 /* ---- CARDS ---- */
 .card {
   background: var(--surface);
@@ -668,6 +709,11 @@ a:hover { text-decoration: underline; }
   /* Social share buttons */
   .share-row { flex-wrap: wrap; gap: 0.4rem; }
   .share-row a, .share-row button { font-size: 0.7rem; padding: 0.3rem 0.5rem; }
+
+  /* Sponsor grids: single column on mobile */
+  .results-sponsor-grid { grid-template-columns: 1fr; }
+  .results-discover { padding: 1rem 0; }
+  .landing-sponsors { padding: 1rem 0; }
 }
 
 @media (max-width: 480px) {
