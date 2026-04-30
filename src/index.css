@@ -734,6 +734,109 @@ a:hover { text-decoration: underline; }
 .sidebar-quit { color: var(--red); border-color: var(--red); }
 .sidebar-quit:hover { background: #fef2f2; }
 
+/* ---- COMMUNITY FEED ---- */
+.community {
+  max-width: 700px; margin: 0 auto; padding: 2rem 1rem;
+}
+.community h2 { margin-bottom: 0.25rem; }
+.community-subtitle { color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.9rem; }
+
+.feed-name-gate {
+  text-align: center; padding: 2rem;
+}
+.feed-name-gate h3 { margin-bottom: 0.25rem; }
+.feed-name-gate p { color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem; }
+.feed-name-form {
+  display: flex; gap: 0.5rem; max-width: 350px; margin: 0 auto;
+}
+.feed-name-form input {
+  flex: 1; padding: 0.6rem 0.75rem; border: 3px solid var(--border);
+  font-family: var(--font-body); font-size: 1rem; background: var(--bg);
+  -webkit-appearance: none; border-radius: 0;
+}
+
+.feed-compose {
+  border: 3px solid var(--border); padding: 1rem; margin-bottom: 1.5rem;
+  background: var(--surface); box-shadow: var(--shadow-sm);
+}
+.feed-compose-header {
+  display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;
+}
+.feed-compose-name { font-family: var(--font-head); font-weight: 600; font-size: 0.85rem; }
+.feed-compose textarea {
+  width: 100%; border: 2px solid #ddd; padding: 0.6rem; resize: vertical;
+  font-family: var(--font-body); font-size: 0.9rem; min-height: 60px;
+  background: var(--bg); -webkit-appearance: none; border-radius: 0;
+}
+.feed-compose textarea:focus { outline: none; border-color: var(--primary); }
+.feed-compose-footer {
+  display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;
+}
+.feed-char-count { font-size: 0.7rem; color: var(--text-secondary); }
+
+.feed-list { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.feed-post {
+  border: 3px solid var(--border); padding: 0.85rem; background: var(--surface);
+  box-shadow: var(--shadow-sm); transition: transform 0.1s;
+}
+.feed-post:hover { transform: translateY(-1px); }
+.feed-post-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;
+}
+.feed-author { display: flex; align-items: center; gap: 0.35rem; }
+.feed-avatar { font-size: 1.1rem; }
+.feed-name { font-family: var(--font-head); font-weight: 700; font-size: 0.85rem; }
+.feed-level {
+  font-size: 0.6rem; font-weight: 700; background: var(--primary); color: #fff;
+  padding: 0.1rem 0.35rem; font-family: var(--font-head);
+}
+.feed-time { font-size: 0.7rem; color: var(--text-secondary); }
+.feed-content { font-size: 0.9rem; line-height: 1.5; margin-bottom: 0.5rem; word-break: break-word; }
+
+.feed-actions {
+  display: flex; gap: 0.5rem; align-items: center;
+}
+.feed-action-btn {
+  background: none; border: none; cursor: pointer; font-size: 0.8rem;
+  padding: 0.25rem 0.4rem; transition: transform 0.1s;
+  font-family: var(--font-body); color: var(--text-secondary);
+  touch-action: manipulation;
+}
+.feed-action-btn:hover { transform: scale(1.1); }
+.feed-action-btn.liked { color: #e63946; }
+.feed-report { margin-left: auto; opacity: 0.4; font-size: 0.7rem; }
+.feed-report:hover { opacity: 1; }
+
+.feed-replies {
+  margin-top: 0.6rem; padding-top: 0.6rem; border-top: 2px solid #eee;
+  display: flex; flex-direction: column; gap: 0.5rem;
+}
+.feed-reply {
+  padding: 0.5rem 0.6rem; background: var(--bg); border-left: 3px solid var(--primary);
+}
+.feed-reply .feed-content { font-size: 0.85rem; margin-bottom: 0.3rem; }
+.feed-reply .feed-actions { gap: 0.3rem; }
+.feed-reply-box {
+  display: flex; gap: 0.4rem; margin-top: 0.3rem;
+}
+.feed-reply-box input {
+  flex: 1; padding: 0.4rem 0.6rem; border: 2px solid #ddd;
+  font-family: var(--font-body); font-size: 0.85rem; background: var(--bg);
+  -webkit-appearance: none; border-radius: 0;
+}
+.feed-reply-box input:focus { outline: none; border-color: var(--primary); }
+
+.feed-loading { text-align: center; padding: 2rem; color: var(--text-secondary); }
+.feed-empty { text-align: center; padding: 3rem 1rem; color: var(--text-secondary); }
+.feed-empty-icon { font-size: 3rem; margin-bottom: 0.75rem; }
+
+.feed-guidelines {
+  margin-top: 2rem; padding: 0.75rem; font-size: 0.75rem;
+  color: var(--text-secondary); background: var(--bg);
+  border: 2px solid #ddd; line-height: 1.5;
+}
+
 /* ---- RESPONSIVE: MOBILE OVERHAUL ---- */
 @media (max-width: 768px) {
   /* Header: compact, touch-friendly */

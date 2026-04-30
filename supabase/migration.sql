@@ -55,3 +55,41 @@ CREATE POLICY "Anyone can view leaderboard"
 CREATE INDEX idx_leaderboard_score ON leaderboard (score DESC);
 CREATE INDEX idx_leaderboard_created ON leaderboard (created_at DESC);
 CREATE INDEX idx_waitlist_created ON waitlist (created_at DESC);
+
+-- ============================================
+-- 7. Community Feed
+-- ============================================
+CREATE TABLE IF NOT EXISTS community_posts (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  author text NOT NULL,
+  content text NOT NULL CHECK (char_length(content) <= 500),
+  parent_id uuid REFERENCES community_posts(id) ON DELETE CASCADE,
+  likes text[] DEFAULT '{}',
+  level integer DEFAULT 1,
+  reported boolean DEFAULT false,
+  created_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE community_posts ENABLE ROW LEVEL SECURITY;
+
+-- Anyone can read posts
+CREATE POLICY "Anyone can read posts"
+  ON community_posts FOR SELECT
+  TO anon
+  USING (reported = false);
+
+-- Anyone can create posts
+CREATE POLICY "Anyone can create posts"
+  ON community_posts FOR INSERT
+  TO anon
+  WITH CHECK (true);
+
+-- Anyone can update likes (we use RPC for this)
+CREATE POLICY "Anyone can like posts"
+  ON community_posts FOR UPDATE
+  TO anon
+  USING (true)
+  WITH CHECK (true);
+
+CREATE INDEX idx_posts_created ON community_posts (created_at DESC);
+CREATE INDEX idx_posts_parent ON community_posts (parent_id);

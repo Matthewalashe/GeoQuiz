@@ -10,6 +10,7 @@ import About from './components/About.jsx'
 import Challenge from './components/Challenge.jsx'
 import Dashboard from './components/Dashboard.jsx'
 import Achievements from './components/Achievements.jsx'
+import Community from './components/Community.jsx'
 import InstallPrompt from './components/InstallPrompt.jsx'
 import PageTransition from './components/PageTransition.jsx'
 import { processDailyLogin } from './engine/xp.js'
@@ -102,6 +103,7 @@ export default function App() {
             <Route path="/challenge" element={<Challenge />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/achievements" element={<Achievements />} />
+            <Route path="/community" element={<Community />} />
           </Routes>
         </PageTransition>
       </main>

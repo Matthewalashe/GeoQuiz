@@ -87,3 +87,115 @@ export async function getWaitlistCount() {
   if (error) return 0
   return count || 0
 }
+
+// ---- Community Feed ----
+const POSTS_KEY = 'geoquiz_community'
+
+function getLocalPosts() {
+  return JSON.parse(localStorage.getItem(POSTS_KEY) || '[]')
+}
+function saveLocalPosts(posts) {
+  localStorage.setItem(POSTS_KEY, JSON.stringify(posts))
+}
+
+export async function fetchPosts(limit = 30) {
+  if (!supabase) {
+    return getLocalPosts()
+      .filter(p => !p.parent_id && !p.reported)
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .slice(0, limit)
+  }
+  const { data, error } = await supabase
+    .from('community_posts')
+    .select('*')
+    .is('parent_id', null)
+    .eq('reported', false)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  return data || []
+}
+
+export async function fetchReplies(parentId) {
+  if (!supabase) {
+    return getLocalPosts()
+      .filter(p => p.parent_id === parentId && !p.reported)
+      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+  }
+  const { data, error } = await supabase
+    .from('community_posts')
+    .select('*')
+    .eq('parent_id', parentId)
+    .eq('reported', false)
+    .order('created_at', { ascending: true })
+  if (error) throw error
+  return data || []
+}
+
+export async function createPost({ author, content, parentId = null, level = 1 }) {
+  const post = {
+    author, content: content.trim().slice(0, 500),
+    parent_id: parentId, level, reported: false,
+    likes: [],
+  }
+  if (!supabase) {
+    const all = getLocalPosts()
+    const newPost = { ...post, id: crypto.randomUUID(), created_at: new Date().toISOString() }
+    all.unshift(newPost)
+    saveLocalPosts(all.slice(0, 200))
+    return newPost
+  }
+  const { data, error } = await supabase
+    .from('community_posts')
+    .insert([post])
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function toggleLike(postId, username) {
+  if (!supabase) {
+    const all = getLocalPosts()
+    const post = all.find(p => p.id === postId)
+    if (!post) return
+    const idx = post.likes.indexOf(username)
+    if (idx >= 0) post.likes.splice(idx, 1)
+    else post.likes.push(username)
+    saveLocalPosts(all)
+    return post
+  }
+  // Fetch current likes, toggle, update
+  const { data: current } = await supabase
+    .from('community_posts')
+    .select('likes')
+    .eq('id', postId)
+    .single()
+  if (!current) return
+  let likes = current.likes || []
+  const idx = likes.indexOf(username)
+  if (idx >= 0) likes = likes.filter(l => l !== username)
+  else likes = [...likes, username]
+  const { data, error } = await supabase
+    .from('community_posts')
+    .update({ likes })
+    .eq('id', postId)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function reportPost(postId) {
+  if (!supabase) {
+    const all = getLocalPosts()
+    const post = all.find(p => p.id === postId)
+    if (post) post.reported = true
+    saveLocalPosts(all)
+    return
+  }
+  await supabase
+    .from('community_posts')
+    .update({ reported: true })
+    .eq('id', postId)
+}
