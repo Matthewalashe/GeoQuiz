@@ -57,6 +57,7 @@ function PostItem({ post, username, onLike, onReply, onReport }) {
         content: sanitize(replyText),
         parentId: post.id,
         level: getLevel(xp.totalXP),
+        avatar: localStorage.getItem('geoquiz_avatar') || '🧭',
       })
       setReplies(prev => [...prev, newReply])
       setReplyText('')
@@ -69,7 +70,7 @@ function PostItem({ post, username, onLike, onReply, onReport }) {
     <div className="feed-post">
       <div className="feed-post-header">
         <div className="feed-author">
-          <span className="feed-avatar">{title.emoji}</span>
+          <span className="feed-avatar">{post.avatar || title.emoji}</span>
           <span className="feed-name">{post.author}</span>
           <span className="feed-level">Lv.{post.level || 1}</span>
         </div>
@@ -103,7 +104,7 @@ function PostItem({ post, username, onLike, onReply, onReport }) {
               <div key={r.id} className="feed-reply">
                 <div className="feed-post-header">
                   <div className="feed-author">
-                    <span className="feed-avatar">{rTitle.emoji}</span>
+                    <span className="feed-avatar">{r.avatar || rTitle.emoji}</span>
                     <span className="feed-name">{r.author}</span>
                     <span className="feed-level">Lv.{r.level || 1}</span>
                   </div>
@@ -184,6 +185,7 @@ export default function Community() {
         author: username,
         content: sanitize(newPost),
         level: getLevel(xp.totalXP),
+        avatar: localStorage.getItem('geoquiz_avatar') || '🧭',
       })
       setPosts(prev => [post, ...prev])
       setNewPost('')
@@ -249,7 +251,7 @@ export default function Community() {
           {/* New post */}
           <div className="feed-compose">
             <div className="feed-compose-header">
-              <span className="feed-avatar">{getLevelTitle(getLevel(getXPData().totalXP)).emoji}</span>
+              <span className="feed-avatar">{localStorage.getItem('geoquiz_avatar') || '🧭'}</span>
               <span className="feed-compose-name">{username}</span>
             </div>
             <textarea

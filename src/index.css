@@ -911,92 +911,126 @@ a:hover { text-decoration: underline; }
 .profile-stat-val { font-family: var(--font-head); font-size: 1.2rem; font-weight: 700; }
 .profile-stat-lbl { font-size: 0.6rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
 
-/* ---- JOURNEY MAP (Themed) ---- */
-.journey-map {
+/* ---- NEON JOURNEY MAP (Futuristic) ---- */
+.neon-map {
   position: relative; margin-bottom: 2rem; overflow: hidden;
-  border: 3px solid var(--border);
+  border: 2px solid rgba(0,255,136,0.2);
+  background: #05080f;
 }
-.journey-map-bg {
-  position: absolute; inset: 0; z-index: 0;
+.neon-map-bg {
+  position: absolute; inset: 0; z-index: 0; overflow: hidden;
+}
+/* Perspective grid floor */
+.neon-grid {
+  position: absolute; inset: 0;
   background:
-    linear-gradient(180deg,
-      #1a2332 0%, #1a3328 15%, #0d3320 30%,
-      #1a4a30 50%, #0d3320 70%, #1a2332 100%
-    );
+    linear-gradient(rgba(0,255,136,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,136,0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+  animation: neonGridScroll 20s linear infinite;
 }
-/* Grass + ground texture overlay */
-.journey-map-bg::before {
-  content: ''; position: absolute; inset: 0;
-  background:
-    repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(0,100,50,0.08) 40px, rgba(0,100,50,0.08) 42px),
-    repeating-linear-gradient(0deg, transparent, transparent 60px, rgba(255,255,255,0.03) 60px, rgba(255,255,255,0.03) 61px);
+@keyframes neonGridScroll {
+  from { transform: translateY(0); }
+  to { transform: translateY(32px); }
 }
-/* Stars at top */
-.journey-map-bg::after {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 80px;
-  background: radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.5), transparent),
-    radial-gradient(1px 1px at 30% 40%, rgba(255,255,255,0.3), transparent),
-    radial-gradient(1px 1px at 50% 15%, rgba(255,255,255,0.4), transparent),
-    radial-gradient(1px 1px at 70% 35%, rgba(255,255,255,0.3), transparent),
-    radial-gradient(1px 1px at 85% 25%, rgba(255,255,255,0.5), transparent),
-    radial-gradient(1px 1px at 20% 60%, rgba(255,255,255,0.2), transparent);
+/* Floating glow orbs */
+.neon-glow-orb {
+  position: absolute; border-radius: 50%; filter: blur(40px); opacity: 0.15;
+}
+.orb-1 { width: 200px; height: 200px; background: #00ff88; top: -50px; right: -30px; animation: orbFloat 8s ease-in-out infinite; }
+.orb-2 { width: 150px; height: 150px; background: #00d4ff; bottom: 20%; left: -40px; animation: orbFloat 12s ease-in-out infinite reverse; }
+.orb-3 { width: 120px; height: 120px; background: #a855f7; bottom: -20px; right: 20%; animation: orbFloat 10s ease-in-out infinite 2s; }
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(15px, -20px) scale(1.15); }
 }
 
-.journey-map-title {
-  position: relative; z-index: 1; color: #fff;
-  padding: 1rem 1rem 0.25rem; margin: 0;
-  font-family: var(--font-head);
+.neon-map-header {
+  position: relative; z-index: 1; padding: 1rem 1rem 0.5rem;
+  display: flex; justify-content: space-between; align-items: baseline;
 }
-.journey-next-hint {
-  position: relative; z-index: 1;
-  padding: 0 1rem 0.75rem; font-size: 0.75rem; color: rgba(255,255,255,0.5);
+.neon-map-header h3 {
+  color: #fff; margin: 0; font-family: var(--font-head);
+  text-shadow: 0 0 10px rgba(0,255,136,0.3);
 }
+.neon-next { font-size: 0.7rem; color: rgba(255,255,255,0.35); }
 
-.journey-path {
+/* Player position */
+.neon-player-pos {
+  position: relative; z-index: 1; display: flex; align-items: center;
+  gap: 0.5rem; padding: 0.4rem 1rem; margin: 0 1rem 0.5rem;
+  background: rgba(0,255,136,0.08); border: 1px solid rgba(0,255,136,0.2);
+}
+.neon-player-avatar { font-size: 1.5rem; }
+.neon-player-label { color: #00ff88; font-family: var(--font-head); font-weight: 700; font-size: 0.85rem; }
+
+/* Path */
+.neon-path {
   position: relative; z-index: 1;
+  display: flex; flex-wrap: wrap; gap: 0; justify-content: center;
+  padding: 0.5rem 0.75rem 1rem;
+}
+.neon-stop-wrap {
   display: flex; flex-direction: column; align-items: center;
-  padding: 0.5rem 1rem 1.5rem; gap: 0;
+  width: calc(25% - 0.5rem); min-width: 70px; margin-bottom: 0.25rem;
+}
+/* Wire connector */
+.neon-wire {
+  width: 100%; height: 2px; margin-bottom: 0.2rem;
+  background: rgba(255,255,255,0.06);
+  position: relative;
+}
+.neon-wire.active {
+  background: var(--wire-color, #00ff88);
+  box-shadow: 0 0 6px var(--wire-color, #00ff88);
+  animation: wirePulse 3s ease-in-out infinite;
+}
+@keyframes wirePulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
 }
 
-.journey-node-wrap { display: flex; flex-direction: column; align-items: center; }
-.journey-left { align-self: flex-start; margin-left: 15%; }
-.journey-right { align-self: flex-end; margin-right: 15%; }
-
-.journey-stop-row { display: flex; align-items: center; gap: 0.5rem; }
-.journey-left .journey-stop-row { flex-direction: row; }
-.journey-right .journey-stop-row { flex-direction: row-reverse; }
-
-.journey-node {
-  width: 44px; height: 44px; border: 3px solid #555; border-radius: 50%;
+/* Stop node */
+.neon-stop {
+  width: 40px; height: 40px; border: 2px solid #1a1a2e; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  transition: all 0.3s; position: relative; z-index: 2;
+  background: #0a0a14; transition: all 0.3s;
 }
-.journey-node.reached { box-shadow: 0 0 12px rgba(0,0,0,0.3); }
-.journey-node.current {
-  width: 52px; height: 52px; border-width: 4px;
-  box-shadow: 0 0 20px rgba(0,135,81,0.5);
-  animation: journeyPulse 2s ease-in-out infinite;
+.neon-stop.reached {
+  background: radial-gradient(circle, rgba(0,0,0,0.3) 30%, transparent 70%);
 }
-@keyframes journeyPulse {
-  0%, 100% { box-shadow: 0 0 10px rgba(0,135,81,0.3); }
-  50% { box-shadow: 0 0 24px rgba(0,135,81,0.7); }
+.neon-stop.current {
+  width: 48px; height: 48px; border-width: 3px;
+  animation: neonPulse 2s ease-in-out infinite;
 }
-.journey-node.locked { opacity: 0.35; }
-.journey-node-level { font-size: 0.75rem; font-family: var(--font-head); font-weight: 800; }
+@keyframes neonPulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.4); }
+}
+.neon-stop.locked { opacity: 0.2; border-color: #222; }
+.neon-stop-num {
+  font-size: 0.7rem; font-family: var(--font-head); font-weight: 800;
+  color: rgba(255,255,255,0.9);
+}
+.neon-stop.locked .neon-stop-num { color: rgba(255,255,255,0.2); }
 
-.journey-node-label {
-  font-size: 0.7rem; font-family: var(--font-head); font-weight: 600;
-  color: rgba(255,255,255,0.85); white-space: nowrap;
+.neon-stop-name {
+  font-size: 0.55rem; font-family: var(--font-head); font-weight: 600;
+  color: rgba(255,255,255,0.15); margin-top: 0.15rem; text-align: center;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 80px;
 }
-.locked-label { color: rgba(255,255,255,0.25); font-style: italic; }
 
-.journey-connector {
-  width: 3px; height: 24px; position: relative; z-index: 1; margin: 0 auto;
+.neon-map-footer {
+  position: relative; z-index: 1; text-align: center;
+  padding: 0.5rem; font-size: 0.65rem; color: rgba(255,255,255,0.25);
+  font-family: var(--font-head); letter-spacing: 0.1em; text-transform: uppercase;
+  border-top: 1px solid rgba(0,255,136,0.08);
 }
-.journey-conn-line { width: 100%; height: 100%; background: rgba(255,255,255,0.15); }
-.journey-connector.filled .journey-conn-line {
-  background: var(--primary); box-shadow: 0 0 6px rgba(0,135,81,0.4);
-}
+
+/* Leaderboard avatar */
+.lb-card-avatar { font-size: 1.3rem; flex-shrink: 0; }
+
 
 /* ---- COMMUNITY FEED ---- */
 .community {
