@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import questions from '../data/questions.js'
 import ABUJA_Q from '../data/questions-abuja.js'
@@ -7,42 +7,66 @@ import { SponsorCard } from './SponsoredBanner.jsx'
 import { getXPData, getLevel, getLevelTitle } from '../engine/xp.js'
 
 import {
-  SearchRegular,
   FoodPizzaRegular,
-  BuildingRegular,
-  UmbrellaRegular,
   LeafOneRegular,
-  BuildingBankRegular,
-  VehicleBusRegular,
-  VideoClipRegular,
-  VehicleCarRegular,
-  ShoppingBagRegular,
-  MusicNote1Regular,
-  StoreMicrosoftRegular,
-  HeartPulseRegular,
-  Wifi1Regular,
-  SportSoccerRegular,
   DrinkWineRegular,
+  BuildingRegular,
+  ShoppingBagRegular,
+  BuildingBankRegular,
+  ChevronLeftRegular,
+  ChevronRightRegular,
+  CalendarRegular,
+  LocationRegular,
   CompassNorthwestRegular
 } from '@fluentui/react-icons'
 
-const DISCOVER_ITEMS = [
-  { icon: <FoodPizzaRegular fontSize={22} />, label: 'Restaurants', tag: 'Food & Dining' },
-  { icon: <BuildingRegular fontSize={22} />, label: 'Hotels', tag: 'Stay' },
-  { icon: <UmbrellaRegular fontSize={22} />, label: 'Beaches', tag: 'Relax' },
-  { icon: <LeafOneRegular fontSize={22} />, label: 'Parks', tag: 'Nature' },
-  { icon: <BuildingBankRegular fontSize={22} />, label: 'Museums', tag: 'Culture' },
-  { icon: <VehicleBusRegular fontSize={22} />, label: 'BRT Stops', tag: 'Transit' },
-  { icon: <VideoClipRegular fontSize={22} />, label: 'Cinemas', tag: 'Movies' },
-  { icon: <VehicleCarRegular fontSize={22} />, label: 'Cab Stands', tag: 'Rides' },
-  { icon: <ShoppingBagRegular fontSize={22} />, label: 'Malls', tag: 'Shopping' },
-  { icon: <MusicNote1Regular fontSize={22} />, label: 'Concerts', tag: 'Events' },
-  { icon: <StoreMicrosoftRegular fontSize={22} />, label: 'Markets', tag: 'Local' },
-  { icon: <HeartPulseRegular fontSize={22} />, label: 'Gyms', tag: 'Fitness' },
-  { icon: <BuildingBankRegular fontSize={22} />, label: 'Banks', tag: 'Finance' },
-  { icon: <Wifi1Regular fontSize={22} />, label: 'Free WiFi', tag: 'Internet' },
-  { icon: <SportSoccerRegular fontSize={22} />, label: 'Stadiums', tag: 'Sports' },
-  { icon: <DrinkWineRegular fontSize={22} />, label: 'Bars & Clubs', tag: 'Nightlife' },
+// Real Lagos events — May 2026
+const EVENTS = [
+  {
+    id: 1,
+    title: 'Lagos Acoustic Experience',
+    date: 'May 29, 2026',
+    venue: 'Federal Palace Hotel & Casino',
+    tag: 'LIVE MUSIC',
+    img: '/images/events/event-hero.png',
+    color: '#C8963E',
+  },
+  {
+    id: 2,
+    title: 'African Business & Leadership Summit',
+    date: 'May 12, 2026',
+    venue: 'Harbour Point, Lagos',
+    tag: 'CONFERENCE',
+    img: '/images/explore/culture.png',
+    color: '#3D348B',
+  },
+  {
+    id: 3,
+    title: 'West Africa Automotive Show',
+    date: 'May 12, 2026',
+    venue: 'Landmark Centre, VI',
+    tag: 'EXHIBITION',
+    img: '/images/explore/shopping.png',
+    color: '#E05A3A',
+  },
+  {
+    id: 4,
+    title: 'Lagos Real Estate Fest 2026',
+    date: 'May 26, 2026',
+    venue: 'Lagos Oriental Hotel',
+    tag: 'EXPO',
+    img: '/images/explore/hotels.png',
+    color: '#008751',
+  },
+]
+
+const EXPLORE_CATEGORIES = [
+  { label: 'Restaurant & Bar', tag: 'FOOD & DINING', icon: <FoodPizzaRegular fontSize={22} />, img: '/images/explore/restaurant.png' },
+  { label: 'Parks & Recreation', tag: 'NATURE & FUN', icon: <LeafOneRegular fontSize={22} />, img: '/images/explore/parks.png' },
+  { label: 'Nightlife & Lifestyle', tag: 'ENTERTAINMENT', icon: <DrinkWineRegular fontSize={22} />, img: '/images/explore/nightlife.png' },
+  { label: 'Hotels & Travels', tag: 'STAY & EXPLORE', icon: <BuildingRegular fontSize={22} />, img: '/images/explore/hotels.png' },
+  { label: 'Shops & Malls', tag: 'SHOPPING', icon: <ShoppingBagRegular fontSize={22} />, img: '/images/explore/shopping.png' },
+  { label: 'Culture & Finance', tag: 'HERITAGE & MONEY', icon: <BuildingBankRegular fontSize={22} />, img: '/images/explore/culture.png' },
 ]
 
 export default function Landing() {
@@ -51,14 +75,19 @@ export default function Landing() {
   const level = getLevel(xp.totalXP)
   const title = getLevelTitle(level)
   const playerName = localStorage.getItem('geoquiz_player') || ''
-  const [searchQuery, setSearchQuery] = useState('')
+  const [eventIdx, setEventIdx] = useState(0)
+  const carouselRef = useRef(null)
 
-  const filteredDiscover = searchQuery.trim()
-    ? DISCOVER_ITEMS.filter(d =>
-        d.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        d.tag.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : DISCOVER_ITEMS
+  // Auto-rotate events
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setEventIdx(prev => (prev + 1) % EVENTS.length)
+    }, 5000)
+    return () => clearInterval(timer)
+  }, [])
+
+  const prevEvent = () => setEventIdx(prev => (prev - 1 + EVENTS.length) % EVENTS.length)
+  const nextEvent = () => setEventIdx(prev => (prev + 1) % EVENTS.length)
 
   return (
     <section className="landing">
@@ -85,17 +114,42 @@ export default function Landing() {
       {/* Adire Strip */}
       <div className="adire-strip" />
 
-      {/* Search Bar */}
-      <div className="home-search">
-        <div className="home-search-inner">
-          <SearchRegular fontSize={20} className="home-search-icon" />
-          <input
-            type="text"
-            placeholder="Search places, categories, people..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="home-search-input"
-          />
+      {/* Events Carousel */}
+      <div className="events-carousel">
+        <h3 className="section-label-home">Happening in Lagos</h3>
+        <div className="events-slider" ref={carouselRef}>
+          <button className="events-nav events-prev" onClick={prevEvent}>
+            <ChevronLeftRegular fontSize={20} />
+          </button>
+
+          <div className="event-card" style={{ borderTopColor: EVENTS[eventIdx].color }}>
+            <div className="event-card-img">
+              <img src={EVENTS[eventIdx].img} alt={EVENTS[eventIdx].title} />
+              <span className="event-tag" style={{ background: EVENTS[eventIdx].color }}>
+                {EVENTS[eventIdx].tag}
+              </span>
+            </div>
+            <div className="event-card-body">
+              <h4 className="event-title">{EVENTS[eventIdx].title}</h4>
+              <div className="event-meta">
+                <span><CalendarRegular fontSize={14} /> {EVENTS[eventIdx].date}</span>
+                <span><LocationRegular fontSize={14} /> {EVENTS[eventIdx].venue}</span>
+              </div>
+            </div>
+          </div>
+
+          <button className="events-nav events-next" onClick={nextEvent}>
+            <ChevronRightRegular fontSize={20} />
+          </button>
+        </div>
+        <div className="events-dots">
+          {EVENTS.map((_, i) => (
+            <button
+              key={i}
+              className={`events-dot ${i === eventIdx ? 'active' : ''}`}
+              onClick={() => setEventIdx(i)}
+            />
+          ))}
         </div>
       </div>
 
@@ -110,21 +164,19 @@ export default function Landing() {
         <p className="sponsored-tag">Sponsored</p>
       </div>
 
-      {/* City Discovery Cards */}
+      {/* Explore the City — 6 Categories with images */}
       <div className="discover-section">
         <h3 className="discover-title">Explore the City</h3>
         <div className="discover-grid">
-          {filteredDiscover.map(d => (
-            <div key={d.label} className="discover-card">
+          {EXPLORE_CATEGORIES.map(d => (
+            <div key={d.label} className="discover-card-lg">
+              <img src={d.img} alt={d.label} />
               <span className="discover-card-icon">{d.icon}</span>
               <span className="discover-card-label">{d.label}</span>
               <span className="discover-card-tag">{d.tag}</span>
             </div>
           ))}
         </div>
-        {filteredDiscover.length === 0 && (
-          <p className="discover-hint">No results for "{searchQuery}"</p>
-        )}
         <p className="discover-hint">Coming soon — explore and discover places near you</p>
       </div>
     </section>

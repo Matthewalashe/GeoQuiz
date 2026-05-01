@@ -13,6 +13,7 @@ export default function Leaderboard() {
   const [wlEmail, setWlEmail] = useState('')
   const [wlRole, setWlRole] = useState('')
   const [wlMsg, setWlMsg] = useState('')
+  const [wlRef, setWlRef] = useState('')
   const [wlSaving, setWlSaving] = useState(false)
   const [wlDone, setWlDone] = useState(false)
 
@@ -55,7 +56,7 @@ export default function Leaderboard() {
     if (!wlName.trim() || !wlEmail.trim()) return
     setWlSaving(true)
     try {
-      await submitWaitlist({ name: wlName.trim(), email: wlEmail.trim(), role: wlRole, message: wlMsg })
+      await submitWaitlist({ name: wlName.trim(), email: wlEmail.trim(), role: wlRole, message: wlMsg, referral: wlRef })
       setWlDone(true)
     } catch (err) {
       console.error('Waitlist error:', err)
@@ -159,9 +160,11 @@ export default function Leaderboard() {
               <option value="">I am a...</option>
               <option value="player">Player / Geography Lover</option>
               <option value="teacher">Teacher / Educator</option>
+              <option value="traveller">Vacationist / Traveller</option>
               <option value="business">Business / Sponsor</option>
               <option value="developer">Developer / Contributor</option>
             </select>
+            <input type="text" value={wlRef} onChange={e => setWlRef(e.target.value)} placeholder="How did you find us? (Referred by?)" />
             <textarea value={wlMsg} onChange={e => setWlMsg(e.target.value)} placeholder="Any feedback or suggestions?" rows={2} />
             <button type="submit" className="btn btn-primary" disabled={wlSaving}>
               {wlSaving ? 'Joining...' : 'Join Waitlist'}

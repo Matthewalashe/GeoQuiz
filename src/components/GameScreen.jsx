@@ -271,18 +271,26 @@ export default function GameScreen() {
       </div>
 
       {/* ── Floating HUD (top) ── */}
-      <div className="game-hud">
-        <div className="hud-left">
-          <span className="hud-counter">Q{currentIdx + 1}<span className="hud-dim">/{questions.length}</span></span>
-        </div>
-        <div className="hud-center">
-          <div className="hud-progress"><div className="hud-progress-fill" style={{ width: `${((currentIdx + (phase === 'feedback' ? 1 : 0)) / questions.length) * 100}%` }} /></div>
-        </div>
-        <div className="hud-right">
-          <span className="hud-score">{totalScore}</span>
-          {streak >= 3 && <span className="hud-streak">🔥{streak}</span>}
-        </div>
-      </div>
+      {(() => {
+        const progress = ((currentIdx + (phase === 'feedback' ? 1 : 0)) / questions.length) * 100
+        return (
+          <div className="game-hud" style={{
+            borderImage: `conic-gradient(var(--primary) ${progress * 3.6}deg, var(--border) 0deg) 1`,
+            borderImageSlice: 1,
+          }}>
+            <div className="hud-left">
+              <span className="hud-counter">Q{currentIdx + 1}<span className="hud-dim">/{questions.length}</span></span>
+            </div>
+            <div className="hud-center">
+              <div className="hud-progress"><div className="hud-progress-fill" style={{ width: `${progress}%` }} /></div>
+            </div>
+            <div className="hud-right">
+              <span className="hud-score">{totalScore}</span>
+              {streak >= 3 && <span className="hud-streak">🔥{streak}</span>}
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Timer ring */}
       {timerEnabled && phase === 'placing' && (

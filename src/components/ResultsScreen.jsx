@@ -66,6 +66,7 @@ export default function ResultsScreen() {
         questionCount: data.questionCount,
         categories: data.config?.categories || [],
         difficulty: data.config?.difficulty || 'all',
+        avatar: localStorage.getItem('geoquiz_avatar') || '🎭',
       })
       setSaved(true)
 

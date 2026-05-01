@@ -5,7 +5,6 @@ import {
   HeartRegular,
   HeartFilled,
   ChatRegular,
-  ArrowRepeatAllRegular,
   ShareRegular,
   MoreHorizontalRegular,
   CheckmarkCircleRegular,
@@ -80,6 +79,21 @@ function PostItem({ post, username, onLike, onReport }) {
     setReplying(false)
   }
 
+  function handleShare(post) {
+    const shareData = {
+      title: `${post.author} on GeoQuiz`,
+      text: post.content,
+      url: window.location.origin + '/community',
+    }
+    if (navigator.share) {
+      navigator.share(shareData).catch(() => {})
+    } else {
+      navigator.clipboard.writeText(`${post.content}\n\n— ${post.author} on GeoQuiz\n${shareData.url}`)
+        .then(() => alert('Copied to clipboard!'))
+        .catch(() => {})
+    }
+  }
+
   return (
     <article className="x-post">
       {/* Avatar column */}
@@ -120,15 +134,13 @@ function PostItem({ post, username, onLike, onReport }) {
             <ChatRegular fontSize={17} />
             <span>{replyCount > 0 ? replyCount : ''}</span>
           </button>
-          <button className="x-action x-repost">
-            <ArrowRepeatAllRegular fontSize={17} />
-          </button>
           <button className={`x-action ${liked ? 'x-liked' : ''}`} onClick={() => onLike(post.id)}>
             {liked ? <HeartFilled fontSize={17} /> : <HeartRegular fontSize={17} />}
             <span>{likeCount > 0 ? likeCount : ''}</span>
           </button>
-          <button className="x-action">
+          <button className="x-action" onClick={() => handleShare(post)}>
             <ShareRegular fontSize={17} />
+            <span>{(post.shares || 0) > 0 ? post.shares : ''}</span>
           </button>
         </div>
 
@@ -274,10 +286,6 @@ export default function Community() {
       {/* Feed Header */}
       <div className="x-feed-header">
         <h2>Feed</h2>
-        <div className="x-feed-tabs">
-          <button className="x-feed-tab active">For You</button>
-          <button className="x-feed-tab">Following</button>
-        </div>
       </div>
 
       {/* Name gate */}
@@ -310,7 +318,7 @@ export default function Community() {
             <textarea
               value={newPost}
               onChange={e => setNewPost(e.target.value)}
-              placeholder="What's happening in Lagos?"
+              placeholder="How far? 🇳🇬"
               maxLength={500}
               rows={3}
             />

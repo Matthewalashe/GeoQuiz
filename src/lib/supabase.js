@@ -8,14 +8,14 @@ export const supabase = supabaseUrl && supabaseAnonKey
   : null
 
 // ---- Waitlist ----
-export async function submitWaitlist({ name, email, role, message }) {
+export async function submitWaitlist({ name, email, role, message, referral }) {
   if (!supabase) {
     const existing = JSON.parse(localStorage.getItem('geoquiz_waitlist') || '[]')
-    existing.push({ name, email, role, message, created_at: new Date().toISOString() })
+    existing.push({ name, email, role, message, referral, created_at: new Date().toISOString() })
     localStorage.setItem('geoquiz_waitlist', JSON.stringify(existing))
     return { success: true, fallback: true }
   }
-  const { error } = await supabase.from('waitlist').insert([{ name, email, role, message }])
+  const { error } = await supabase.from('waitlist').insert([{ name, email, role, message, referral }])
   if (error) throw error
 
   // Send email notification (fire-and-forget)
@@ -38,13 +38,12 @@ export async function submitWaitlist({ name, email, role, message }) {
 }
 
 // ---- Leaderboard ----
-export async function submitScore({ playerName, score, maxScore, questionCount, categories, difficulty }) {
+export async function submitScore({ playerName, score, maxScore, questionCount, categories, difficulty, avatar }) {
   if (!supabase) {
-    // Fallback to localStorage
     const existing = JSON.parse(localStorage.getItem('geoquiz_leaderboard') || '[]')
     existing.push({
       player_name: playerName, score, max_score: maxScore,
-      question_count: questionCount, categories, difficulty,
+      question_count: questionCount, categories, difficulty, avatar,
       created_at: new Date().toISOString(),
     })
     existing.sort((a, b) => b.score - a.score)
@@ -58,6 +57,7 @@ export async function submitScore({ playerName, score, maxScore, questionCount, 
     question_count: questionCount,
     categories,
     difficulty,
+    avatar,
   }])
   if (error) throw error
   return { success: true }
@@ -132,10 +132,10 @@ export async function fetchReplies(parentId) {
   return data || []
 }
 
-export async function createPost({ author, content, parentId = null, level = 1 }) {
+export async function createPost({ author, content, parentId = null, level = 1, avatar = '🎭' }) {
   const post = {
     author, content: content.trim().slice(0, 500),
-    parent_id: parentId, level, reported: false,
+    parent_id: parentId, level, avatar, reported: false,
     likes: [],
   }
   if (!supabase) {
