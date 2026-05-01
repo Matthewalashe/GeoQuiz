@@ -2,10 +2,51 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getXPData, getLevel, getLevelProgress, getLevelTitle, getXPToNextLevel } from '../engine/xp.js'
 
+// Nigerian Heritage + Explorer avatar library
 const AVATARS = [
-  '🧭', '🗺️', '🌍', '🎯', '⚡', '🔥', '🌟', '🏆', '👑', '🛰️',
-  '🎓', '🧑‍🚀', '🦁', '🐊', '🦅', '🐺', '🦊', '🐯', '🦈', '🐉',
-  '🎮', '🎲', '🧩', '🏅', '💎', '🚀', '⭐', '🌙', '🎪', '🗿',
+  // Yoruba & Nigerian Cultural
+  '🎭', // Eyo masquerade
+  '🗿', // Ife Bronze head
+  '👑', // Oba crown
+  '🐚', // Cowrie shell
+  '⚡', // Sango (thunder)
+  '🔱', // Ogun (iron)
+  '🛡️', // Egungun
+  '🦅', // Arugba (eagle)
+  '🌀', // Adire pattern
+  '🌍', // Naija globe
+  '🪘', // Talking drum
+  '🏺', // Calabash
+  '🌴', // Palm tree
+  '🔥', // Ẹṣù fire
+  '🐆', // Leopard (Benin)
+  '🐘', // Elephant (strength)
+  // Explorer & Achievement
+  '🧭', // Compass
+  '🗺️', // Map
+  '🏆', // Trophy
+  '💎', // Diamond
+  '🚀', // Rocket
+  '⭐', // Star
+  '🎯', // Target
+  '🌟', // Glowing star
+  '🏅', // Medal
+  '🎮', // Controller
+  // Nature & Lagos
+  '🦁', // Lion
+  '🐊', // Crocodile
+  '🦈', // Shark
+  '🐉', // Dragon
+  '🌙', // Moon
+  '🛰️', // Satellite
+  '🎓', // Graduate
+  '🎲', // Dice
+  '🧩', // Puzzle
+  '🎪', // Circus
+  '🐺', // Wolf
+  '🦊', // Fox
+  '🐯', // Tiger
+  '🌊', // Wave (Lagos coast)
 ]
 
 const JOURNEY_STOPS = [

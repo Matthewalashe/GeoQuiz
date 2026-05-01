@@ -33,7 +33,7 @@ export default function Header({ theme, toggleTheme }) {
           <Link to="/play" className={pathname === '/play' ? 'active' : ''}>Play</Link>
           <Link to="/leaderboard" className={pathname === '/leaderboard' ? 'active' : ''}>Scores</Link>
           <Link to="/dashboard" className={pathname === '/dashboard' ? 'active' : ''}>Progress</Link>
-          <Link to="/community" className={pathname === '/community' ? 'active' : ''}>Chat</Link>
+          <Link to="/community" className={pathname === '/community' ? 'active' : ''}>Feed</Link>
           <Link to="/about" className={pathname === '/about' ? 'active' : ''}>About</Link>
         </nav>
 

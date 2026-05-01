@@ -111,13 +111,17 @@ export default function Leaderboard() {
           {filtered.map((entry, i) => {
             const isMe = playerName && entry.player_name?.toLowerCase() === playerName.toLowerCase()
             const pct = entry.max_score > 0 ? Math.round((entry.score / entry.max_score) * 100) : 0
-            const myAvatar = localStorage.getItem('geoquiz_avatar') || '🧭'
+            const myAvatar = localStorage.getItem('geoquiz_avatar') || '🎭'
+            const entryAvatar = entry.avatar || (isMe ? myAvatar : '🎭')
+            const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : null
+            const podiumClass = i === 0 ? 'lb-card-gold' : i === 1 ? 'lb-card-adire' : i === 2 ? 'lb-card-silver' : ''
             return (
-              <div key={entry.id || i} className={`lb-card ${isMe ? 'lb-card-me' : ''} ${i < 3 ? 'lb-card-top' : ''}`}>
+              <div key={entry.id || i} className={`lb-card ${isMe ? 'lb-card-me' : ''} ${podiumClass}`}>
                 <div className="lb-card-rank">
+                  {medal && <span className="lb-medal">{medal}</span>}
                   {i === 0 ? '1st' : i === 1 ? '2nd' : i === 2 ? '3rd' : `${i + 1}th`}
                 </div>
-                <span className="lb-card-avatar">{isMe ? myAvatar : '👤'}</span>
+                <span className="lb-card-avatar">{entryAvatar}</span>
                 <div className="lb-card-info">
                   <div className="lb-card-name">{entry.player_name}{isMe ? ' (You)' : ''}</div>
                   <div className="lb-card-meta">{entry.question_count}Q · {formatDate(entry.created_at)}</div>
