@@ -15,6 +15,21 @@ import InstallPrompt from './components/InstallPrompt.jsx'
 import PageTransition from './components/PageTransition.jsx'
 import { processDailyLogin } from './engine/xp.js'
 
+// Dark mode hook
+function useTheme() {
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem('geoquiz_theme')
+    if (saved) return saved
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  })
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('geoquiz_theme', theme)
+  }, [theme])
+  const toggle = () => setTheme(t => t === 'dark' ? 'light' : 'dark')
+  return { theme, toggle }
+}
+
 function SplashScreen({ onDone }) {
   const [progress, setProgress] = useState(0)
   const [fadeOut, setFadeOut] = useState(false)
@@ -51,6 +66,7 @@ function SplashScreen({ onDone }) {
 export default function App() {
   const location = useLocation()
   const isGamePage = location.pathname === '/game'
+  const { theme, toggle: toggleTheme } = useTheme()
   const [showSplash, setShowSplash] = useState(() => {
     // Only show splash on fresh app loads, not on navigations
     const shown = sessionStorage.getItem('geoquiz_splash')
@@ -89,7 +105,7 @@ export default function App() {
         </div>
       )}
 
-      {!isGamePage && <Header />}
+      {!isGamePage && <Header theme={theme} toggleTheme={toggleTheme} />}
       <InstallPrompt />
       <main className={isGamePage ? 'app-main-full' : 'app-main'}>
         <PageTransition>

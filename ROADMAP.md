@@ -3,8 +3,24 @@
 # Last updated: 2026-04-30
 
 > Vision: Quiz game → Gamified city explorer → Local discovery platform
-> Stack: Vite + React 19 · Supabase · Cloudflare Pages
+> Stack: Vite + React 19 · Supabase · Material Design
 > Domain: visitnaija.online · GitHub: Matthewalashe/GeoQuiz
+
+---
+
+## 🎨 UI REDESIGN (In Progress)
+> Goal: Transition from Brutalist/Bauhaus design to Material Design & Microsoft Fluent Icons.
+
+### Milestone 0.1 — Design System Update
+- [ ] Migrate CSS variables to Material Design tokens (soft shadows, rounded corners).
+- [ ] Install `@fluentui/react-icons`.
+- [ ] Standardize typography for accessibility.
+
+### Milestone 0.2 — Component Refactor
+- [ ] Update `Landing.jsx` (Hero, Cards, Icons).
+- [ ] Update `Header.jsx` and Mobile Navigation.
+- [ ] Update `GameScreen.jsx` and `Play` Modes to Material cards.
+- [ ] Update Data Tables, Scoreboards, and Profiles.
 
 ---
 

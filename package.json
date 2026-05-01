@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fluentui/react-icons": "^2.0.325",
     "@supabase/supabase-js": "^2.104.1",
     "leaflet": "^1.9.4",
     "react": "^19.2.5",

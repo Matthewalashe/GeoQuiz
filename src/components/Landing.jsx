@@ -5,6 +5,28 @@ import { SPONSORS } from '../data/sponsors.js'
 import { SponsorCard } from './SponsoredBanner.jsx'
 import { getXPData, getLevel, getLevelTitle } from '../engine/xp.js'
 
+// Import Microsoft Fluent Icons
+import { 
+  PlayCircleRegular, 
+  OptionsRegular, 
+  ChatMultipleRegular,
+  FoodPizzaRegular,
+  BuildingRegular,
+  UmbrellaRegular,
+  LeafOneRegular,
+  BuildingBankRegular,
+  VehicleBusRegular,
+  VideoClipRegular,
+  VehicleCarRegular,
+  ShoppingBagRegular,
+  MusicNote1Regular,
+  StoreMicrosoftRegular,
+  HeartPulseRegular,
+  Wifi1Regular,
+  SportSoccerRegular,
+  DrinkWineRegular
+} from '@fluentui/react-icons'
+
 export default function Landing() {
   const totalQ = questions.length + ABUJA_Q.length
   const xp = getXPData()
@@ -14,17 +36,11 @@ export default function Landing() {
 
   return (
     <section className="landing">
-      {/* Hero — compact, punchy */}
-      <div className="landing-hero">
-        <div className="geo-deco">
-          <div className="geo-square" />
-          <div className="geo-circle" />
-          <div className="geo-tri" />
-        </div>
-
+      {/* Hero — Clean Material Design */}
+      <div className="landing-hero" style={{ borderBottom: 'none' }}>
         <h1>
-          <span className="hero-sub">How well do you know</span>
-          <span className="hero-main">Nigeria<span className="accent">?</span></span>
+          <span className="hero-sub" style={{ fontWeight: 400 }}>How well do you know</span>
+          <span className="hero-main" style={{ color: 'var(--primary)' }}>Nigeria?</span>
         </h1>
         <p className="hero-desc">
           Drop pins on the map. {totalQ}+ questions across Lagos & Abuja.
@@ -44,27 +60,27 @@ export default function Landing() {
 
       {/* Quick play cards */}
       <div className="quick-play">
-        <Link to="/play?mode=quick" className="qp-card">
+        <Link to="/play?mode=quick" className="qp-card card">
           <div className="qp-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+            <PlayCircleRegular fontSize={28} />
           </div>
           <div className="qp-info">
             <div className="qp-title">Quick Play</div>
             <div className="qp-desc">10 random questions</div>
           </div>
         </Link>
-        <Link to="/play" className="qp-card">
+        <Link to="/play" className="qp-card card">
           <div className="qp-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            <OptionsRegular fontSize={28} />
           </div>
           <div className="qp-info">
             <div className="qp-title">Custom Game</div>
             <div className="qp-desc">Pick categories & difficulty</div>
           </div>
         </Link>
-        <Link to="/community" className="qp-card">
+        <Link to="/community" className="qp-card card">
           <div className="qp-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <ChatMultipleRegular fontSize={28} />
           </div>
           <div className="qp-info">
             <div className="qp-title">Community</div>
@@ -89,26 +105,26 @@ export default function Landing() {
         <h3 className="discover-title">Explore the City</h3>
         <div className="discover-grid">
           {[
-            { icon: '🍽️', label: 'Restaurants', tag: 'Food & Dining' },
-            { icon: '🏨', label: 'Hotels', tag: 'Stay' },
-            { icon: '🏖️', label: 'Beaches', tag: 'Relax' },
-            { icon: '🌳', label: 'Parks', tag: 'Nature' },
-            { icon: '🏛️', label: 'Museums', tag: 'Culture' },
-            { icon: '🚌', label: 'BRT Stops', tag: 'Transit' },
-            { icon: '🎬', label: 'Cinemas', tag: 'Movies' },
-            { icon: '🚕', label: 'Cab Stands', tag: 'Rides' },
-            { icon: '🛍️', label: 'Malls', tag: 'Shopping' },
-            { icon: '🎵', label: 'Concerts', tag: 'Events' },
-            { icon: '🏪', label: 'Markets', tag: 'Local' },
-            { icon: '💪', label: 'Gyms', tag: 'Fitness' },
-            { icon: '🏦', label: 'Banks', tag: 'Finance' },
-            { icon: '📶', label: 'Free WiFi', tag: 'Internet' },
-            { icon: '⚽', label: 'Stadiums', tag: 'Sports' },
-            { icon: '🍻', label: 'Bars & Clubs', tag: 'Nightlife' },
+            { icon: <FoodPizzaRegular fontSize={24} />, label: 'Restaurants', tag: 'Food & Dining' },
+            { icon: <BuildingRegular fontSize={24} />, label: 'Hotels', tag: 'Stay' },
+            { icon: <UmbrellaRegular fontSize={24} />, label: 'Beaches', tag: 'Relax' },
+            { icon: <LeafOneRegular fontSize={24} />, label: 'Parks', tag: 'Nature' },
+            { icon: <BuildingBankRegular fontSize={24} />, label: 'Museums', tag: 'Culture' },
+            { icon: <VehicleBusRegular fontSize={24} />, label: 'BRT Stops', tag: 'Transit' },
+            { icon: <VideoClipRegular fontSize={24} />, label: 'Cinemas', tag: 'Movies' },
+            { icon: <VehicleCarRegular fontSize={24} />, label: 'Cab Stands', tag: 'Rides' },
+            { icon: <ShoppingBagRegular fontSize={24} />, label: 'Malls', tag: 'Shopping' },
+            { icon: <MusicNote1Regular fontSize={24} />, label: 'Concerts', tag: 'Events' },
+            { icon: <StoreMicrosoftRegular fontSize={24} />, label: 'Markets', tag: 'Local' },
+            { icon: <HeartPulseRegular fontSize={24} />, label: 'Gyms', tag: 'Fitness' },
+            { icon: <BuildingBankRegular fontSize={24} />, label: 'Banks', tag: 'Finance' },
+            { icon: <Wifi1Regular fontSize={24} />, label: 'Free WiFi', tag: 'Internet' },
+            { icon: <SportSoccerRegular fontSize={24} />, label: 'Stadiums', tag: 'Sports' },
+            { icon: <DrinkWineRegular fontSize={24} />, label: 'Bars & Clubs', tag: 'Nightlife' },
           ].map(d => (
-            <div key={d.label} className="discover-card">
-              <span className="discover-card-icon">{d.icon}</span>
-              <span className="discover-card-label">{d.label}</span>
+            <div key={d.label} className="discover-card card" style={{ padding: '0.75rem 0.5rem', border: 'none' }}>
+              <span className="discover-card-icon" style={{ color: 'var(--primary)' }}>{d.icon}</span>
+              <span className="discover-card-label" style={{ marginTop: '0.5rem', fontWeight: 600 }}>{d.label}</span>
               <span className="discover-card-tag">{d.tag}</span>
             </div>
           ))}
