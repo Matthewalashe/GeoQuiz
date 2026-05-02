@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import questions from '../data/questions.js'
 import ABUJA_Q from '../data/questions-abuja.js'
@@ -7,17 +7,11 @@ import { SponsorCard } from './SponsoredBanner.jsx'
 import { getXPData, getLevel, getLevelTitle } from '../engine/xp.js'
 
 import {
-  FoodPizzaRegular,
-  LeafOneRegular,
-  DrinkWineRegular,
-  BuildingRegular,
-  ShoppingBagRegular,
-  BuildingBankRegular,
-  ChevronLeftRegular,
-  ChevronRightRegular,
   CalendarRegular,
   LocationRegular,
-  CompassNorthwestRegular
+  PlayCircleRegular,
+  ChevronRightRegular,
+  ArrowRightRegular
 } from '@fluentui/react-icons'
 
 // Real Lagos events — May 2026
@@ -29,7 +23,6 @@ const EVENTS = [
     venue: 'Federal Palace Hotel & Casino',
     tag: 'LIVE MUSIC',
     img: '/images/events/event-hero.png',
-    color: '#C8963E',
   },
   {
     id: 2,
@@ -38,7 +31,6 @@ const EVENTS = [
     venue: 'Harbour Point, Lagos',
     tag: 'CONFERENCE',
     img: '/images/explore/culture.png',
-    color: '#3D348B',
   },
   {
     id: 3,
@@ -47,7 +39,6 @@ const EVENTS = [
     venue: 'Landmark Centre, VI',
     tag: 'EXHIBITION',
     img: '/images/explore/shopping.png',
-    color: '#E05A3A',
   },
   {
     id: 4,
@@ -56,102 +47,72 @@ const EVENTS = [
     venue: 'Lagos Oriental Hotel',
     tag: 'EXPO',
     img: '/images/explore/hotels.png',
-    color: '#008751',
   },
 ]
 
 const EXPLORE_CATEGORIES = [
-  { label: 'Restaurant & Bar', tag: 'FOOD & DINING', icon: <FoodPizzaRegular fontSize={22} />, img: '/images/explore/restaurant.png' },
-  { label: 'Parks & Recreation', tag: 'NATURE & FUN', icon: <LeafOneRegular fontSize={22} />, img: '/images/explore/parks.png' },
-  { label: 'Nightlife & Lifestyle', tag: 'ENTERTAINMENT', icon: <DrinkWineRegular fontSize={22} />, img: '/images/explore/nightlife.png' },
-  { label: 'Hotels & Travels', tag: 'STAY & EXPLORE', icon: <BuildingRegular fontSize={22} />, img: '/images/explore/hotels.png' },
-  { label: 'Shops & Malls', tag: 'SHOPPING', icon: <ShoppingBagRegular fontSize={22} />, img: '/images/explore/shopping.png' },
-  { label: 'Culture & Finance', tag: 'HERITAGE & MONEY', icon: <BuildingBankRegular fontSize={22} />, img: '/images/explore/culture.png' },
+  { label: 'Restaurant & Bar', sub: 'Food & Dining', img: '/images/explore/restaurant.png' },
+  { label: 'Parks & Recreation', sub: 'Nature & Fun', img: '/images/explore/parks.png' },
+  { label: 'Nightlife & Lifestyle', sub: 'Entertainment', img: '/images/explore/nightlife.png' },
+  { label: 'Hotels & Travels', sub: 'Stay & Explore', img: '/images/explore/hotels.png' },
+  { label: 'Shops & Malls', sub: 'Shopping', img: '/images/explore/shopping.png' },
+  { label: 'Culture & Finance', sub: 'Heritage & Money', img: '/images/explore/culture.png' },
 ]
 
 export default function Landing() {
   const totalQ = questions.length + ABUJA_Q.length
-  const xp = getXPData()
-  const level = getLevel(xp.totalXP)
-  const title = getLevelTitle(level)
-  const playerName = localStorage.getItem('geoquiz_player') || ''
   const [eventIdx, setEventIdx] = useState(0)
-  const carouselRef = useRef(null)
 
-  // Auto-rotate events
+  // Auto-rotate hero
   useEffect(() => {
     const timer = setInterval(() => {
       setEventIdx(prev => (prev + 1) % EVENTS.length)
-    }, 5000)
+    }, 6000)
     return () => clearInterval(timer)
   }, [])
 
-  const prevEvent = () => setEventIdx(prev => (prev - 1 + EVENTS.length) % EVENTS.length)
-  const nextEvent = () => setEventIdx(prev => (prev + 1) % EVENTS.length)
+  const ev = EVENTS[eventIdx]
 
   return (
-    <section className="landing">
-      {/* Hero */}
-      <div className="landing-hero">
-        <h1>
-          <span className="hero-sub">How well do you know</span>
-          <span className="hero-main">Nigeria?</span>
-        </h1>
-        <p className="hero-desc">
-          Drop pins on the map. {totalQ}+ questions across Lagos & Abuja.
-        </p>
-
-        <div className="hero-actions">
-          <Link to="/play" className="btn btn-primary btn-lg">
-            Start Quiz →
-          </Link>
-          <Link to="/play" className="btn btn-outline btn-lg">
-            <CompassNorthwestRegular fontSize={18} /> Explore
-          </Link>
+    <section className="landing netflix-landing">
+      {/* ═══ NETFLIX-STYLE HERO ═══ */}
+      <div className="nf-hero">
+        <div className="nf-hero-bg">
+          <img src={ev.img} alt={ev.title} key={ev.id} />
+          <div className="nf-hero-gradient" />
         </div>
-      </div>
 
-      {/* Adire Strip */}
-      <div className="adire-strip" />
-
-      {/* Events Carousel */}
-      <div className="events-carousel">
-        <h3 className="section-label-home">Happening in Lagos</h3>
-        <div className="events-slider" ref={carouselRef}>
-          <button className="events-nav events-prev" onClick={prevEvent}>
-            <ChevronLeftRegular fontSize={20} />
-          </button>
-
-          <div className="event-card" style={{ borderTopColor: EVENTS[eventIdx].color }}>
-            <div className="event-card-img">
-              <img src={EVENTS[eventIdx].img} alt={EVENTS[eventIdx].title} />
-              <span className="event-tag" style={{ background: EVENTS[eventIdx].color }}>
-                {EVENTS[eventIdx].tag}
-              </span>
-            </div>
-            <div className="event-card-body">
-              <h4 className="event-title">{EVENTS[eventIdx].title}</h4>
-              <div className="event-meta">
-                <span><CalendarRegular fontSize={14} /> {EVENTS[eventIdx].date}</span>
-                <span><LocationRegular fontSize={14} /> {EVENTS[eventIdx].venue}</span>
-              </div>
-            </div>
+        <div className="nf-hero-content">
+          <span className="nf-hero-tag">{ev.tag}</span>
+          <h1 className="nf-hero-title">{ev.title}</h1>
+          <div className="nf-hero-meta">
+            <span><CalendarRegular fontSize={14} /> {ev.date}</span>
+            <span><LocationRegular fontSize={14} /> {ev.venue}</span>
           </div>
-
-          <button className="events-nav events-next" onClick={nextEvent}>
-            <ChevronRightRegular fontSize={20} />
-          </button>
+          <div className="nf-hero-actions">
+            <Link to="/play" className="nf-hero-btn nf-btn-play">
+              <PlayCircleRegular fontSize={20} /> Start Quiz
+            </Link>
+            <Link to="/play" className="nf-hero-btn nf-btn-explore">
+              Explore <ArrowRightRegular fontSize={16} />
+            </Link>
+          </div>
         </div>
-        <div className="events-dots">
+
+        {/* Indicator dots */}
+        <div className="nf-hero-dots">
           {EVENTS.map((_, i) => (
             <button
               key={i}
-              className={`events-dot ${i === eventIdx ? 'active' : ''}`}
+              className={`nf-dot ${i === eventIdx ? 'active' : ''}`}
               onClick={() => setEventIdx(i)}
             />
           ))}
         </div>
       </div>
+
+      {/* Adire Strip */}
+      <div className="adire-strip" />
 
       {/* Sponsored Discoveries */}
       <div className="landing-sponsors">
@@ -164,16 +125,22 @@ export default function Landing() {
         <p className="sponsored-tag">Sponsored</p>
       </div>
 
-      {/* Explore the City — 6 Categories with images */}
+      {/* ═══ EXPLORE — Clean Photo Cards ═══ */}
       <div className="discover-section">
-        <h3 className="discover-title">Explore the City</h3>
+        <div className="discover-header">
+          <h3 className="discover-title">Explore the City</h3>
+          <span className="discover-see-all">See all <ChevronRightRegular fontSize={14} /></span>
+        </div>
         <div className="discover-grid">
           {EXPLORE_CATEGORIES.map(d => (
-            <div key={d.label} className="discover-card-lg">
-              <img src={d.img} alt={d.label} />
-              <span className="discover-card-icon">{d.icon}</span>
-              <span className="discover-card-label">{d.label}</span>
-              <span className="discover-card-tag">{d.tag}</span>
+            <div key={d.label} className="explore-card">
+              <div className="explore-card-img">
+                <img src={d.img} alt={d.label} loading="lazy" />
+              </div>
+              <div className="explore-card-body">
+                <h4 className="explore-card-title">{d.label}</h4>
+                <p className="explore-card-sub">{d.sub}</p>
+              </div>
             </div>
           ))}
         </div>

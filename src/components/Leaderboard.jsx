@@ -38,7 +38,6 @@ export default function Leaderboard() {
     return true
   }).slice(0, 30)
 
-  // Find player's best position
   const playerEntries = filtered.filter(e =>
     e.player_name?.toLowerCase() === playerName.toLowerCase()
   )
@@ -67,25 +66,22 @@ export default function Leaderboard() {
   }
 
   return (
-    <section className="leaderboard">
-      <h2>Leaderboard</h2>
-      <p className="subtitle">How do you rank among GeoQuiz players?</p>
+    <section className="lb-page">
+      <div className="lb-header">
+        <h2>Leaderboard</h2>
+        <p className="lb-subtitle">How do you rank among GeoQuiz players?</p>
+      </div>
 
       {/* Player's rank highlight */}
       {playerBest && (
-        <div className="lb-player-rank">
-          <div className="lb-rank-pos">#{playerRank}</div>
-          <div className="lb-rank-info">
-            <div className="lb-rank-name">{playerBest.player_name}</div>
-            <div className="lb-rank-score">{playerBest.score}/{playerBest.max_score} pts</div>
-          </div>
-          <div className="lb-rank-msg">
-            {playerRank === 1 ? 'You\'re #1!' : `${playerRank - 1} player${playerRank - 1 > 1 ? 's' : ''} ahead of you`}
-          </div>
+        <div className="lb-my-rank">
+          <span className="lb-my-pos">#{playerRank}</span>
+          <span className="lb-my-name">{playerBest.player_name}</span>
+          <span className="lb-my-score">{playerBest.score} pts</span>
         </div>
       )}
 
-      {/* Season tabs */}
+      {/* Tabs */}
       <div className="lb-tabs">
         {TABS.map(t => (
           <button key={t.id} className={`lb-tab ${tab === t.id ? 'active' : ''}`} onClick={() => setTab(t.id)}>
@@ -95,49 +91,77 @@ export default function Leaderboard() {
       </div>
 
       {tab === 'week' && (
-        <div style={{ textAlign: 'center', margin: '0.5rem 0', fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 600 }}>
-          Resets every Monday — climb to #1!
-        </div>
+        <div className="lb-reset-hint">Resets every Monday — climb to #1!</div>
       )}
 
       {loading ? (
         <div className="lb-empty">Loading scores...</div>
       ) : filtered.length === 0 ? (
         <div className="lb-empty">
-          <p>{tab === 'all' ? 'No scores yet. Be the first!' : 'No scores this period. Be the first!'}</p>
-          <Link to="/play" className="btn btn-primary mt-2">Play Now</Link>
+          <p>{tab === 'all' ? 'No scores yet. Be the first!' : 'No scores this period.'}</p>
+          <Link to="/play" className="btn btn-primary" style={{ marginTop: '1rem' }}>Play Now</Link>
         </div>
       ) : (
-        <div className="lb-card-list">
-          {filtered.map((entry, i) => {
-            const isMe = playerName && entry.player_name?.toLowerCase() === playerName.toLowerCase()
-            const pct = entry.max_score > 0 ? Math.round((entry.score / entry.max_score) * 100) : 0
-            const myAvatar = localStorage.getItem('geoquiz_avatar') || '🎭'
-            const entryAvatar = entry.avatar || (isMe ? myAvatar : '🎭')
-            const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : null
-            const podiumClass = i === 0 ? 'lb-card-gold' : i === 1 ? 'lb-card-adire' : i === 2 ? 'lb-card-silver' : ''
-            return (
-              <div key={entry.id || i} className={`lb-card ${isMe ? 'lb-card-me' : ''} ${podiumClass}`}>
-                <div className="lb-card-rank">
-                  {medal && <span className="lb-medal">{medal}</span>}
-                  {i === 0 ? '1st' : i === 1 ? '2nd' : i === 2 ? '3rd' : `${i + 1}th`}
+        <div className="lb-list">
+          {/* Podium — Top 3 */}
+          {filtered.length >= 3 && (
+            <div className="lb-podium">
+              {[1, 0, 2].map(idx => {
+                const e = filtered[idx]
+                if (!e) return null
+                const isMe = playerName && e.player_name?.toLowerCase() === playerName.toLowerCase()
+                const myAvatar = localStorage.getItem('geoquiz_avatar') || '🎭'
+                const avatar = e.avatar || (isMe ? myAvatar : '🎭')
+                const pct = e.max_score > 0 ? Math.round((e.score / e.max_score) * 100) : 0
+                const podiumLabel = idx === 0 ? '1st' : idx === 1 ? '2nd' : '3rd'
+                const podiumEmoji = idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'
+                return (
+                  <div key={e.id || idx} className={`lb-podium-item lb-pos-${idx + 1} ${isMe ? 'lb-is-me' : ''}`}>
+                    <div className="lb-podium-avatar">{avatar}</div>
+                    <div className="lb-podium-medal">{podiumEmoji}</div>
+                    <div className="lb-podium-name">{e.player_name}</div>
+                    <div className="lb-podium-score">{e.score}</div>
+                    <div className="lb-podium-pct">{pct}%</div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Rest of the list */}
+          <div className="lb-table">
+            <div className="lb-table-head">
+              <span className="lb-col-rank">#</span>
+              <span className="lb-col-player">Player</span>
+              <span className="lb-col-score">Score</span>
+              <span className="lb-col-pct">%</span>
+            </div>
+            {filtered.slice(filtered.length >= 3 ? 3 : 0).map((entry, i) => {
+              const rank = (filtered.length >= 3 ? 3 : 0) + i + 1
+              const isMe = playerName && entry.player_name?.toLowerCase() === playerName.toLowerCase()
+              const pct = entry.max_score > 0 ? Math.round((entry.score / entry.max_score) * 100) : 0
+              const myAvatar = localStorage.getItem('geoquiz_avatar') || '🎭'
+              const avatar = entry.avatar || (isMe ? myAvatar : '🎭')
+              return (
+                <div key={entry.id || rank} className={`lb-table-row ${isMe ? 'lb-row-me' : ''}`}>
+                  <span className="lb-col-rank">{rank}</span>
+                  <span className="lb-col-player">
+                    <span className="lb-row-avatar">{avatar}</span>
+                    <span>
+                      <span className="lb-row-name">{entry.player_name}{isMe ? ' (You)' : ''}</span>
+                      <span className="lb-row-meta">{entry.question_count}Q · {formatDate(entry.created_at)}</span>
+                    </span>
+                  </span>
+                  <span className="lb-col-score">{entry.score}</span>
+                  <span className="lb-col-pct">{pct}%</span>
                 </div>
-                <span className="lb-card-avatar">{entryAvatar}</span>
-                <div className="lb-card-info">
-                  <div className="lb-card-name">{entry.player_name}{isMe ? ' (You)' : ''}</div>
-                  <div className="lb-card-meta">{entry.question_count}Q · {formatDate(entry.created_at)}</div>
-                </div>
-                <div className="lb-card-score">
-                  <span className="lb-card-pts">{entry.score}</span>
-                  <span className="lb-card-pct">{pct}%</span>
-                </div>
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
         </div>
       )}
 
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '2rem' }}>
+      <div className="lb-cta-row">
         <Link to="/play" className="btn btn-primary">Play Again</Link>
         <Link to="/dashboard" className="btn btn-outline">My Progress</Link>
       </div>
