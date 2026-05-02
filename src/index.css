@@ -2619,3 +2619,91 @@ a:hover { text-decoration: underline; }
 .lb-col-pct { width: 2.5rem; text-align: right; font-size: 0.75rem; color: var(--text-secondary); flex-shrink: 0; }
 .lb-cta-row { display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem; }
 .lb-empty { text-align: center; padding: 3rem 1rem; color: var(--text-secondary); }
+/* ================================================
+   PLAY PAGE HERO
+   ================================================ */
+.play-hero {
+  text-align: center; padding: 1.5rem 1rem 0.5rem;
+}
+.play-hero h1 { margin-bottom: 0.75rem; }
+.play-hero .hero-desc { margin-bottom: 0; }
+
+/* ================================================
+   iOS GAME SCREEN FIX
+   ================================================ */
+.game-screen {
+  touch-action: none;
+  overflow: hidden;
+  -webkit-overflow-scrolling: auto;
+  overscroll-behavior: none;
+}
+.fullscreen-game {
+  position: fixed; inset: 0;
+  overflow: hidden;
+  -webkit-overflow-scrolling: auto;
+  overscroll-behavior: none;
+}
+.fullscreen-game .app-main-full {
+  height: 100%; overflow: hidden;
+}
+.game-map-area {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+/* Prevent iOS rubber-band bounce on game screen */
+.fullscreen-game body,
+.fullscreen-game html {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+
+/* ================================================
+   KAMPALA NEON GLOW PROGRESS BAR
+   ================================================ */
+.hud-progress {
+  height: 4px; border-radius: 2px;
+  background: rgba(0,0,0,0.15); overflow: visible !important;
+  position: relative;
+}
+.hud-progress-fill {
+  height: 100%; border-radius: 2px;
+  background: linear-gradient(90deg, #00ff88, #00e5ff, #00ff88);
+  background-size: 200% 100%;
+  animation: neonShift 2s ease-in-out infinite;
+  transition: width 0.4s;
+  box-shadow: 0 0 6px rgba(0,255,136,0.6), 0 0 12px rgba(0,229,255,0.4), 0 0 20px rgba(0,255,136,0.2);
+  position: relative;
+}
+.hud-progress-fill::after {
+  content: '';
+  position: absolute; right: -2px; top: -3px;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #00ff88;
+  box-shadow: 0 0 8px #00ff88, 0 0 16px rgba(0,255,136,0.5);
+  opacity: 0.9;
+}
+@keyframes neonShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+/* Dark mode neon glow is brighter */
+[data-theme="dark"] .hud-progress-fill {
+  box-shadow: 0 0 8px rgba(0,255,136,0.8), 0 0 16px rgba(0,229,255,0.6), 0 0 30px rgba(0,255,136,0.3);
+}
+[data-theme="dark"] .hud-progress-fill::after {
+  box-shadow: 0 0 10px #00ff88, 0 0 20px rgba(0,255,136,0.7);
+}
+
+/* Also style the loading bar with kampala neon */
+.neon-bar {
+  background: linear-gradient(90deg, #00ff88, #00e5ff, #a855f7) !important;
+  box-shadow: 0 0 8px rgba(0,255,136,0.5), 0 0 16px rgba(0,229,255,0.3);
+}
+.splash-bar {
+  background: linear-gradient(90deg, #00ff88, #00e5ff, #a855f7) !important;
+  box-shadow: 0 0 8px rgba(0,255,136,0.5), 0 0 16px rgba(0,229,255,0.3);
+}

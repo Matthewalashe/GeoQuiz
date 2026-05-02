@@ -60,6 +60,34 @@ export default function GameScreen() {
     if (!config) navigate('/play', { replace: true })
   }, [config, navigate])
 
+  // iOS: lock body scroll to prevent rubber-band / zoom on game screen
+  useEffect(() => {
+    const html = document.documentElement
+    const body = document.body
+    html.style.overflow = 'hidden'
+    html.style.position = 'fixed'
+    html.style.width = '100%'
+    html.style.height = '100%'
+    body.style.overflow = 'hidden'
+    body.style.position = 'fixed'
+    body.style.width = '100%'
+    body.style.height = '100%'
+    // Prevent pinch-zoom on iOS
+    const preventZoom = (e) => { if (e.touches.length > 1) e.preventDefault() }
+    document.addEventListener('touchmove', preventZoom, { passive: false })
+    return () => {
+      html.style.overflow = ''
+      html.style.position = ''
+      html.style.width = ''
+      html.style.height = ''
+      body.style.overflow = ''
+      body.style.position = ''
+      body.style.width = ''
+      body.style.height = ''
+      document.removeEventListener('touchmove', preventZoom)
+    }
+  }, [])
+
   const [questions, setQuestions] = useState([])
   const [currentIdx, setCurrentIdx] = useState(0)
   const [totalScore, setTotalScore] = useState(0)

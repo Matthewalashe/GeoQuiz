@@ -75,6 +75,39 @@ export default function CategorySelector() {
 
   return (
     <section className="play-page">
+      {/* Hero — brought from former Landing */}
+      <div className="play-hero">
+        <h1>
+          <span className="hero-sub">How well do you know</span>
+          <span className="hero-main">Nigeria?</span>
+        </h1>
+        <p className="hero-desc">
+          Drop pins on the map. {available.length}+ questions across Lagos & Abuja.
+        </p>
+      </div>
+
+      {/* How to Play */}
+      <div className="how-it-works">
+        <h2 className="section-label-home">How to Play</h2>
+        <div className="steps-grid">
+          <div className="step-card">
+            <div className="step-num">1</div>
+            <h3>📍 Read the clue</h3>
+            <p>Each question describes a location in Nigeria.</p>
+          </div>
+          <div className="step-card">
+            <div className="step-num">2</div>
+            <h3>🗺️ Drop your pin</h3>
+            <p>Tap the map where you think the location is.</p>
+          </div>
+          <div className="step-card">
+            <div className="step-num">3</div>
+            <h3>🏆 Score points</h3>
+            <p>The closer your pin, the higher your score!</p>
+          </div>
+        </div>
+      </div>
+
       {/* Mode selector cards */}
       <div className="play-modes">
         <button className="play-mode-card play-mode-daily" onClick={startDailyChallenge}>
