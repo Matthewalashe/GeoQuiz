@@ -17,50 +17,92 @@ const TIMER_OPTIONS = [
   { id: 90, label: '90s' },
 ]
 
+// ── GAME DEFINITIONS ──
+const GAMES = [
+  {
+    id: 'quiz',
+    name: 'Map Quiz',
+    tagline: 'Pin the location on the map',
+    color: '#00c853',
+    icon: '🗺️',
+    image: '/images/postcards/third-mainland-bridge.png',
+    steps: [
+      { emoji: '📍', title: 'Read the clue', desc: 'Each question describes a real Nigerian location.' },
+      { emoji: '🗺️', title: 'Drop your pin', desc: 'Tap the map where you think it is.' },
+      { emoji: '🏆', title: 'Score points', desc: 'Closer pin = higher score. 100 pts max!' },
+    ],
+    modes: ['daily', 'blitz', 'custom'],
+  },
+  {
+    id: 'postcards',
+    name: 'PostCards',
+    tagline: 'Guess landmarks from photos',
+    color: '#8b5cf6',
+    icon: '📷',
+    image: '/images/postcards/national-theatre.png',
+    steps: [
+      { emoji: '🖼️', title: 'See the postcard', desc: 'A photo of a Nigerian landmark appears.' },
+      { emoji: '🅰️', title: 'Pick your answer', desc: 'Choose from 4 options — A, B, C or D.' },
+      { emoji: '📖', title: 'Learn a fact', desc: 'Get a fun fact after every answer!' },
+    ],
+  },
+  {
+    id: 'puzzle',
+    name: 'Puzzle',
+    tagline: 'Rearrange the image',
+    color: '#06b6d4',
+    icon: '🧩',
+    image: '/images/postcards/zuma-rock.png',
+    steps: [
+      { emoji: '👀', title: 'Memorize', desc: 'See the full image for 2.5 seconds.' },
+      { emoji: '🔀', title: 'Swap tiles', desc: 'Tap two tiles to swap. Rearrange the 3×3 grid.' },
+      { emoji: '⭐', title: 'Earn stars', desc: 'Fewer moves = more stars. 3★ under 10 moves!' },
+    ],
+  },
+  {
+    id: 'wordgame',
+    name: 'Guess the Word',
+    tagline: 'Unscramble & learn history',
+    color: '#f59e0b',
+    icon: '🔤',
+    image: '/images/postcards/badagry.png',
+    steps: [
+      { emoji: '🔤', title: 'Read the clue', desc: 'A hint about a Nigerian place, person or event.' },
+      { emoji: '🅰️', title: 'Tap letters', desc: 'Place scrambled letters in the right order.' },
+      { emoji: '📚', title: 'Discover history', desc: 'Rich historical info + footnotes after each word!' },
+    ],
+  },
+]
+
 export default function CategorySelector() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const preselected = searchParams.get('cat')
-  const mode = searchParams.get('mode')
 
+  // View state: 'hub' | 'quiz-setup' | 'postcards-info' | 'puzzle-info' | 'wordgame-info'
+  const [view, setView] = useState('hub')
+
+  // Quiz config
   const [selectedCats, setSelectedCats] = useState(preselected ? [preselected] : [])
   const [difficulty, setDifficulty] = useState('all')
   const [questionCount, setQuestionCount] = useState(10)
   const [timer, setTimer] = useState(0)
   const [region, setRegion] = useState('lagos')
-  const [step, setStep] = useState(mode === 'quick' ? 'go' : 'setup') // setup | go
 
   const available = getQuestionsByRegion(region, selectedCats, difficulty)
 
   useEffect(() => {
-    if (preselected && !selectedCats.includes(preselected)) {
-      setSelectedCats([preselected])
-    }
+    if (preselected && !selectedCats.includes(preselected)) setSelectedCats([preselected])
   }, [preselected])
 
-  // Quick play: auto-start
-  useEffect(() => {
-    if (mode === 'quick') {
-      navigate('/game', { state: { categories: [], difficulty: 'all', count: 10, timer: 0, region: 'lagos' } })
-    }
-  }, [mode])
-
-  function toggleCat(id) {
-    setSelectedCats(prev =>
-      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
-    )
-  }
+  function toggleCat(id) { setSelectedCats(p => p.includes(id) ? p.filter(c => c !== id) : [...p, id]) }
 
   function startGame() {
-    if (available.length < 5) {
-      alert('Not enough questions. Try adding more categories.')
-      return
-    }
-    const actualCount = Math.min(questionCount, available.length)
-    navigate('/game', { state: { categories: selectedCats, difficulty, count: actualCount, timer, region } })
+    if (available.length < 5) { alert('Not enough questions.'); return }
+    navigate('/game', { state: { categories: selectedCats, difficulty, count: Math.min(questionCount, available.length), timer, region } })
   }
 
-  function startDailyChallenge() {
+  function startDaily() {
     const today = new Date().toISOString().slice(0, 10)
     const seed = today.split('-').reduce((a, b) => a * 31 + parseInt(b), 0)
     navigate('/game', { state: { categories: [], difficulty: 'all', count: 10, timer: 45, daily: true, seed } })
@@ -71,184 +113,172 @@ export default function CategorySelector() {
     navigate('/game', { state: { categories: [], difficulty: 'all', count: Math.min(30, pool.length), timer: 10, region, mode: 'blitz', totalTimer: 300 } })
   }
 
-  const todayStr = new Date().toLocaleDateString('en-NG', { weekday: 'short', month: 'short', day: 'numeric' })
+  function handleCardClick(gameId) {
+    if (gameId === 'quiz') setView('quiz-setup')
+    else setView(`${gameId}-info`)
+  }
 
+  // ══════════════════════════════════════════
+  // INFO / INSTRUCTION SCREENS
+  // ══════════════════════════════════════════
+  if (view.endsWith('-info')) {
+    const gameId = view.replace('-info', '')
+    const game = GAMES.find(g => g.id === gameId)
+    const route = `/${gameId}`
+    return (
+      <section className="play-page">
+        <button className="gh-back" onClick={() => setView('hub')}>← All Games</button>
+        <div className="gi-hero" style={{ borderColor: game.color }}>
+          <img src={game.image} alt={game.name} className="gi-hero-img" />
+          <div className="gi-hero-overlay">
+            <span className="gi-hero-icon">{game.icon}</span>
+            <h2 className="gi-hero-title">{game.name}</h2>
+            <p className="gi-hero-tag">{game.tagline}</p>
+          </div>
+        </div>
+
+        <h3 className="gi-section-title">How to Play</h3>
+        <div className="gi-steps">
+          {game.steps.map((s, i) => (
+            <div key={i} className="gi-step">
+              <div className="gi-step-num" style={{ background: game.color }}>{i + 1}</div>
+              <div className="gi-step-body">
+                <div className="gi-step-title">{s.emoji} {s.title}</div>
+                <p className="gi-step-desc">{s.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <button className="gi-play-btn" style={{ background: game.color }} onClick={() => navigate(route)}>
+          Play {game.name} →
+        </button>
+      </section>
+    )
+  }
+
+  // ══════════════════════════════════════════
+  // QUIZ SETUP (with Daily/Blitz/Custom)
+  // ══════════════════════════════════════════
+  if (view === 'quiz-setup') {
+    const game = GAMES[0]
+    const todayStr = new Date().toLocaleDateString('en-NG', { weekday: 'short', month: 'short', day: 'numeric' })
+    return (
+      <section className="play-page">
+        <button className="gh-back" onClick={() => setView('hub')}>← All Games</button>
+        <div className="gi-hero" style={{ borderColor: game.color }}>
+          <img src={game.image} alt={game.name} className="gi-hero-img" />
+          <div className="gi-hero-overlay">
+            <span className="gi-hero-icon">{game.icon}</span>
+            <h2 className="gi-hero-title">{game.name}</h2>
+            <p className="gi-hero-tag">{game.tagline}</p>
+          </div>
+        </div>
+
+        <h3 className="gi-section-title">Quick Start</h3>
+        <div className="gi-quick-modes">
+          <button className="gi-qm" onClick={startDaily}>
+            <span className="gi-qm-icon">📅</span>
+            <div><strong>Daily Challenge</strong><br/><span>{todayStr} · 10Q · 45s</span></div>
+          </button>
+          <button className="gi-qm gi-qm-blitz" onClick={startBlitz}>
+            <span className="gi-qm-icon">⚡</span>
+            <div><strong>Blitz Mode</strong><br/><span>30Q · 5 min race</span></div>
+          </button>
+        </div>
+
+        <h3 className="gi-section-title">Custom Game</h3>
+        <div className="play-builder">
+          <div className="play-row">
+            <span className="play-row-label">Region</span>
+            <div className="play-chips">
+              {REGIONS.map(r => (
+                <button key={r.id} className={`play-chip ${region === r.id ? 'active' : ''}`} onClick={() => setRegion(r.id)}>
+                  {r.icon} {r.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="play-row">
+            <span className="play-row-label">Categories</span>
+            <div className="play-chips play-chips-wrap">
+              {CATEGORIES.map(cat => (
+                <button key={cat.id} className={`play-chip play-chip-cat ${selectedCats.includes(cat.id) ? 'active' : ''}`} onClick={() => toggleCat(cat.id)}>
+                  {cat.icon} {cat.label}
+                </button>
+              ))}
+            </div>
+            <span className="play-row-hint">
+              {selectedCats.length === 0 ? 'All categories' : `${selectedCats.length} selected`} · {available.length} questions
+            </span>
+          </div>
+          <div className="play-row">
+            <span className="play-row-label">Difficulty</span>
+            <div className="play-chips">
+              {DIFFICULTIES.map(d => (
+                <button key={d.id} className={`play-chip ${difficulty === d.id ? 'active' : ''}`} onClick={() => setDifficulty(d.id)}
+                  style={difficulty === d.id ? { borderColor: d.color, background: d.color, color: '#fff' } : {}}>
+                  {d.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="play-row">
+            <span className="play-row-label">Questions</span>
+            <div className="play-chips">
+              {QUESTION_COUNTS.map(n => (
+                <button key={n} className={`play-chip ${questionCount === n ? 'active' : ''}`} onClick={() => setQuestionCount(n)}>{n}</button>
+              ))}
+            </div>
+            {questionCount > available.length && <span className="play-row-warn">Only {available.length} available</span>}
+          </div>
+          <div className="play-row">
+            <span className="play-row-label">Timer</span>
+            <div className="play-chips">
+              {TIMER_OPTIONS.map(t => (
+                <button key={t.id} className={`play-chip ${timer === t.id ? 'active' : ''}`} onClick={() => setTimer(t.id)}>{t.label}</button>
+              ))}
+            </div>
+          </div>
+          <button className="play-start-btn" onClick={startGame}>
+            <span>Start Quiz</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </button>
+        </div>
+      </section>
+    )
+  }
+
+  // ══════════════════════════════════════════
+  // GAME HUB (default)
+  // ══════════════════════════════════════════
   return (
     <section className="play-page">
-      {/* Hero — brought from former Landing */}
-      <div className="play-hero">
-        <h1>
-          <span className="hero-sub">How well do you know</span>
-          <span className="hero-main">Nigeria?</span>
-        </h1>
-        <p className="hero-desc">
-          Drop pins on the map. {available.length}+ questions across Lagos & Abuja.
-        </p>
+      <div className="gh-header">
+        <h1 className="gh-title">Choose Your Game</h1>
+        <p className="gh-subtitle">4 ways to explore Nigeria</p>
       </div>
 
-      {/* How to Play */}
-      <div className="how-it-works">
-        <h2 className="section-label-home">How to Play</h2>
-        <div className="steps-grid">
-          <div className="step-card">
-            <div className="step-num">1</div>
-            <h3>📍 Read the clue</h3>
-            <p>Each question describes a location in Nigeria.</p>
-          </div>
-          <div className="step-card">
-            <div className="step-num">2</div>
-            <h3>🗺️ Drop your pin</h3>
-            <p>Tap the map where you think the location is.</p>
-          </div>
-          <div className="step-card">
-            <div className="step-num">3</div>
-            <h3>🏆 Score points</h3>
-            <p>The closer your pin, the higher your score!</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Mode selector cards */}
-      <div className="play-modes">
-        <button className="play-mode-card play-mode-daily" onClick={startDailyChallenge}>
-          <div className="play-mode-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          </div>
-          <div className="play-mode-info">
-            <div className="play-mode-name">Daily Challenge</div>
-            <div className="play-mode-desc">{todayStr} · 10Q · 45s timer</div>
-          </div>
-          <span className="play-mode-arrow">→</span>
-        </button>
-
-        <button className="play-mode-card play-mode-blitz" onClick={startBlitz}>
-          <div className="play-mode-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-          </div>
-          <div className="play-mode-info">
-            <div className="play-mode-name">Blitz Mode</div>
-            <div className="play-mode-desc">30Q · 5 min total · Race!</div>
-          </div>
-          <span className="play-mode-arrow">→</span>
-        </button>
-
-        <button className="play-mode-card play-mode-postcard" onClick={() => navigate('/postcards')}>
-          <div className="play-mode-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="12" y1="10" x2="12" y2="20"/></svg>
-          </div>
-          <div className="play-mode-info">
-            <div className="play-mode-name">PostCards</div>
-            <div className="play-mode-desc">Photo quiz · Guess the landmark</div>
-          </div>
-          <span className="play-mode-arrow">→</span>
-        </button>
-
-        <button className="play-mode-card play-mode-puzzle" onClick={() => navigate('/puzzle')}>
-          <div className="play-mode-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 5h4v4H5zM15 5h4v4h-4zM5 15h4v4H5zM15 15h4v4h-4z"/><path d="M9 7h6M9 17h6M7 9v6M17 9v6"/></svg>
-          </div>
-          <div className="play-mode-info">
-            <div className="play-mode-name">Puzzle</div>
-            <div className="play-mode-desc">Rearrange · Nigerian landmarks</div>
-          </div>
-          <span className="play-mode-arrow">→</span>
-        </button>
-
-        <button className="play-mode-card play-mode-word" onClick={() => navigate('/wordgame')}>
-          <div className="play-mode-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
-          </div>
-          <div className="play-mode-info">
-            <div className="play-mode-name">Guess the Word</div>
-            <div className="play-mode-desc">Unscramble · Learn Nigerian history</div>
-          </div>
-          <span className="play-mode-arrow">→</span>
-        </button>
-      </div>
-
-      {/* Custom Game Builder */}
-      <div className="play-builder">
-        <h3 className="play-builder-title">Custom Game</h3>
-
-        {/* Region */}
-        <div className="play-row">
-          <span className="play-row-label">Region</span>
-          <div className="play-chips">
-            {REGIONS.map(r => (
-              <button key={r.id} className={`play-chip ${region === r.id ? 'active' : ''}`} onClick={() => setRegion(r.id)}>
-                {r.icon} {r.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Categories */}
-        <div className="play-row">
-          <span className="play-row-label">Categories</span>
-          <div className="play-chips play-chips-wrap">
-            {CATEGORIES.map(cat => (
-              <button
-                key={cat.id}
-                className={`play-chip play-chip-cat ${selectedCats.includes(cat.id) ? 'active' : ''}`}
-                onClick={() => toggleCat(cat.id)}
-              >
-                {cat.icon} {cat.label}
-              </button>
-            ))}
-          </div>
-          <span className="play-row-hint">
-            {selectedCats.length === 0 ? 'All categories' : `${selectedCats.length} selected`} · {available.length} questions
-          </span>
-        </div>
-
-        {/* Difficulty */}
-        <div className="play-row">
-          <span className="play-row-label">Difficulty</span>
-          <div className="play-chips">
-            {DIFFICULTIES.map(d => (
-              <button key={d.id}
-                className={`play-chip ${difficulty === d.id ? 'active' : ''}`}
-                onClick={() => setDifficulty(d.id)}
-                style={difficulty === d.id ? { borderColor: d.color, background: d.color, color: '#fff' } : {}}
-              >
-                {d.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Questions */}
-        <div className="play-row">
-          <span className="play-row-label">Questions</span>
-          <div className="play-chips">
-            {QUESTION_COUNTS.map(n => (
-              <button key={n} className={`play-chip ${questionCount === n ? 'active' : ''}`} onClick={() => setQuestionCount(n)}>
-                {n}
-              </button>
-            ))}
-          </div>
-          {questionCount > available.length && (
-            <span className="play-row-warn">Only {available.length} available</span>
-          )}
-        </div>
-
-        {/* Timer */}
-        <div className="play-row">
-          <span className="play-row-label">Timer</span>
-          <div className="play-chips">
-            {TIMER_OPTIONS.map(t => (
-              <button key={t.id} className={`play-chip ${timer === t.id ? 'active' : ''}`} onClick={() => setTimer(t.id)}>
-                {t.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Start */}
-        <button className="play-start-btn" onClick={startGame}>
-          <span>Start Quiz</span>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        </button>
+      <div className="gh-grid">
+        {GAMES.map(game => (
+          <button key={game.id} className="gh-card" onClick={() => handleCardClick(game.id)}>
+            <div className="gh-card-img-wrap">
+              <img src={game.image} alt={game.name} className="gh-card-img" loading="lazy" />
+              <div className="gh-card-img-overlay" />
+              <span className="gh-card-icon">{game.icon}</span>
+            </div>
+            <div className="gh-card-body">
+              <h3 className="gh-card-name">{game.name}</h3>
+              <p className="gh-card-tag">{game.tagline}</p>
+              <div className="gh-card-steps">
+                {game.steps.map((s, i) => (
+                  <span key={i} className="gh-card-step">{s.emoji}</span>
+                ))}
+              </div>
+            </div>
+            <div className="gh-card-accent" style={{ background: game.color }} />
+          </button>
+        ))}
       </div>
     </section>
   )
