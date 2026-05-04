@@ -1,31 +1,30 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PUZZLE_IMAGES } from '../data/postcards.js'
-import { playCorrect, playWrong, playPinDrop, vibrate } from '../engine/audio.js'
+import { playCorrect, playPinDrop, vibrate } from '../engine/audio.js'
 
-const GRID = 3 // 3x3 puzzle
+const GRID = 3
 
-function createTiles(size) {
-  return Array.from({ length: size * size }, (_, i) => i)
+function createTiles() {
+  return Array.from({ length: GRID * GRID }, (_, i) => i)
 }
 
-function shuffleTiles(tiles) {
-  const a = [...tiles]
-  // Fisher-Yates with solvability guarantee
+function shuffleTiles() {
+  const a = createTiles()
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
     ;[a[i], a[j]] = [a[j], a[i]]
   }
-  // Ensure solvable (even number of inversions for odd grid)
+  // Ensure solvable (even inversions)
   let inversions = 0
   for (let i = 0; i < a.length; i++) {
     for (let j = i + 1; j < a.length; j++) {
       if (a[i] > a[j]) inversions++
     }
   }
-  if (inversions % 2 !== 0) {
-    [a[0], a[1]] = [a[1], a[0]]
-  }
+  if (inversions % 2 !== 0) [a[0], a[1]] = [a[1], a[0]]
+  // Don't start solved
+  if (a.every((t, i) => t === i)) [a[0], a[1]] = [a[1], a[0]]
   return a
 }
 
@@ -36,36 +35,37 @@ function isSolved(tiles) {
 export default function PuzzleGame() {
   const navigate = useNavigate()
   const [puzzleIdx, setPuzzleIdx] = useState(0)
-  const [tiles, setTiles] = useState(() => shuffleTiles(createTiles(GRID)))
+  const [tiles, setTiles] = useState(createTiles)
   const [selected, setSelected] = useState(null)
   const [moves, setMoves] = useState(0)
-  const [phase, setPhase] = useState('loading') // loading | playing | solved | allDone
+  const [phase, setPhase] = useState('preview') // preview | playing | solved | allDone
   const [timer, setTimer] = useState(0)
   const [imgLoaded, setImgLoaded] = useState(false)
   const [results, setResults] = useState([])
-  const [showPreview, setShowPreview] = useState(true)
   const intervalRef = useRef(null)
 
   const puzzle = PUZZLE_IMAGES[puzzleIdx]
 
   // Timer
   useEffect(() => {
-    if (phase !== 'playing') return
+    if (phase !== 'playing') {
+      clearInterval(intervalRef.current)
+      return
+    }
     intervalRef.current = setInterval(() => setTimer(t => t + 1), 1000)
     return () => clearInterval(intervalRef.current)
   }, [phase])
 
-  // Preview for 2 seconds, then scramble
+  // When image loads, show preview then scramble
   useEffect(() => {
     if (!imgLoaded) return
-    setShowPreview(true)
+    setPhase('preview')
     const t = setTimeout(() => {
-      setShowPreview(false)
-      setTiles(shuffleTiles(createTiles(GRID)))
+      setTiles(shuffleTiles())
       setPhase('playing')
     }, 2500)
     return () => clearTimeout(t)
-  }, [imgLoaded, puzzleIdx])
+  }, [imgLoaded])
 
   function handleTileClick(idx) {
     if (phase !== 'playing') return
@@ -73,13 +73,11 @@ export default function PuzzleGame() {
       setSelected(idx)
       playPinDrop()
     } else {
-      // Swap tiles
       const newTiles = [...tiles]
       ;[newTiles[selected], newTiles[idx]] = [newTiles[idx], newTiles[selected]]
       setTiles(newTiles)
       setSelected(null)
       setMoves(prev => prev + 1)
-
       if (isSolved(newTiles)) {
         clearInterval(intervalRef.current)
         playCorrect(); vibrate([100])
@@ -96,25 +94,27 @@ export default function PuzzleGame() {
       return
     }
     setPuzzleIdx(prev => prev + 1)
-    setTiles(createTiles(GRID))
+    setTiles(createTiles())
     setSelected(null)
     setMoves(0)
     setTimer(0)
-    setPhase('loading')
     setImgLoaded(false)
+  }
+
+  function restart() {
+    setPuzzleIdx(0); setResults([]); setMoves(0); setTimer(0)
+    setTiles(createTiles()); setSelected(null); setImgLoaded(false)
   }
 
   const formatTime = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 
-  // All puzzles complete
   if (phase === 'allDone') {
     const totalStars = results.reduce((s, r) => s + r.stars, 0)
-    const maxStars = results.length * 3
     return (
       <section className="pz-results">
         <div className="pz-results-card">
           <h2>🧩 Puzzle Complete!</h2>
-          <div className="pz-results-stars">{'⭐'.repeat(totalStars)} <span className="pz-dim">/ {maxStars} stars</span></div>
+          <div className="pz-results-stars">{'⭐'.repeat(totalStars)} <span className="pz-dim">/ {results.length * 3} stars</span></div>
           <div className="pz-results-list">
             {results.map((r, i) => (
               <div key={i} className="pz-result-row">
@@ -126,7 +126,7 @@ export default function PuzzleGame() {
             ))}
           </div>
           <div className="pz-results-actions">
-            <button className="btn btn-primary" onClick={() => { setPuzzleIdx(0); setResults([]); setMoves(0); setTimer(0); setPhase('loading'); setImgLoaded(false) }}>Play Again</button>
+            <button className="btn btn-primary" onClick={restart}>Play Again</button>
             <button className="btn btn-outline" onClick={() => navigate('/')}>Home</button>
           </div>
         </div>
@@ -138,43 +138,44 @@ export default function PuzzleGame() {
     <section className="puzzle-game">
       {/* HUD */}
       <div className="pz-hud">
-        <span className="pz-hud-title">🧩 {puzzle.title}</span>
-        <span className="pz-hud-info">{puzzleIdx + 1}/{PUZZLE_IMAGES.length}</span>
+        <span className="pz-hud-title">🧩 {puzzleIdx + 1}/{PUZZLE_IMAGES.length}</span>
+        <span className="pz-hud-info">{puzzle.title}</span>
       </div>
       <div className="pz-stats">
         <span className="pz-stat">⏱ {formatTime(timer)}</span>
         <span className="pz-stat">🔄 {moves} moves</span>
+        {phase === 'preview' && <span className="pz-stat pz-stat-preview">👀 Memorize!</span>}
+      </div>
+
+      {/* Reference image */}
+      <div className="pz-ref">
+        <img src={puzzle.image} alt="Reference" />
+        <span>Reference</span>
       </div>
 
       {/* Puzzle board */}
-      <div className="pz-board-wrap">
-        {/* Reference image (small) */}
-        <div className="pz-ref">
-          <img src={puzzle.image} alt="Reference" />
-          <span>Reference</span>
-        </div>
-
-        <div className="pz-board" style={{ '--grid': GRID }}>
-          {(showPreview ? createTiles(GRID) : tiles).map((tileIdx, pos) => {
-            const row = Math.floor(tileIdx / GRID)
-            const col = tileIdx % GRID
-            return (
-              <div
-                key={pos}
-                className={`pz-tile ${selected === pos ? 'selected' : ''} ${showPreview ? 'preview' : ''} ${phase === 'solved' ? 'solved' : ''}`}
-                onClick={() => handleTileClick(pos)}
-                style={{
-                  backgroundImage: `url(${puzzle.image})`,
-                  backgroundSize: `${GRID * 100}%`,
-                  backgroundPosition: `${(col / (GRID - 1)) * 100}% ${(row / (GRID - 1)) * 100}%`,
-                }}
-              >
-                {showPreview && <div className="pz-tile-num">{tileIdx + 1}</div>}
-              </div>
-            )
-          })}
-        </div>
+      <div className="pz-board" style={{ '--grid': GRID }}>
+        {(phase === 'preview' ? createTiles() : tiles).map((tileIdx, pos) => {
+          const row = Math.floor(tileIdx / GRID)
+          const col = tileIdx % GRID
+          return (
+            <div
+              key={pos}
+              className={`pz-tile ${selected === pos ? 'selected' : ''} ${phase === 'preview' ? 'preview' : ''} ${phase === 'solved' ? 'solved' : ''}`}
+              onClick={() => handleTileClick(pos)}
+              style={{
+                backgroundImage: `url(${puzzle.image})`,
+                backgroundSize: `${GRID * 100}%`,
+                backgroundPosition: `${(col / (GRID - 1)) * 100}% ${(row / (GRID - 1)) * 100}%`,
+              }}
+            />
+          )
+        })}
       </div>
+
+      {phase === 'playing' && (
+        <p className="pz-instruction">Tap a tile to select, then tap another to swap</p>
+      )}
 
       {/* Solved overlay */}
       {phase === 'solved' && (
@@ -191,21 +192,8 @@ export default function PuzzleGame() {
         </div>
       )}
 
-      {/* Loading state */}
-      {phase === 'loading' && !imgLoaded && (
-        <div className="pz-loading">
-          <div className="pz-loading-spinner" />
-          <p>Loading puzzle...</p>
-        </div>
-      )}
-
-      {/* Hidden image for preload */}
-      <img
-        src={puzzle.image}
-        alt=""
-        style={{ display: 'none' }}
-        onLoad={() => setImgLoaded(true)}
-      />
+      {/* Hidden image preloader */}
+      <img src={puzzle.image} alt="" style={{ display: 'none' }} onLoad={() => setImgLoaded(true)} />
     </section>
   )
 }

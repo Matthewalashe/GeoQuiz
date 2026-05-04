@@ -2935,3 +2935,28 @@ a:hover { text-decoration: underline; }
 .pz-rr-time { color: var(--text-secondary); }
 .pz-results-actions { display: flex; gap: 0.5rem; }
 .pz-results-actions .btn { flex: 1; }
+
+/* Puzzle instruction */
+.pz-instruction {
+  text-align: center; font-size: 0.75rem; color: var(--text-secondary);
+  margin-top: 0.75rem; font-style: italic;
+}
+.pz-stat-preview {
+  color: #fbbf24; font-weight: 700; animation: blink 1s ease-in-out infinite;
+}
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+/* Round corners for modern feel */
+.pc-image-wrap { border-radius: 12px; }
+.pc-option { border-radius: 10px; }
+.pc-fact { border-radius: 8px; }
+.pc-next-btn, .pz-next-btn { border-radius: 10px; }
+.pc-results-card, .pz-results-card { border-radius: 16px; }
+.play-mode-card { border-radius: 12px; }
+.play-builder { border-radius: 14px; }
+.play-chip { border-radius: 8px; }
+.play-start-btn { border-radius: 10px; }
+.pz-board { border-radius: 12px; overflow: hidden; }
+.pz-ref { border-radius: 8px; }
+.pz-solved-card { border-radius: 16px; }
+.pc-image-badge { border-radius: 4px; }

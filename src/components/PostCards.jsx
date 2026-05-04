@@ -1,14 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { POSTCARD_QUESTIONS } from '../data/postcards.js'
 import { playCorrect, playWrong, vibrate } from '../engine/audio.js'
 
-function shuffleArray(arr, seed) {
+function shuffle(arr) {
   const a = [...arr]
-  let s = seed || Date.now()
   for (let i = a.length - 1; i > 0; i--) {
-    s = (s * 16807) % 2147483647
-    const j = s % (i + 1)
+    const j = Math.floor(Math.random() * (i + 1))
     ;[a[i], a[j]] = [a[j], a[i]]
   }
   return a
@@ -16,7 +14,7 @@ function shuffleArray(arr, seed) {
 
 export default function PostCards() {
   const navigate = useNavigate()
-  const [questions] = useState(() => shuffleArray(POSTCARD_QUESTIONS).slice(0, 10))
+  const [questions] = useState(() => shuffle(POSTCARD_QUESTIONS).slice(0, 10))
   const [idx, setIdx] = useState(0)
   const [selected, setSelected] = useState(null)
   const [phase, setPhase] = useState('playing') // playing | answered | done
@@ -73,7 +71,7 @@ export default function PostCards() {
             ))}
           </div>
           <div className="pc-results-actions">
-            <button className="btn btn-primary" onClick={() => navigate('/postcards')}>Play Again</button>
+            <button className="btn btn-primary" onClick={() => window.location.reload()}>Play Again</button>
             <button className="btn btn-outline" onClick={() => navigate('/')}>Home</button>
           </div>
         </div>
@@ -86,13 +84,19 @@ export default function PostCards() {
       {/* HUD */}
       <div className="pc-hud">
         <span className="pc-hud-q">📷 {idx + 1}/{questions.length}</span>
-        <span className="pc-hud-score">{score} pts</span>
-        {streak >= 3 && <span className="pc-hud-streak">🔥{streak}</span>}
+        <div>
+          <span className="pc-hud-score">{score} pts</span>
+          {streak >= 3 && <span className="pc-hud-streak">🔥{streak}</span>}
+        </div>
       </div>
 
       {/* Postcard image */}
       <div className="pc-image-wrap">
-        {!imgLoaded && <div className="pc-image-skeleton"><div className="pc-skeleton-pulse" /></div>}
+        {!imgLoaded && (
+          <div className="pc-image-skeleton">
+            <div className="pc-skeleton-pulse" />
+          </div>
+        )}
         <img
           src={q.image}
           alt="Postcard"
@@ -133,7 +137,7 @@ export default function PostCards() {
         <div className="pc-fact-bar">
           <p className="pc-fact">{q.fact}</p>
           <button className="pc-next-btn" onClick={next}>
-            {idx + 1 >= questions.length ? 'See Results' : 'Next Postcard'} →
+            {idx + 1 >= questions.length ? 'See Results →' : 'Next Postcard →'}
           </button>
         </div>
       )}
