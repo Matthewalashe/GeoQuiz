@@ -131,6 +131,28 @@ export default function CategorySelector() {
           </div>
           <span className="play-mode-arrow">→</span>
         </button>
+
+        <button className="play-mode-card play-mode-postcard" onClick={() => navigate('/postcards')}>
+          <div className="play-mode-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="12" y1="10" x2="12" y2="20"/></svg>
+          </div>
+          <div className="play-mode-info">
+            <div className="play-mode-name">PostCards</div>
+            <div className="play-mode-desc">Photo quiz · Guess the landmark</div>
+          </div>
+          <span className="play-mode-arrow">→</span>
+        </button>
+
+        <button className="play-mode-card play-mode-puzzle" onClick={() => navigate('/puzzle')}>
+          <div className="play-mode-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 5h4v4H5zM15 5h4v4h-4zM5 15h4v4H5zM15 15h4v4h-4z"/><path d="M9 7h6M9 17h6M7 9v6M17 9v6"/></svg>
+          </div>
+          <div className="play-mode-info">
+            <div className="play-mode-name">Puzzle</div>
+            <div className="play-mode-desc">Rearrange · Nigerian landmarks</div>
+          </div>
+          <span className="play-mode-arrow">→</span>
+        </button>
       </div>
 
       {/* Custom Game Builder */}

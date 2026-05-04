@@ -1,4 +1,4 @@
-const CACHE = 'geoquiz-v5'
+const CACHE = 'geoquiz-v6'
 const ASSETS = ['/', '/index.html']
 
 self.addEventListener('install', e => {
