@@ -13,6 +13,7 @@ import Achievements from './components/Achievements.jsx'
 import Community from './components/Community.jsx'
 import PostCards from './components/PostCards.jsx'
 import PuzzleGame from './components/PuzzleGame.jsx'
+import WordGame from './components/WordGame.jsx'
 import InstallPrompt from './components/InstallPrompt.jsx'
 import PageTransition from './components/PageTransition.jsx'
 import { processDailyLogin } from './engine/xp.js'
@@ -124,6 +125,7 @@ export default function App() {
             <Route path="/community" element={<Community />} />
             <Route path="/postcards" element={<PostCards />} />
             <Route path="/puzzle" element={<PuzzleGame />} />
+            <Route path="/wordgame" element={<WordGame />} />
           </Routes>
         </PageTransition>
       </main>

@@ -153,6 +153,17 @@ export default function CategorySelector() {
           </div>
           <span className="play-mode-arrow">→</span>
         </button>
+
+        <button className="play-mode-card play-mode-word" onClick={() => navigate('/wordgame')}>
+          <div className="play-mode-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
+          </div>
+          <div className="play-mode-info">
+            <div className="play-mode-name">Guess the Word</div>
+            <div className="play-mode-desc">Unscramble · Learn Nigerian history</div>
+          </div>
+          <span className="play-mode-arrow">→</span>
+        </button>
       </div>
 
       {/* Custom Game Builder */}
