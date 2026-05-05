@@ -200,8 +200,10 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div style={{ textAlign: 'center', marginTop: '1.5rem', display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+      <div style={{ textAlign: 'center', marginTop: '1.5rem', display: 'flex', justifyContent: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
         <Link to="/play" className="btn btn-primary">Keep Exploring</Link>
+        <Link to="/story" className="btn btn-outline">📖 Story Mode</Link>
+        <Link to="/rewards" className="btn btn-outline">🎁 Rewards</Link>
         <Link to="/achievements" className="btn btn-outline">Achievements</Link>
       </div>
     </section>

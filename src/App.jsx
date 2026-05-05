@@ -15,9 +15,11 @@ import PostCards from './components/PostCards.jsx'
 import PuzzleGame from './components/PuzzleGame.jsx'
 import WordGame from './components/WordGame.jsx'
 import Rewards from './components/Rewards.jsx'
+import StoryMode from './components/StoryMode.jsx'
 import InstallPrompt from './components/InstallPrompt.jsx'
 import PageTransition from './components/PageTransition.jsx'
 import { processDailyLogin, canClaimToday } from './engine/xp.js'
+import { scheduleNotifChecks, getNotifPermission, requestNotifPermission } from './engine/notifications.js'
 
 // Dark mode hook
 function useTheme() {
@@ -93,6 +95,8 @@ export default function App() {
       setTimeout(() => setDailyToast(null), 4000)
     }
     setShowRewardDot(canClaimToday())
+    // Start notification scheduler
+    if (getNotifPermission() === 'granted') scheduleNotifChecks()
   }, [])
 
   return (
@@ -130,13 +134,14 @@ export default function App() {
             <Route path="/puzzle" element={<PuzzleGame />} />
             <Route path="/wordgame" element={<WordGame />} />
             <Route path="/rewards" element={<Rewards />} />
+            <Route path="/story" element={<StoryMode />} />
           </Routes>
         </PageTransition>
       </main>
       {!isGamePage && (
         <footer className="app-footer">
           <p>
-            GeoQuiz v2.0 — Lagos Edition &nbsp;|&nbsp;
+            GeoQuiz v3.0 — Lagos Edition &nbsp;|&nbsp;
             By <a href="https://wa.me/2348184495633" target="_blank" rel="noopener noreferrer">WhiteArts Technologies</a> &nbsp;|&nbsp;
             Conceived by LASPIC &nbsp;|&nbsp;
             <a href="mailto:donghinny91@gmail.com">Contact</a>

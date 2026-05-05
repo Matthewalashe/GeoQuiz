@@ -3471,3 +3471,131 @@ a:hover { text-decoration: underline; }
   background: #ef4444; border-radius: 50%; border: 2px solid var(--bg);
 }
 .tab-center-icon { position: relative; }
+
+/* ═══════════════════════════════════════════
+   STORY MODE + MAP SKINS (Milestone 2.6)
+   ═══════════════════════════════════════════ */
+.story-page { max-width: 500px; margin: 0 auto; padding: 0.5rem 0.75rem; }
+
+/* ── Campaign Overview ── */
+.sm-header { text-align: center; margin-bottom: 1rem; }
+.sm-main-title { font-family: var(--font-head); font-size: 1.4rem; font-weight: 800; margin: 0; }
+.sm-main-sub { font-size: 0.78rem; color: var(--text-secondary); margin: 0.15rem 0; }
+.sm-total-stars { font-size: 0.75rem; color: var(--primary); font-weight: 700; }
+
+.sm-chapters { display: flex; flex-direction: column; gap: 0.5rem; }
+.sm-ch-card {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.75rem; border: 2px solid var(--border); border-radius: 14px;
+  background: var(--surface); cursor: pointer; text-align: left;
+  font-family: inherit; font-size: inherit; color: var(--text);
+  transition: all 0.2s; touch-action: manipulation;
+}
+.sm-ch-card:hover { border-color: var(--primary); }
+.sm-ch-card.locked { opacity: 0.45; cursor: default; }
+.sm-ch-card.completed { background: rgba(0,255,136,0.04); }
+.sm-ch-card-icon {
+  width: 44px; height: 44px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; flex-shrink: 0; color: #fff;
+}
+.sm-ch-card-body { flex: 1; }
+.sm-ch-card-week { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary); font-weight: 700; }
+.sm-ch-card-name { font-family: var(--font-head); font-weight: 800; font-size: 0.9rem; }
+.sm-ch-card-progress { font-size: 0.7rem; color: var(--text-secondary); }
+.sm-ch-badge { font-size: 1.3rem; }
+.sm-ch-arrow { font-size: 1.2rem; color: var(--text-secondary); }
+
+/* ── Chapter Detail ── */
+.sm-ch-hero {
+  text-align: center; padding: 1.25rem; border: 3px solid;
+  border-radius: 16px; background: var(--surface); margin-bottom: 1rem;
+}
+.sm-ch-icon { font-size: 2.5rem; display: block; margin-bottom: 0.25rem; }
+.sm-ch-title { font-family: var(--font-head); font-size: 1.3rem; margin: 0; }
+.sm-ch-sub { font-size: 0.78rem; color: var(--text-secondary); margin: 0.15rem 0; }
+.sm-ch-stars { font-size: 0.75rem; font-weight: 700; color: var(--primary); }
+
+.sm-intro {
+  padding: 0.75rem; background: var(--surface); border: 2px solid var(--border);
+  border-radius: 12px; margin-bottom: 1rem; font-size: 0.8rem; line-height: 1.45;
+}
+.sm-intro p { margin: 0; }
+
+/* Candy Crush Stage Path */
+.sm-path {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 0; margin-bottom: 1rem;
+}
+.sm-stage-wrap {
+  display: flex; flex-direction: column; align-items: center;
+}
+.sm-wire {
+  width: 3px; height: 28px; background: var(--border); border-radius: 2px;
+  transition: background 0.3s;
+}
+.sm-wire.done { background: var(--primary); }
+.sm-stage {
+  width: 48px; height: 48px; border-radius: 50%;
+  border: 3px solid var(--border); background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-head); font-weight: 800; font-size: 1rem;
+  cursor: pointer; transition: all 0.2s; touch-action: manipulation;
+  color: var(--text);
+}
+.sm-stage.done { color: #fff; background: var(--primary); border-color: var(--primary); }
+.sm-stage.locked { opacity: 0.35; cursor: default; }
+.sm-stage:not(.locked):hover { transform: scale(1.1); }
+.sm-stage-name { font-size: 0.65rem; font-weight: 600; margin-top: 0.15rem; color: var(--text-secondary); }
+.sm-stage-stars { font-size: 0.7rem; margin-bottom: 0.15rem; }
+.star-filled { color: #fbbf24; }
+.star-empty { color: var(--border); }
+
+/* Fun Facts */
+.sm-facts {
+  padding: 0.75rem; background: var(--surface); border: 2px solid var(--border);
+  border-radius: 12px; margin-bottom: 1rem;
+}
+.sm-facts-title { font-family: var(--font-head); font-size: 0.8rem; margin: 0 0 0.5rem; }
+.sm-fact {
+  font-size: 0.75rem; color: var(--text-secondary); line-height: 1.35;
+  padding: 0.4rem 0; border-bottom: 1px solid var(--border);
+}
+.sm-fact:last-child { border-bottom: none; padding-bottom: 0; }
+
+/* Badge earned */
+.sm-badge-earned {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.75rem; border: 2px solid; border-radius: 12px;
+  background: rgba(0,255,136,0.05); font-family: var(--font-head);
+  font-weight: 700; font-size: 0.85rem;
+}
+.sm-badge-icon { font-size: 1.5rem; }
+
+/* ── Map Skins ── */
+.sm-skin-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem;
+}
+.sm-skin-card {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 0.75rem; border: 2px solid var(--border); border-radius: 14px;
+  background: var(--surface); cursor: pointer; font-family: inherit;
+  font-size: inherit; color: var(--text); transition: all 0.2s;
+  touch-action: manipulation;
+}
+.sm-skin-card:hover:not(.locked) { border-color: var(--primary); }
+.sm-skin-card.active { border-color: var(--primary); background: rgba(0,255,136,0.06); box-shadow: 0 0 12px rgba(0,255,136,0.15); }
+.sm-skin-card.locked { opacity: 0.4; cursor: default; }
+.sm-skin-preview {
+  width: 56px; height: 56px; border-radius: 12px;
+  background: linear-gradient(135deg, var(--surface), var(--border));
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 0.35rem;
+}
+.sm-skin-emoji { font-size: 1.8rem; }
+.sm-skin-name { font-family: var(--font-head); font-weight: 700; font-size: 0.78rem; }
+.sm-skin-unlock { font-size: 0.6rem; color: var(--text-secondary); }
+
+/* Map tile filter for skins like Inferno/Rainbow */
+.skin-filtered { filter: var(--map-filter, none); }
+.leaflet-tile-pane .skin-filtered img { filter: var(--map-filter, none); }

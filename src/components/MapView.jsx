@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { MapContainer, TileLayer, Marker, CircleMarker, Polyline, GeoJSON, Tooltip, useMapEvents, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import { fetchLagosFeature } from '../data/lagos-boundary.js'
+import { getActiveSkin, getSkinById } from '../data/map-skins.js'
 
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
@@ -13,6 +14,7 @@ L.Icon.Default.mergeOptions({
 const userIcon = L.divIcon({ className: 'pin-marker', iconSize: [30, 30], iconAnchor: [15, 30] })
 const correctIcon = L.divIcon({ className: 'correct-marker', iconSize: [24, 24], iconAnchor: [12, 12] })
 
+// Legacy TILES kept for fallback
 const TILES = {
   topo: { url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png', attr: '© CartoDB © OpenStreetMap' },
   light: { url: 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', attr: '© CartoDB © OpenStreetMap' },
@@ -59,12 +61,24 @@ function LagosBoundary() {
 export default function MapView({ onMapClick, userPin, correctPin, activeLayers, referenceDots = [], unlabeledDots = [], distanceKm, mapCenter, mapZoom }) {
   const center = mapCenter || LAGOS_CENTER
   const zoom = mapZoom || LAGOS_ZOOM
-  const baseLayer = activeLayers.find(l => ['topo', 'terrain', 'satellite'].includes(l)) || 'topo'
-  const tile = TILES[baseLayer]
+
+  // Resolve tile source: explicit layer override → player's skin
+  const explicitLayer = activeLayers.find(l => ['terrain', 'satellite'].includes(l))
+  let tileUrl, tileAttr, tileFilter = null
+
+  if (explicitLayer) {
+    const t = TILES[explicitLayer]
+    tileUrl = t.url; tileAttr = t.attr
+  } else {
+    const skin = getSkinById(getActiveSkin())
+    tileUrl = skin.url; tileAttr = skin.attr; tileFilter = skin.filter || null
+  }
 
   return (
-    <MapContainer center={center} zoom={zoom} className="game-map" zoomControl={true} attributionControl={false}>
-      <TileLayer url={tile.url} attribution={tile.attr} key={baseLayer} />
+    <MapContainer center={center} zoom={zoom} className="game-map" zoomControl={true} attributionControl={false}
+      style={tileFilter ? { '--map-filter': tileFilter } : {}}>
+      <TileLayer url={tileUrl} attribution={tileAttr} key={tileUrl}
+        className={tileFilter ? 'skin-filtered' : ''} />
       <ClickHandler onClick={onMapClick} />
       <ResetView trigger={correctPin ? 'fb' : 'place'} center={center} zoom={zoom} />
 
