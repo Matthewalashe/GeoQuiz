@@ -3282,3 +3282,19 @@ a:hover { text-decoration: underline; }
 
 /* Play builder inside quiz-setup — keep existing styles, override spacing */
 .play-page .play-builder { margin: 0 1rem 1.5rem; }
+
+/* ── PostCards Pack Selector ── */
+.pc-pack-select { max-width: 500px; margin: 0 auto; padding: 0 0.75rem; }
+.pc-pack-title { text-align: center; font-family: var(--font-head); font-size: 1.4rem; margin: 0.5rem 0 0.15rem; }
+.pc-pack-sub { text-align: center; font-size: 0.8rem; color: var(--text-secondary); margin: 0 0 1rem; }
+.pc-packs { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1.25rem; }
+.pc-pack-card {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.75rem 1rem; border: 2px solid var(--border); border-radius: 12px;
+  background: var(--surface); cursor: pointer; font-family: inherit;
+  font-size: 0.85rem; transition: all 0.15s; touch-action: manipulation;
+}
+.pc-pack-card:hover { border-color: #8b5cf6; }
+.pc-pack-card.active { border-color: #8b5cf6; background: rgba(139,92,246,0.1); }
+.pc-pack-label { font-family: var(--font-head); font-weight: 700; }
+.pc-pack-count { font-size: 0.7rem; color: var(--text-secondary); }

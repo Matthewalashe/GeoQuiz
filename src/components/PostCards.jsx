@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { POSTCARD_QUESTIONS } from '../data/postcards.js'
+import { POSTCARD_QUESTIONS, CONTENT_PACKS } from '../data/postcards.js'
 import { playCorrect, playWrong, vibrate } from '../engine/audio.js'
 
 function shuffle(arr) {
@@ -14,14 +14,48 @@ function shuffle(arr) {
 
 export default function PostCards() {
   const navigate = useNavigate()
-  const [questions] = useState(() => shuffle(POSTCARD_QUESTIONS).slice(0, 10))
+  const [pack, setPack] = useState('all')
+  const [started, setStarted] = useState(false)
+  const [questions, setQuestions] = useState([])
   const [idx, setIdx] = useState(0)
   const [selected, setSelected] = useState(null)
-  const [phase, setPhase] = useState('playing') // playing | answered | done
+  const [phase, setPhase] = useState('playing')
   const [score, setScore] = useState(0)
   const [results, setResults] = useState([])
   const [imgLoaded, setImgLoaded] = useState(false)
   const [streak, setStreak] = useState(0)
+
+  function startGame() {
+    const pool = pack === 'all' ? POSTCARD_QUESTIONS : POSTCARD_QUESTIONS.filter(q => q.category === pack)
+    setQuestions(shuffle(pool).slice(0, Math.min(12, pool.length)))
+    setStarted(true)
+  }
+
+  // Pack selector
+  if (!started) {
+    return (
+      <section className="pc-pack-select">
+        <button className="gh-back" onClick={() => navigate('/play')}>← Back</button>
+        <h2 className="pc-pack-title">📷 PostCards</h2>
+        <p className="pc-pack-sub">Choose a content pack</p>
+        <div className="pc-packs">
+          {CONTENT_PACKS.map(p => (
+            <button
+              key={p.id}
+              className={`pc-pack-card ${pack === p.id ? 'active' : ''}`}
+              onClick={() => setPack(p.id)}
+            >
+              <span className="pc-pack-label">{p.label}</span>
+              <span className="pc-pack-count">{p.count} cards</span>
+            </button>
+          ))}
+        </div>
+        <button className="gi-play-btn" style={{ background: '#8b5cf6' }} onClick={startGame}>
+          Start PostCards →
+        </button>
+      </section>
+    )
+  }
 
   const q = questions[idx]
 
@@ -29,27 +63,15 @@ export default function PostCards() {
     if (phase !== 'playing') return
     setSelected(optIdx)
     const isCorrect = optIdx === q.correct
-    if (isCorrect) {
-      playCorrect(); vibrate([50])
-      setScore(prev => prev + 100)
-      setStreak(prev => prev + 1)
-    } else {
-      playWrong(); vibrate([30, 50, 30])
-      setStreak(0)
-    }
+    if (isCorrect) { playCorrect(); vibrate([50]); setScore(p => p + 100); setStreak(p => p + 1) }
+    else { playWrong(); vibrate([30, 50, 30]); setStreak(0) }
     setResults(prev => [...prev, { question: q, selected: optIdx, correct: isCorrect }])
     setPhase('answered')
   }
 
   function next() {
-    if (idx + 1 >= questions.length) {
-      setPhase('done')
-      return
-    }
-    setIdx(prev => prev + 1)
-    setSelected(null)
-    setPhase('playing')
-    setImgLoaded(false)
+    if (idx + 1 >= questions.length) { setPhase('done'); return }
+    setIdx(p => p + 1); setSelected(null); setPhase('playing'); setImgLoaded(false)
   }
 
   if (phase === 'done') {
@@ -72,7 +94,7 @@ export default function PostCards() {
           </div>
           <div className="pc-results-actions">
             <button className="btn btn-primary" onClick={() => window.location.reload()}>Play Again</button>
-            <button className="btn btn-outline" onClick={() => navigate('/')}>Home</button>
+            <button className="btn btn-outline" onClick={() => navigate('/play')}>Games</button>
           </div>
         </div>
       </section>
@@ -81,7 +103,6 @@ export default function PostCards() {
 
   return (
     <section className="postcard-game">
-      {/* HUD */}
       <div className="pc-hud">
         <span className="pc-hud-q">📷 {idx + 1}/{questions.length}</span>
         <div>
@@ -90,29 +111,15 @@ export default function PostCards() {
         </div>
       </div>
 
-      {/* Postcard image */}
       <div className="pc-image-wrap">
-        {!imgLoaded && (
-          <div className="pc-image-skeleton">
-            <div className="pc-skeleton-pulse" />
-          </div>
-        )}
-        <img
-          src={q.image}
-          alt="Postcard"
-          className={`pc-image ${imgLoaded ? 'loaded' : ''}`}
-          onLoad={() => setImgLoaded(true)}
-          draggable={false}
-        />
-        <div className="pc-image-badge">POSTCARD</div>
+        {!imgLoaded && <div className="pc-image-skeleton"><div className="pc-skeleton-pulse" /></div>}
+        <img src={q.image} alt="Postcard" className={`pc-image ${imgLoaded ? 'loaded' : ''}`}
+          onLoad={() => setImgLoaded(true)} draggable={false} />
+        <div className="pc-image-badge">{q.category === 'visual' ? 'VISUAL GUESS' : q.category === 'cultural' ? 'CULTURAL' : 'HYPERLOCAL'}</div>
       </div>
 
-      {/* Question */}
-      <div className="pc-question">
-        <h3>{q.question}</h3>
-      </div>
+      <div className="pc-question"><h3>{q.question}</h3></div>
 
-      {/* Options */}
       <div className="pc-options">
         {q.options.map((opt, i) => {
           let cls = 'pc-option'
@@ -132,12 +139,11 @@ export default function PostCards() {
         })}
       </div>
 
-      {/* Fact + Next */}
       {phase === 'answered' && (
         <div className="pc-fact-bar">
           <p className="pc-fact">{q.fact}</p>
           <button className="pc-next-btn" onClick={next}>
-            {idx + 1 >= questions.length ? 'See Results →' : 'Next Postcard →'}
+            {idx + 1 >= questions.length ? 'See Results →' : 'Next Card →'}
           </button>
         </div>
       )}
