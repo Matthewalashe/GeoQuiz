@@ -3298,3 +3298,176 @@ a:hover { text-decoration: underline; }
 .pc-pack-card.active { border-color: #8b5cf6; background: rgba(139,92,246,0.1); }
 .pc-pack-label { font-family: var(--font-head); font-weight: 700; }
 .pc-pack-count { font-size: 0.7rem; color: var(--text-secondary); }
+
+/* ═══════════════════════════════════════════
+   REWARDS + LEAGUES PAGE
+   ═══════════════════════════════════════════ */
+.rewards-page { max-width: 500px; margin: 0 auto; padding: 0.5rem 0.75rem; position: relative; }
+
+/* Tabs */
+.rw-tabs { display: flex; gap: 4px; margin-bottom: 1rem; background: var(--surface); border-radius: 12px; padding: 4px; }
+.rw-tab {
+  flex: 1; padding: 0.6rem; border: none; border-radius: 10px;
+  font-family: var(--font-head); font-weight: 700; font-size: 0.8rem;
+  background: transparent; color: var(--text-secondary); cursor: pointer;
+  transition: all 0.2s;
+}
+.rw-tab.active { background: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+
+/* Confetti */
+.rw-confetti { position: fixed; inset: 0; pointer-events: none; z-index: 999; overflow: hidden; }
+.rw-confetti-bit {
+  position: absolute; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--color); left: var(--x); top: -10px;
+  animation: confettiFall 2s ease-out var(--delay) forwards;
+}
+@keyframes confettiFall {
+  0% { transform: translateY(0) rotate(0); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+/* Streak banner */
+.rw-streak-banner {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.75rem 1rem; background: var(--surface); border: 2px solid var(--border);
+  border-radius: 14px; margin-bottom: 1rem;
+}
+.rw-streak-fire { font-size: 2rem; }
+.rw-streak-count { font-family: var(--font-head); font-weight: 800; font-size: 1.1rem; }
+.rw-streak-sub { font-size: 0.7rem; color: var(--text-secondary); }
+
+/* ── 7-day Calendar ── */
+.rw-calendar {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
+  margin-bottom: 1rem;
+}
+.rw-day {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 0.5rem 0.2rem; border: 2px solid var(--border); border-radius: 10px;
+  background: var(--surface); position: relative; transition: all 0.2s;
+}
+.rw-day.claimed { border-color: #22c55e; background: rgba(34,197,94,0.08); }
+.rw-day.claimed .rw-day-num { color: #22c55e; }
+.rw-day.today { border-color: var(--primary); box-shadow: 0 0 10px rgba(0,255,136,0.2); animation: pulse 2s infinite; }
+.rw-day.next { border-style: dashed; opacity: 0.6; }
+.rw-day-num { font-family: var(--font-head); font-weight: 700; font-size: 0.55rem; color: var(--text-secondary); }
+.rw-day-emoji { font-size: 1.2rem; margin: 0.15rem 0; }
+.rw-day-label { font-size: 0.5rem; color: var(--text-secondary); text-align: center; line-height: 1.1; }
+.rw-day-check {
+  position: absolute; top: -4px; right: -4px; width: 16px; height: 16px;
+  background: #22c55e; color: #fff; border-radius: 50%; font-size: 0.55rem;
+  display: flex; align-items: center; justify-content: center; font-weight: 800;
+}
+
+/* Claim button */
+.rw-claim-btn {
+  width: 100%; padding: 0.85rem; border: none; border-radius: 12px;
+  background: linear-gradient(135deg, #00ff88 0%, #00c853 100%);
+  color: #000; font-family: var(--font-head); font-weight: 800; font-size: 1rem;
+  cursor: pointer; margin-bottom: 1rem; touch-action: manipulation;
+  animation: claimPulse 2s ease-in-out infinite;
+  box-shadow: 0 4px 20px rgba(0,255,136,0.3);
+}
+@keyframes claimPulse { 0%,100% { box-shadow: 0 4px 20px rgba(0,255,136,0.3); } 50% { box-shadow: 0 4px 30px rgba(0,255,136,0.5); } }
+.rw-claim-btn:active { transform: scale(0.97); }
+
+/* Claimed message */
+.rw-claimed-msg { text-align: center; margin-bottom: 1rem; }
+.rw-claimed-msg p { font-size: 0.85rem; color: var(--text-secondary); }
+.rw-claim-result {
+  display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+  padding: 0.75rem; background: rgba(0,255,136,0.1); border-radius: 12px;
+  border: 2px solid rgba(0,255,136,0.3); font-family: var(--font-head); font-weight: 700;
+}
+.rw-claim-emoji { font-size: 1.5rem; }
+.rw-claim-xp { color: var(--primary); }
+
+/* XP progress card */
+.rw-xp-card {
+  padding: 0.75rem 1rem; background: var(--surface); border: 2px solid var(--border);
+  border-radius: 12px; margin-bottom: 1.5rem;
+}
+.rw-xp-top { display: flex; justify-content: space-between; font-family: var(--font-head); font-weight: 700; font-size: 0.8rem; margin-bottom: 0.3rem; }
+.rw-xp-bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.rw-xp-fill { height: 100%; background: var(--primary); border-radius: 4px; transition: width 0.5s; }
+.rw-xp-bot { font-size: 0.65rem; color: var(--text-secondary); margin-top: 0.25rem; text-align: right; }
+
+/* ── League Tab ── */
+.rw-league-badge {
+  text-align: center; padding: 1.25rem; border: 3px solid;
+  border-radius: 16px; background: var(--surface); margin-bottom: 1rem;
+}
+.rw-lb-emoji { font-size: 3rem; display: block; margin-bottom: 0.25rem; }
+.rw-lb-name { font-family: var(--font-head); font-size: 1.3rem; margin: 0; }
+.rw-lb-progress { font-size: 0.75rem; color: var(--text-secondary); margin: 0.25rem 0 0; }
+
+/* Tier track */
+.rw-tiers { display: flex; gap: 4px; margin-bottom: 1rem; }
+.rw-tier {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  padding: 0.5rem 0.2rem; border: 2px solid var(--border); border-radius: 10px;
+  background: var(--surface); opacity: 0.4; font-size: 0.6rem; position: relative;
+}
+.rw-tier.reached { opacity: 0.7; }
+.rw-tier.active { opacity: 1; border-color: var(--primary); background: rgba(0,255,136,0.05); }
+.rw-tier-emoji { font-size: 1.3rem; }
+.rw-tier-name { font-family: var(--font-head); font-weight: 700; font-size: 0.6rem; margin-top: 0.1rem; }
+.rw-tier-xp { font-size: 0.5rem; color: var(--text-secondary); }
+.rw-tier-you {
+  position: absolute; top: -6px; right: -4px; background: var(--primary); color: #000;
+  font-size: 0.45rem; font-weight: 800; padding: 1px 4px; border-radius: 4px;
+}
+
+/* Weekly leaderboard */
+.rw-lb-title { font-family: var(--font-head); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 0.5rem; }
+.rw-lb-list { margin-bottom: 0.5rem; }
+.rw-lb-row {
+  display: flex; align-items: center; gap: 0.4rem;
+  padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--border);
+  font-size: 0.78rem; transition: background 0.15s;
+}
+.rw-lb-row.is-you { background: rgba(0,255,136,0.08); border-radius: 8px; font-weight: 700; }
+.rw-lb-rank { width: 24px; font-family: var(--font-head); font-weight: 800; font-size: 0.75rem; color: var(--text-secondary); }
+.rw-lb-row:nth-child(1) .rw-lb-rank { color: #ffd700; }
+.rw-lb-row:nth-child(2) .rw-lb-rank { color: #c0c0c0; }
+.rw-lb-row:nth-child(3) .rw-lb-rank { color: #cd7f32; }
+.rw-lb-avatar { font-size: 1rem; }
+.rw-lb-pname { flex: 1; }
+.rw-lb-pxp { font-family: var(--font-head); font-weight: 700; color: var(--primary); font-size: 0.7rem; }
+.rw-lb-badge { color: #22c55e; font-size: 0.6rem; font-weight: 800; }
+.rw-lb-note { font-size: 0.6rem; color: var(--text-secondary); text-align: center; font-style: italic; }
+
+/* Nudge bar */
+.rw-nudge {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.65rem 0.75rem; background: rgba(245,158,11,0.1); border: 2px solid rgba(245,158,11,0.3);
+  border-radius: 10px; margin-top: 0.75rem; font-size: 0.78rem; font-weight: 600;
+}
+
+/* Actions */
+.rw-actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
+.rw-actions .btn { flex: 1; }
+
+/* ── Home reward banner ── */
+.rw-home-banner {
+  display: flex; align-items: center; gap: 0.6rem;
+  margin: 0.75rem 1rem; padding: 0.65rem 1rem; border-radius: 12px;
+  background: linear-gradient(135deg, rgba(0,255,136,0.12), rgba(139,92,246,0.12));
+  border: 2px solid rgba(0,255,136,0.3); text-decoration: none; color: var(--text);
+  font-family: var(--font-head); font-weight: 700; font-size: 0.85rem;
+  animation: bannerShimmer 3s ease-in-out infinite;
+}
+@keyframes bannerShimmer {
+  0%,100% { border-color: rgba(0,255,136,0.3); }
+  50% { border-color: rgba(139,92,246,0.4); }
+}
+.rw-hb-icon { font-size: 1.3rem; }
+.rw-hb-text { flex: 1; }
+.rw-hb-arrow { color: var(--primary); font-size: 1.2rem; }
+
+/* Tab bar reward notification dot */
+.tab-reward-dot {
+  position: absolute; top: -2px; right: -2px; width: 8px; height: 8px;
+  background: #ef4444; border-radius: 50%; border: 2px solid var(--bg);
+}
+.tab-center-icon { position: relative; }

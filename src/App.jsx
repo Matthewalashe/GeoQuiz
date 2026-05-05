@@ -14,9 +14,10 @@ import Community from './components/Community.jsx'
 import PostCards from './components/PostCards.jsx'
 import PuzzleGame from './components/PuzzleGame.jsx'
 import WordGame from './components/WordGame.jsx'
+import Rewards from './components/Rewards.jsx'
 import InstallPrompt from './components/InstallPrompt.jsx'
 import PageTransition from './components/PageTransition.jsx'
-import { processDailyLogin } from './engine/xp.js'
+import { processDailyLogin, canClaimToday } from './engine/xp.js'
 
 // Dark mode hook
 function useTheme() {
@@ -77,6 +78,7 @@ export default function App() {
   })
 
   const [dailyToast, setDailyToast] = useState(null)
+  const [showRewardDot, setShowRewardDot] = useState(false)
 
   function handleSplashDone() {
     setShowSplash(false)
@@ -90,6 +92,7 @@ export default function App() {
       setDailyToast(result)
       setTimeout(() => setDailyToast(null), 4000)
     }
+    setShowRewardDot(canClaimToday())
   }, [])
 
   return (
@@ -126,6 +129,7 @@ export default function App() {
             <Route path="/postcards" element={<PostCards />} />
             <Route path="/puzzle" element={<PuzzleGame />} />
             <Route path="/wordgame" element={<WordGame />} />
+            <Route path="/rewards" element={<Rewards />} />
           </Routes>
         </PageTransition>
       </main>

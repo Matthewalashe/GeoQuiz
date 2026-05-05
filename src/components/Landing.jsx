@@ -4,7 +4,7 @@ import questions from '../data/questions.js'
 import ABUJA_Q from '../data/questions-abuja.js'
 import { SPONSORS } from '../data/sponsors.js'
 import { SponsorCard } from './SponsoredBanner.jsx'
-import { getXPData, getLevel, getLevelTitle } from '../engine/xp.js'
+import { getXPData, getLevel, getLevelTitle, canClaimToday, getCurrentLeague } from '../engine/xp.js'
 
 import {
   CalendarRegular,
@@ -110,6 +110,15 @@ export default function Landing() {
           ))}
         </div>
       </div>
+
+      {/* Daily Reward Banner */}
+      {canClaimToday() && (
+        <Link to="/rewards" className="rw-home-banner">
+          <span className="rw-hb-icon">🎁</span>
+          <span className="rw-hb-text">Claim your daily reward!</span>
+          <span className="rw-hb-arrow">→</span>
+        </Link>
+      )}
 
       {/* Adire Strip */}
       <div className="adire-strip" />

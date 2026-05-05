@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { getXPData, getLevel, getLevelProgress, getLevelTitle } from '../engine/xp.js'
+import { getXPData, getLevel, getLevelProgress, getLevelTitle, canClaimToday } from '../engine/xp.js'
 
 import {
   HomeRegular,
@@ -7,6 +7,7 @@ import {
   TrophyRegular,
   PersonRegular,
   ChatMultipleRegular,
+  GiftRegular,
   MapRegular,
   WeatherSunnyRegular,
   WeatherMoonRegular
@@ -61,8 +62,11 @@ export default function Header({ theme, toggleTheme }) {
           <span className="tab-label">Play</span>
         </Link>
 
-        <Link to="/community" className="tab-center-btn" aria-label="Community">
-          <span className="tab-center-icon"><ChatMultipleRegular fontSize={22} style={{ color: '#fff' }} /></span>
+        <Link to="/rewards" className="tab-center-btn" aria-label="Rewards">
+          <span className="tab-center-icon">
+            <GiftRegular fontSize={22} style={{ color: '#fff' }} />
+            {canClaimToday() && <span className="tab-reward-dot" />}
+          </span>
         </Link>
 
         <Link to="/leaderboard" className={`tab-item ${pathname === '/leaderboard' ? 'active' : ''}`}>
