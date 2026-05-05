@@ -72,38 +72,38 @@
 
 ---
 
-## 🔴 PHASE 2: ENGAGEMENT ENGINE (Sessions 4-8)
+## 🟢 PHASE 2: ENGAGEMENT ENGINE (Sessions 4-8) ✅
 > Goal: Make GeoQuiz addictive. Users come back daily.
 
-### Milestone 2.1 — XP + Levels + Streak Freeze (Session 4)
-- [ ] XP system: earn XP for every action
+### Milestone 2.1 — XP + Levels + Streak Freeze ✅ (Session 4)
+- [x] XP system: earn XP for every action
   - Correct answer: 10-50 XP (distance-based)
   - Complete game: 100 XP bonus
   - Daily login: 25 XP
   - Streak day bonus: streak_count × 5 XP
   - Share result: 20 XP
   - Real-world check-in: 50 XP
-- [ ] Level system: 500 XP per level (1-50)
+- [x] Level system: 500 XP per level (1-50)
   - Titles: Newcomer → Explorer → Navigator → Master → Legend → Naija King 👑
   - Level shown on leaderboard + profile
   - Level-up animation with confetti + sound
-- [ ] Streak Freeze
+- [x] Streak Freeze
   - Earn 1 freeze every 7 days
   - Auto-activates on missed day
   - Max 2 stored
   - "Your streak was saved!" celebration message
   - ❄️ icon display on profile
 
-### Milestone 2.2 — Weekly Leagues (Session 5)
-- [ ] 5 tiers: Bronze → Silver → Gold → Diamond → Champion
-- [ ] 30 players per league (virtual grouping)
-- [ ] Top 10 promote, bottom 5 demote (weekly reset Monday)
-- [ ] League badge on profile + leaderboard
-- [ ] Champion league = special profile border + glow
-- [ ] "You're 2 games from Gold!" motivational nudge
+### Milestone 2.2 — Weekly Leagues ✅ (Session 5)
+- [x] 5 tiers: Bronze → Silver → Gold → Diamond → Champion
+- [x] 30 players per league (virtual grouping)
+- [x] Top 10 promote, bottom 5 demote (weekly reset Monday)
+- [x] League badge on profile + leaderboard
+- [x] Champion league = special profile border + glow
+- [x] "You're 2 games from Gold!" motivational nudge
 
-### Milestone 2.3 — Daily Login Rewards (Session 5)
-- [ ] Visual reward calendar grid (7-day cycle)
+### Milestone 2.3 — Daily Login Rewards ✅ (Session 5)
+- [x] Visual reward calendar grid (7-day cycle)
   - Day 1: 25 XP
   - Day 2: 50 XP
   - Day 3: Streak Freeze 🧊
@@ -111,8 +111,8 @@
   - Day 5: Map Skin unlock 🗺️
   - Day 6: 100 XP
   - Day 7: Exclusive badge + 200 XP 🏆
-- [ ] "Claim Today's Reward" button on homepage
-- [ ] Missed days shown as dimmed
+- [x] "Claim Today's Reward" button on homepage
+- [x] Missed days shown as dimmed
 
 ### Milestone 2.4 — Live Multiplayer Duels (Session 6)
 - [ ] "Find Opponent" matchmaking
@@ -123,22 +123,22 @@
 - [ ] Duel history on profile
 - [ ] WebSocket via Supabase Realtime
 
-### Milestone 2.5 — Push Notifications (Session 6)
-- [ ] PWA push notifications
+### Milestone 2.5 — Push Notifications ✅ (Session 6)
+- [x] PWA push notifications
   - "🔥 Your streak is in danger!"
   - "🏆 Daily Challenge is ready"
   - "⚔️ @Tunde challenged you!"
   - "📈 2 games from Gold League!"
   - "🎁 Daily reward waiting!"
 
-### Milestone 2.6 — Story Mode + Map Skins (Session 7)
-- [ ] Guided Campaign (Candy Crush-style map)
+### Milestone 2.6 — Story Mode + Map Skins ✅ (Session 7)
+- [x] Guided Campaign (Candy Crush-style map)
   - Week 1: "Learn the 20 LGAs"
   - Week 2: "Master the Markets"
   - Week 3: "Bridge the Gaps"
   - Week 4: "Cultural Lagos"
   - Each chapter: intro story → quiz → fun facts → badge
-- [ ] Map Skins (cosmetic unlocks)
+- [x] Map Skins (cosmetic unlocks)
   - Default (Voyager) — free
   - 🌙 Dark Mode — Level 5
   - 🛰️ Satellite — Level 10
