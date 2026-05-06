@@ -16,6 +16,8 @@ import PuzzleGame from './components/PuzzleGame.jsx'
 import WordGame from './components/WordGame.jsx'
 import Rewards from './components/Rewards.jsx'
 import StoryMode from './components/StoryMode.jsx'
+import CrosswordGame from './components/CrosswordGame.jsx'
+import ColoringGame from './components/ColoringGame.jsx'
 import Discovery from './components/Discovery.jsx'
 import InstallPrompt from './components/InstallPrompt.jsx'
 import PageTransition from './components/PageTransition.jsx'
@@ -134,6 +136,8 @@ export default function App() {
             <Route path="/postcards" element={<PostCards />} />
             <Route path="/puzzle" element={<PuzzleGame />} />
             <Route path="/wordgame" element={<WordGame />} />
+            <Route path="/crossword" element={<CrosswordGame />} />
+            <Route path="/coloring" element={<ColoringGame />} />
             <Route path="/rewards" element={<Rewards />} />
             <Route path="/story" element={<StoryMode />} />
             <Route path="/discovery" element={<Discovery />} />

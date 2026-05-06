@@ -72,6 +72,32 @@ const GAMES = [
       { emoji: '📚', title: 'Discover history', desc: 'Rich historical info + footnotes after each word!' },
     ],
   },
+  {
+    id: 'crossword',
+    name: 'Crossword',
+    tagline: 'Solve Nigerian trivia clues',
+    color: '#3b82f6',
+    icon: '📝',
+    image: 'https://images.unsplash.com/photo-1594680874312-3ee32c933a35?auto=format&fit=crop&q=80&w=800',
+    steps: [
+      { emoji: '💡', title: 'Read the clue', desc: 'Tap a row or column to read the clue.' },
+      { emoji: '⌨️', title: 'Type the word', desc: 'Fill in the blanks with Nigerian landmarks and culture.' },
+      { emoji: '🎉', title: 'Complete puzzle', desc: 'Fill the entire grid to win XP!' },
+    ],
+  },
+  {
+    id: 'coloring',
+    name: 'Coloring',
+    tagline: 'Paint Nigerian landmarks',
+    color: '#ec4899',
+    icon: '🎨',
+    image: 'https://images.unsplash.com/photo-1605721911519-3dfeb3be25e7?auto=format&fit=crop&q=80&w=800',
+    steps: [
+      { emoji: '🎨', title: 'Pick a color', desc: 'Select a vibrant color from your palette.' },
+      { emoji: '🖌️', title: 'Tap to paint', desc: 'Tap any section of the drawing to fill it in.' },
+      { emoji: '🖼️', title: 'Finish artwork', desc: 'Complete your masterpiece to earn rewards.' },
+    ],
+  },
 ]
 
 export default function CategorySelector() {
