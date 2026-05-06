@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { CheckmarkCircleRegular, DismissCircleRegular } from '@fluentui/react-icons'
 import { playCorrect, playWrong, playTick, vibrate } from '../engine/audio.js'
 import { addXP } from '../engine/xp.js'
-import { useRewardSystem } from '../engine/rewards.jsx'
+import { RewardsOverlay, useRewardSystem } from '../engine/rewards.jsx'
 
 // ── DATA ─────────────────────────────────────────────────────────────────────
 const PACKS = {
@@ -87,7 +87,7 @@ function CollectButton({ points, stars, onCollect, collected }) {
 // ── COMPONENT ─────────────────────────────────────────────────────────────
 export default function TriviaGame() {
   const navigate = useNavigate()
-  const { popXP, celebrateCorrect, celebrateWrong, openChest, showStarBurst, combo, Rewards } = useRewardSystem()
+  const { popXP, celebrateCorrect, celebrateWrong, openChest, showStarBurst, combo, rewardProps } = useRewardSystem()
 
   const [selectedPack, setSelectedPack] = useState(null)
   const [started, setStarted] = useState(false)
@@ -235,7 +235,7 @@ export default function TriviaGame() {
 
   return (
     <section className="game-screen trivia-game">
-      <Rewards />
+      <RewardsOverlay {...rewardProps} />
       {showQuitModal && (
         <div className="quit-overlay" onClick={() => setShowQuitModal(false)}>
           <div className="quit-modal" onClick={e => e.stopPropagation()}>

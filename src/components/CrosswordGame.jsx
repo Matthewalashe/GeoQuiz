@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CheckmarkCircleRegular } from '@fluentui/react-icons'
 import { addXP } from '../engine/xp.js'
-import { useRewardSystem } from '../engine/rewards.jsx'
+import { RewardsOverlay, useRewardSystem } from '../engine/rewards.jsx'
 
 // ── PUZZLES ───────────────────────────────────────────────────────────────────
 const PUZZLES = [
@@ -58,7 +58,7 @@ const PUZZLES = [
 
 export default function CrosswordGame() {
   const navigate = useNavigate()
-  const { showStarBurst, openChest, Rewards } = useRewardSystem()
+  const { showStarBurst, openChest, rewardProps } = useRewardSystem()
   const [selectedPuzzle, setSelectedPuzzle] = useState(null)
   const [started, setStarted] = useState(false)
   const [grid, setGrid] = useState([])
@@ -202,7 +202,7 @@ export default function CrosswordGame() {
   // ── GAMEPLAY ─────────────────────────────────────────────────────────────
   return (
     <div className="game-screen">
-      <Rewards />
+      <RewardsOverlay {...rewardProps} />
       {showQuitModal && (
         <div className="quit-overlay" onClick={() => setShowQuitModal(false)}>
           <div className="quit-modal" onClick={e => e.stopPropagation()}>

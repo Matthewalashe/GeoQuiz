@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { CheckmarkCircleRegular, DismissCircleRegular, HeartPulseRegular } from '@fluentui/react-icons'
 import { playCorrect, playWrong, vibrate } from '../engine/audio.js'
 import { addXP } from '../engine/xp.js'
-import { useRewardSystem } from '../engine/rewards.jsx'
+import { RewardsOverlay, useRewardSystem } from '../engine/rewards.jsx'
 
 // ── STORIES ─────────────────────────────────────────────────────────────────
 const STORIES = {
@@ -199,7 +199,7 @@ const STORY_LIST = Object.values(STORIES)
 
 export default function AdventureGame() {
   const navigate = useNavigate()
-  const { popXP, celebrateCorrect, celebrateWrong, openChest, showStarBurst, Rewards } = useRewardSystem()
+  const { popXP, celebrateCorrect, celebrateWrong, openChest, showStarBurst, rewardProps } = useRewardSystem()
   const [selectedStory, setSelectedStory] = useState(null)
   const [started, setStarted] = useState(false)
   const [nodeId, setNodeId] = useState(null)
@@ -295,7 +295,7 @@ export default function AdventureGame() {
   // ── GAMEPLAY ─────────────────────────────────────────────────────────────
   return (
     <section className="game-screen adv-game">
-      <Rewards />
+      <RewardsOverlay {...rewardProps} />
       {showQuitModal && (
         <div className="quit-overlay" onClick={() => setShowQuitModal(false)}>
           <div className="quit-modal" onClick={e => e.stopPropagation()}>

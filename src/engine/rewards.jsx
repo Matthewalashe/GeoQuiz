@@ -1,16 +1,16 @@
 /**
  * Reward Engine — Duolingo-style XP/Stars/Streaks/Chests
- * Used by all mini-games as a shared celebration system.
+ * Shared by all mini-games.
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
-// ── XP Pop (floating +XP text) ────────────────────────────────────────────
+// ── XP Pop ───────────────────────────────────────────────────────────────────
 export function XPPop({ amount, x, y, onDone }) {
   useEffect(() => {
     const t = setTimeout(onDone, 900)
     return () => clearTimeout(t)
-  }, [onDone])
+  }, []) // eslint-disable-line
   return (
     <div className="xp-pop" style={{ left: x, top: y }}>
       +{amount} XP
@@ -18,12 +18,12 @@ export function XPPop({ amount, x, y, onDone }) {
   )
 }
 
-// ── Star burst (3 stars falling in) ──────────────────────────────────────
+// ── Star Burst ────────────────────────────────────────────────────────────────
 export function StarBurst({ count = 3, onDone }) {
   useEffect(() => {
     const t = setTimeout(onDone, 1200)
     return () => clearTimeout(t)
-  }, [onDone])
+  }, []) // eslint-disable-line
   return (
     <div className="star-burst">
       {Array.from({ length: count }).map((_, i) => (
@@ -33,12 +33,12 @@ export function StarBurst({ count = 3, onDone }) {
   )
 }
 
-// ── Streak Flash (🔥 streak counter) ─────────────────────────────────────
+// ── Streak Flash ──────────────────────────────────────────────────────────────
 export function StreakFlash({ streak, onDone }) {
   useEffect(() => {
     const t = setTimeout(onDone, 1500)
     return () => clearTimeout(t)
-  }, [onDone])
+  }, []) // eslint-disable-line
   return (
     <div className="streak-flash">
       <span className="streak-flash-fire">🔥</span>
@@ -48,7 +48,35 @@ export function StreakFlash({ streak, onDone }) {
   )
 }
 
-// ── Treasure Chest (click to open & collect XP) ───────────────────────────
+// ── Correct / Wrong Flashes ───────────────────────────────────────────────────
+export function CorrectFlash({ onDone }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 600)
+    return () => clearTimeout(t)
+  }, []) // eslint-disable-line
+  return <div className="correct-flash" />
+}
+
+export function WrongFlash({ onDone }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 500)
+    return () => clearTimeout(t)
+  }, []) // eslint-disable-line
+  return <div className="wrong-flash" />
+}
+
+// ── Combo Badge ───────────────────────────────────────────────────────────────
+export function ComboBadge({ combo }) {
+  if (combo < 2) return null
+  return (
+    <div className="combo-badge">
+      <span className="combo-x">x{combo}</span>
+      <span className="combo-label">Combo!</span>
+    </div>
+  )
+}
+
+// ── Treasure Chest ────────────────────────────────────────────────────────────
 export function TreasureChest({ xp, onCollect }) {
   const [opened, setOpened] = useState(false)
   const [collected, setCollected] = useState(false)
@@ -57,7 +85,7 @@ export function TreasureChest({ xp, onCollect }) {
     if (opened) return
     setOpened(true)
     setTimeout(() => setCollected(true), 600)
-    setTimeout(() => onCollect(), 800)
+    setTimeout(() => onCollect(), 900)
   }
 
   return (
@@ -65,13 +93,13 @@ export function TreasureChest({ xp, onCollect }) {
       <div className="chest-body">
         <div className="chest-lid" />
         <div className="chest-base">
-          {!opened && <span className="chest-tap-hint">Tap!</span>}
+          {!opened && <span className="chest-tap-hint">Tap to open!</span>}
         </div>
       </div>
       {collected && (
         <div className="chest-xp-burst">
           <span>+{xp} XP</span>
-          {['⭐','💛','✨'].map((e, i) => (
+          {['⭐', '💛', '✨'].map((e, i) => (
             <span key={i} className="chest-particle" style={{ '--i': i }}>{e}</span>
           ))}
         </div>
@@ -80,25 +108,7 @@ export function TreasureChest({ xp, onCollect }) {
   )
 }
 
-// ── Correct Answer Overlay (full-screen flash) ────────────────────────────
-export function CorrectFlash({ onDone }) {
-  useEffect(() => {
-    const t = setTimeout(onDone, 600)
-    return () => clearTimeout(t)
-  }, [onDone])
-  return <div className="correct-flash" />
-}
-
-// ── Wrong Answer Shake indicator ──────────────────────────────────────────
-export function WrongShake({ onDone }) {
-  useEffect(() => {
-    const t = setTimeout(onDone, 500)
-    return () => clearTimeout(t)
-  }, [onDone])
-  return <div className="wrong-flash" />
-}
-
-// ── Hearts display (lives system) ─────────────────────────────────────────
+// ── Hearts Display ────────────────────────────────────────────────────────────
 export function HeartsDisplay({ hearts, maxHearts = 3 }) {
   return (
     <div className="hearts-display">
@@ -111,88 +121,109 @@ export function HeartsDisplay({ hearts, maxHearts = 3 }) {
   )
 }
 
-// ── Combo Multiplier badge ─────────────────────────────────────────────────
-export function ComboBadge({ combo }) {
-  if (combo < 2) return null
+// ── Rewards Overlay Component ─────────────────────────────────────────────────
+// Rendered as a proper React component inside each game
+export function RewardsOverlay({
+  xpPops, onRemoveXP,
+  showCorrect, onCorrectDone,
+  showWrong, onWrongDone,
+  stars, onStarsDone,
+  streak, onStreakDone,
+  combo,
+  chest, chestXP, onChestCollect,
+}) {
   return (
-    <div className="combo-badge">
-      <span className="combo-x">x{combo}</span>
-      <span className="combo-label">Combo!</span>
-    </div>
-  )
-}
-
-// ── Hook: useRewardSystem ─────────────────────────────────────────────────
-export function useRewardSystem() {
-  const [xpPops, setXpPops] = useState([])
-  const [showStars, setShowStars] = useState(false)
-  const [showStreak, setShowStreak] = useState(false)
-  const [streakCount, setStreakCount] = useState(0)
-  const [showChest, setShowChest] = useState(false)
-  const [chestXP, setChestXP] = useState(0)
-  const [showCorrectFlash, setShowCorrectFlash] = useState(false)
-  const [showWrongFlash, setShowWrongFlash] = useState(false)
-  const [combo, setCombo] = useState(0)
-
-  const popXP = useCallback((amount, element) => {
-    const rect = element?.getBoundingClientRect?.()
-    const x = rect ? rect.left + rect.width / 2 : window.innerWidth / 2
-    const y = rect ? rect.top : window.innerHeight / 2
-    const id = Date.now() + Math.random()
-    setXpPops(prev => [...prev, { id, amount, x, y }])
-  }, [])
-
-  const celebrateCorrect = useCallback((streak = 0) => {
-    setShowCorrectFlash(true)
-    setCombo(c => c + 1)
-    if (streak > 0 && streak % 3 === 0) {
-      setStreakCount(streak)
-      setShowStreak(true)
-    }
-  }, [])
-
-  const celebrateWrong = useCallback(() => {
-    setShowWrongFlash(true)
-    setCombo(0)
-  }, [])
-
-  const openChest = useCallback((xpAmount) => {
-    setChestXP(xpAmount)
-    setShowChest(true)
-  }, [])
-
-  const showStarBurst = useCallback((count = 3) => {
-    setShowStars(count)
-  }, [])
-
-  const removeXpPop = useCallback((id) => {
-    setXpPops(prev => prev.filter(p => p.id !== id))
-  }, [])
-
-  const Rewards = useCallback(() => (
     <>
       {xpPops.map(p => (
-        <XPPop key={p.id} amount={p.amount} x={p.x} y={p.y} onDone={() => removeXpPop(p.id)} />
+        <XPPop key={p.id} amount={p.amount} x={p.x} y={p.y} onDone={() => onRemoveXP(p.id)} />
       ))}
-      {showCorrectFlash && <CorrectFlash onDone={() => setShowCorrectFlash(false)} />}
-      {showWrongFlash && <WrongFlash onDone={() => setShowWrongFlash(false)} />}
-      {showStars && <StarBurst count={showStars} onDone={() => setShowStars(false)} />}
-      {showStreak && <StreakFlash streak={streakCount} onDone={() => setShowStreak(false)} />}
+      {showCorrect && <CorrectFlash onDone={onCorrectDone} />}
+      {showWrong && <WrongFlash onDone={onWrongDone} />}
+      {stars > 0 && <StarBurst count={stars} onDone={onStarsDone} />}
+      {streak > 0 && <StreakFlash streak={streak} onDone={onStreakDone} />}
       {combo >= 2 && <ComboBadge combo={combo} />}
-      {showChest && (
+      {chest && (
         <div className="chest-overlay">
           <div className="chest-overlay-inner">
             <p className="chest-title">🎁 Bonus Reward!</p>
-            <TreasureChest xp={chestXP} onCollect={() => setShowChest(false)} />
+            <TreasureChest xp={chestXP} onCollect={onChestCollect} />
           </div>
         </div>
       )}
     </>
-  ), [xpPops, showCorrectFlash, showWrongFlash, showStars, showStreak, streakCount, combo, showChest, chestXP])
+  )
+}
+
+// ── useRewardSystem hook ──────────────────────────────────────────────────────
+export function useRewardSystem() {
+  const [xpPops, setXpPops] = useState([])
+  const [showCorrect, setShowCorrect] = useState(false)
+  const [showWrong, setShowWrong] = useState(false)
+  const [stars, setStars] = useState(0)
+  const [streak, setStreak] = useState(0)
+  const [combo, setCombo] = useState(0)
+  const [chest, setChest] = useState(false)
+  const [chestXP, setChestXP] = useState(0)
+  const idRef = useRef(0)
+
+  function popXP(amount, element) {
+    const rect = element?.getBoundingClientRect?.()
+    const x = rect ? Math.round(rect.left + rect.width / 2) : Math.round(window.innerWidth / 2)
+    const y = rect ? Math.round(rect.top) : Math.round(window.innerHeight / 3)
+    const id = ++idRef.current
+    setXpPops(prev => [...prev, { id, amount, x, y }])
+  }
+
+  function removeXP(id) {
+    setXpPops(prev => prev.filter(p => p.id !== id))
+  }
+
+  function celebrateCorrect(streakVal = 0) {
+    setShowCorrect(true)
+    setCombo(c => c + 1)
+    if (streakVal > 0 && streakVal % 3 === 0) {
+      setStreak(streakVal)
+    }
+  }
+
+  function celebrateWrong() {
+    setShowWrong(true)
+    setCombo(0)
+  }
+
+  function openChest(amount) {
+    setChestXP(amount)
+    setChest(true)
+  }
+
+  function showStarBurst(count = 3) {
+    setStars(count)
+  }
+
+  const rewardProps = {
+    xpPops,
+    onRemoveXP: removeXP,
+    showCorrect,
+    onCorrectDone: () => setShowCorrect(false),
+    showWrong,
+    onWrongDone: () => setShowWrong(false),
+    stars,
+    onStarsDone: () => setStars(0),
+    streak,
+    onStreakDone: () => setStreak(0),
+    combo,
+    chest,
+    chestXP,
+    onChestCollect: () => setChest(false),
+  }
 
   return {
-    popXP, celebrateCorrect, celebrateWrong,
-    openChest, showStarBurst,
-    combo, Rewards,
+    popXP,
+    celebrateCorrect,
+    celebrateWrong,
+    openChest,
+    showStarBurst,
+    combo,
+    rewardProps,
   }
 }
