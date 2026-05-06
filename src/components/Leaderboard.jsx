@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchLeaderboard, submitWaitlist, getWaitlistCount } from '../lib/supabase.js'
 
-export default function Leaderboard() {
+export default function Leaderboard({ isEmbedded = false }) {
   const [entries, setEntries] = useState([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState('all')
@@ -161,41 +161,45 @@ export default function Leaderboard() {
         </div>
       )}
 
-      <div className="lb-cta-row">
-        <Link to="/play" className="btn btn-primary">Play Again</Link>
-        <Link to="/dashboard" className="btn btn-outline">My Progress</Link>
-      </div>
+      {!isEmbedded && (
+        <div className="lb-cta-row">
+          <Link to="/play" className="btn btn-primary">Play Again</Link>
+          <Link to="/dashboard" className="btn btn-outline">My Progress</Link>
+        </div>
+      )}
 
       {/* Waitlist */}
-      <div className="waitlist-section">
-        <h3>Join the Waitlist ({waitlistCount} signed up)</h3>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-          Get notified when new cities, features, and rewards drop.
-        </p>
-        {wlDone ? (
-          <div style={{ color: 'var(--primary)', fontWeight: 600, marginTop: '1rem' }}>
-            You're on the list!
-          </div>
-        ) : (
-          <form className="waitlist-form" onSubmit={handleWaitlist}>
-            <input type="text" value={wlName} onChange={e => setWlName(e.target.value)} placeholder="Your name" required />
-            <input type="email" value={wlEmail} onChange={e => setWlEmail(e.target.value)} placeholder="Email address" required />
-            <select value={wlRole} onChange={e => setWlRole(e.target.value)}>
-              <option value="">I am a...</option>
-              <option value="player">Player / Geography Lover</option>
-              <option value="teacher">Teacher / Educator</option>
-              <option value="traveller">Vacationist / Traveller</option>
-              <option value="business">Business / Sponsor</option>
-              <option value="developer">Developer / Contributor</option>
-            </select>
-            <input type="text" value={wlRef} onChange={e => setWlRef(e.target.value)} placeholder="How did you find us? (Referred by?)" />
-            <textarea value={wlMsg} onChange={e => setWlMsg(e.target.value)} placeholder="Any feedback or suggestions?" rows={2} />
-            <button type="submit" className="btn btn-primary" disabled={wlSaving}>
-              {wlSaving ? 'Joining...' : 'Join Waitlist'}
-            </button>
-          </form>
-        )}
-      </div>
+      {!isEmbedded && (
+        <div className="waitlist-section">
+          <h3>Join the Waitlist ({waitlistCount} signed up)</h3>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+            Get notified when new cities, features, and rewards drop.
+          </p>
+          {wlDone ? (
+            <div style={{ color: 'var(--primary)', fontWeight: 600, marginTop: '1rem' }}>
+              You're on the list!
+            </div>
+          ) : (
+            <form className="waitlist-form" onSubmit={handleWaitlist}>
+              <input type="text" value={wlName} onChange={e => setWlName(e.target.value)} placeholder="Your name" required />
+              <input type="email" value={wlEmail} onChange={e => setWlEmail(e.target.value)} placeholder="Email address" required />
+              <select value={wlRole} onChange={e => setWlRole(e.target.value)}>
+                <option value="">I am a...</option>
+                <option value="player">Player / Geography Lover</option>
+                <option value="teacher">Teacher / Educator</option>
+                <option value="traveller">Vacationist / Traveller</option>
+                <option value="business">Business / Sponsor</option>
+                <option value="developer">Developer / Contributor</option>
+              </select>
+              <input type="text" value={wlRef} onChange={e => setWlRef(e.target.value)} placeholder="How did you find us? (Referred by?)" />
+              <textarea value={wlMsg} onChange={e => setWlMsg(e.target.value)} placeholder="Any feedback or suggestions?" rows={2} />
+              <button type="submit" className="btn btn-primary" disabled={wlSaving}>
+                {wlSaving ? 'Joining...' : 'Join Waitlist'}
+              </button>
+            </form>
+          )}
+        </div>
+      )}
     </section>
   )
 }

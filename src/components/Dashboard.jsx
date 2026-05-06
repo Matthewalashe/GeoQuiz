@@ -5,6 +5,7 @@ import {
   getCurrentLeague, getNextLeague, LEAGUE_TIERS
 } from '../engine/xp.js'
 import { getExplorationPercent, getCheckIns } from '../engine/exploration.js'
+import Leaderboard from './Leaderboard.jsx'
 
 const AVATARS = [
   '🎭','🗿','👑','🐚','⚡','🔱','🛡️','🦅','🌀','🌍','🪘','🏺','🌴','🔥','🐆','🐘',
@@ -237,6 +238,11 @@ export default function Dashboard() {
         <Link to="/rewards" className="btn btn-outline">🎁 Rewards</Link>
         <Link to="/story" className="btn btn-outline">📖 Story</Link>
         <Link to="/achievements" className="btn btn-outline">Achievements</Link>
+      </div>
+
+      {/* ── Global Leaderboard ── */}
+      <div style={{ marginTop: '4rem', paddingTop: '1rem', borderTop: '2px solid var(--border)' }}>
+        <Leaderboard isEmbedded={true} />
       </div>
     </section>
   )
