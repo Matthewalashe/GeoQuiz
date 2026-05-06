@@ -16,6 +16,7 @@ import PuzzleGame from './components/PuzzleGame.jsx'
 import WordGame from './components/WordGame.jsx'
 import Rewards from './components/Rewards.jsx'
 import StoryMode from './components/StoryMode.jsx'
+import Discovery from './components/Discovery.jsx'
 import InstallPrompt from './components/InstallPrompt.jsx'
 import PageTransition from './components/PageTransition.jsx'
 import { processDailyLogin, canClaimToday } from './engine/xp.js'
@@ -135,6 +136,7 @@ export default function App() {
             <Route path="/wordgame" element={<WordGame />} />
             <Route path="/rewards" element={<Rewards />} />
             <Route path="/story" element={<StoryMode />} />
+            <Route path="/discovery" element={<Discovery />} />
           </Routes>
         </PageTransition>
       </main>

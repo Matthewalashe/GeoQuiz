@@ -4,6 +4,62 @@ import L from 'leaflet'
 import { fetchLagosFeature } from '../data/lagos-boundary.js'
 import { getActiveSkin, getSkinById } from '../data/map-skins.js'
 
+// ── Fog of War Canvas Overlay ──
+function FogOfWar({ explored }) {
+  const map = useMap()
+
+  useEffect(() => {
+    if (!explored || explored.length === 0) return
+    const canvas = document.createElement('canvas')
+    const container = map.getContainer()
+    canvas.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;z-index:400;opacity:0.82'
+    container.appendChild(canvas)
+
+    function redraw() {
+      const size = map.getSize()
+      canvas.width = size.x
+      canvas.height = size.y
+      const ctx = canvas.getContext('2d')
+      ctx.clearRect(0, 0, size.x, size.y)
+
+      // Fill whole canvas with fog
+      ctx.fillStyle = 'rgba(8, 12, 28, 1)'
+      ctx.fillRect(0, 0, size.x, size.y)
+
+      // Punch transparent holes at explored spots
+      ctx.globalCompositeOperation = 'destination-out'
+      explored.forEach(({ lat, lng }) => {
+        try {
+          const pt = map.latLngToContainerPoint([lat, lng])
+          const z = map.getZoom()
+          const r = Math.max(45, (z - 8) * 18)
+          const g = ctx.createRadialGradient(pt.x, pt.y, 0, pt.x, pt.y, r)
+          g.addColorStop(0, 'rgba(0,0,0,1)')
+          g.addColorStop(0.6, 'rgba(0,0,0,0.9)')
+          g.addColorStop(1, 'rgba(0,0,0,0)')
+          ctx.fillStyle = g
+          ctx.beginPath()
+          ctx.arc(pt.x, pt.y, r * 1.25, 0, Math.PI * 2)
+          ctx.fill()
+        } catch {}
+      })
+      ctx.globalCompositeOperation = 'source-over'
+    }
+
+    map.on('move zoom moveend zoomend resize', redraw)
+    redraw()
+
+    return () => {
+      map.off('move zoom moveend zoomend resize', redraw)
+      if (canvas.parentNode) canvas.parentNode.removeChild(canvas)
+    }
+  }, [map, explored])
+
+  return null
+}
+
+export { FogOfWar }
+
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -58,7 +114,7 @@ function LagosBoundary() {
   )
 }
 
-export default function MapView({ onMapClick, userPin, correctPin, activeLayers, referenceDots = [], unlabeledDots = [], distanceKm, mapCenter, mapZoom }) {
+export default function MapView({ onMapClick, userPin, correctPin, activeLayers, referenceDots = [], unlabeledDots = [], distanceKm, mapCenter, mapZoom, fogOfWar = null }) {
   const center = mapCenter || LAGOS_CENTER
   const zoom = mapZoom || LAGOS_ZOOM
 
@@ -79,6 +135,7 @@ export default function MapView({ onMapClick, userPin, correctPin, activeLayers,
       style={tileFilter ? { '--map-filter': tileFilter } : {}}>
       <TileLayer url={tileUrl} attribution={tileAttr} key={tileUrl}
         className={tileFilter ? 'skin-filtered' : ''} />
+      {fogOfWar && fogOfWar.length > 0 && <FogOfWar explored={fogOfWar} />}
       <ClickHandler onClick={onMapClick} />
       <ResetView trigger={correctPin ? 'fb' : 'place'} center={center} zoom={zoom} />
 

@@ -3599,3 +3599,224 @@ a:hover { text-decoration: underline; }
 /* Map tile filter for skins like Inferno/Rainbow */
 .skin-filtered { filter: var(--map-filter, none); }
 .leaflet-tile-pane .skin-filtered img { filter: var(--map-filter, none); }
+
+/* ════════════════════════════════════════════════════════
+   PHASE 3 — CITY DISCOVERY HUB
+   ════════════════════════════════════════════════════════ */
+
+/* ── Hero ── */
+.discovery {
+  max-width: 800px; margin: 0 auto; padding: 0 0 6rem;
+  min-height: calc(100vh - 62px);
+}
+.disc-hero {
+  padding: 2rem 1.25rem 1rem;
+  background: linear-gradient(160deg, #0a1628 0%, #0d2040 60%, #0a1628 100%);
+  color: #fff; text-align: center;
+}
+.disc-title {
+  font-family: var(--font-head); font-size: 2rem; font-weight: 800;
+  background: linear-gradient(90deg, #00ff88, #00d4ff, #a855f7);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; margin-bottom: 0.25rem;
+}
+.disc-subtitle {
+  font-size: 0.9rem; color: rgba(255,255,255,0.6); margin-bottom: 1rem;
+}
+
+/* ── Search ── */
+.disc-search-wrap {
+  position: relative; max-width: 420px; margin: 0 auto 0.75rem;
+}
+.disc-search-icon {
+  position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%);
+  color: rgba(255,255,255,0.5);
+}
+.disc-search {
+  width: 100%; padding: 0.65rem 0.75rem 0.65rem 2.4rem;
+  background: rgba(255,255,255,0.1); border: 1.5px solid rgba(255,255,255,0.2);
+  color: #fff; font-family: var(--font-body); font-size: 0.95rem;
+  border-radius: var(--radius-md); outline: none; -webkit-appearance: none;
+  transition: border-color 0.2s;
+}
+.disc-search::placeholder { color: rgba(255,255,255,0.4); }
+.disc-search:focus { border-color: #00ff88; }
+
+/* ── View toggle ── */
+.disc-view-toggle {
+  display: inline-flex; border: 1.5px solid rgba(255,255,255,0.2);
+  border-radius: var(--radius-full); overflow: hidden; margin-top: 0.5rem;
+}
+.disc-view-btn {
+  padding: 0.4rem 1rem; background: transparent; border: none;
+  color: rgba(255,255,255,0.5); font-family: var(--font-head); font-size: 0.8rem;
+  font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+.disc-view-btn.active {
+  background: rgba(0,255,136,0.2); color: #00ff88;
+}
+
+/* ── Category chips ── */
+.disc-cats {
+  display: flex; gap: 0.4rem; overflow-x: auto; padding: 0.75rem 1rem;
+  scrollbar-width: none; -ms-overflow-style: none;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 50;
+}
+.disc-cats::-webkit-scrollbar { display: none; }
+.disc-cat-chip {
+  flex-shrink: 0; padding: 0.35rem 0.85rem; border-radius: var(--radius-full);
+  border: 1.5px solid var(--border); background: var(--bg);
+  font-size: 0.78rem; font-family: var(--font-head); font-weight: 600;
+  cursor: pointer; white-space: nowrap; transition: all 0.15s;
+  color: var(--text);
+}
+.disc-cat-chip.active {
+  background: var(--primary); border-color: var(--primary); color: #fff;
+}
+.disc-cat-chip:hover:not(.active) { border-color: var(--primary); color: var(--primary); }
+
+/* ── Sort bar ── */
+.disc-sort-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.5rem 1rem; font-size: 0.8rem;
+}
+.disc-count { color: var(--text-secondary); font-size: 0.78rem; }
+.disc-sort-btns { display: flex; gap: 0.4rem; }
+.disc-sort-btn {
+  padding: 0.25rem 0.65rem; border-radius: var(--radius-full);
+  border: 1.5px solid var(--border); background: var(--surface);
+  font-size: 0.72rem; font-family: var(--font-head); font-weight: 600;
+  cursor: pointer; transition: all 0.15s; color: var(--text-secondary);
+}
+.disc-sort-btn.active { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+
+/* Location notice */
+.disc-location-notice {
+  display: flex; align-items: center; gap: 0.4rem;
+  margin: 0 1rem 0.5rem; padding: 0.5rem 0.75rem;
+  background: #fffbea; border: 1px solid #fde68a;
+  border-radius: var(--radius-md); font-size: 0.75rem; color: #92400e;
+}
+
+/* ── List view ── */
+.disc-list {
+  display: flex; flex-direction: column; gap: 0.75rem; padding: 0.75rem 1rem;
+}
+.disc-empty {
+  text-align: center; padding: 3rem 1rem; color: var(--text-secondary);
+}
+
+/* ── POI Card ── */
+.disc-card {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg); padding: 1rem;
+  box-shadow: var(--shadow-sm); transition: box-shadow 0.2s, transform 0.2s;
+  position: relative;
+}
+.disc-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.disc-card.sponsored {
+  border-color: var(--gold, #f59e0b);
+  background: linear-gradient(135deg, var(--surface) 85%, rgba(245,158,11,0.05) 100%);
+}
+
+.disc-sponsored-badge {
+  position: absolute; top: 0.75rem; right: 0.75rem;
+  font-size: 0.65rem; font-weight: 700; font-family: var(--font-head);
+  background: linear-gradient(90deg, #f59e0b, #ef4444);
+  color: #fff; padding: 0.15rem 0.5rem; border-radius: var(--radius-full);
+}
+
+.disc-card-header {
+  display: flex; align-items: flex-start; gap: 0.65rem; margin-bottom: 0.6rem;
+}
+.disc-cat-icon { font-size: 1.5rem; flex-shrink: 0; margin-top: 0.1rem; }
+.disc-card-info { flex: 1; min-width: 0; }
+.disc-name {
+  font-family: var(--font-head); font-weight: 700; font-size: 0.95rem;
+  margin: 0 0 0.25rem; line-height: 1.3;
+}
+.disc-meta {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem;
+}
+.disc-area {
+  display: flex; align-items: center; gap: 0.2rem;
+  font-size: 0.72rem; color: var(--text-secondary); font-weight: 500;
+}
+.disc-stars {
+  display: flex; align-items: center; gap: 0.1rem;
+}
+.disc-rating-num { font-size: 0.7rem; color: var(--text-secondary); margin-left: 0.2rem; }
+.disc-dist {
+  font-size: 0.68rem; background: var(--primary-light); color: var(--primary);
+  padding: 0.1rem 0.4rem; border-radius: var(--radius-full); font-weight: 600;
+}
+
+.disc-desc {
+  font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5;
+  margin-bottom: 0.75rem;
+}
+
+/* Actions row */
+.disc-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.disc-cta-btn {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  padding: 0.45rem 0.9rem; border-radius: var(--radius-full);
+  background: var(--primary); color: #fff; text-decoration: none;
+  font-size: 0.78rem; font-family: var(--font-head); font-weight: 600;
+  transition: background 0.2s; border: none; cursor: pointer;
+}
+.disc-cta-btn:hover { background: var(--primary-hover); }
+.disc-checkin-btn {
+  padding: 0.4rem 0.8rem; border-radius: var(--radius-full);
+  background: transparent; border: 1.5px solid var(--primary);
+  color: var(--primary); font-size: 0.75rem; font-family: var(--font-head);
+  font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+.disc-checkin-btn:hover { background: var(--primary-light); }
+.disc-checkin-done {
+  font-size: 0.75rem; color: #16a34a; font-family: var(--font-head);
+  font-weight: 700; padding: 0.4rem 0;
+}
+
+/* ── Map view ── */
+.disc-map-wrap {
+  margin: 0; height: calc(100vh - 220px); min-height: 420px;
+}
+.disc-map-wrap .leaflet-container {
+  height: 100%;
+}
+
+/* POI map pin */
+.disc-map-pin {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--primary); border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+.disc-map-pin.sponsored {
+  background: #f59e0b; width: 18px; height: 18px; border-color: #fff;
+}
+
+/* Popup */
+.disc-popup .leaflet-popup-content-wrapper {
+  border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+.disc-popup .leaflet-popup-content {
+  font-family: var(--font-body); font-size: 0.82rem; line-height: 1.4;
+  margin: 0.5rem 0.75rem;
+}
+
+/* ── Check-in toast ── */
+.checkin-toast {
+  position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+  z-index: 9999; background: #16a34a; color: #fff;
+  padding: 0.65rem 1.25rem; border-radius: var(--radius-full);
+  font-family: var(--font-head); font-size: 0.85rem; font-weight: 600;
+  box-shadow: 0 4px 20px rgba(22,163,74,0.4);
+  animation: toastSlideIn 0.3s ease-out;
+  white-space: nowrap;
+}
+@keyframes toastSlideIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-16px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}

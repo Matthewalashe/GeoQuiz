@@ -7,6 +7,7 @@ import { SponsoredBanner } from './SponsoredBanner.jsx'
 import { trackAchievement } from './Achievements.jsx'
 import MapView from './MapView.jsx'
 import Onboarding from './Onboarding.jsx'
+import { markExplored, getExplored } from '../engine/exploration.js'
 
 const LABELED_DOTS = [
   { lat: 6.4541, lng: 3.3947, name: 'Lagos Island' },
@@ -103,6 +104,8 @@ export default function GameScreen() {
   const [showQuitModal, setShowQuitModal] = useState(false)
   const [loadProgress, setLoadProgress] = useState(0)
   const [pendingNav, setPendingNav] = useState(null)
+  const [showFog, setShowFog] = useState(false)
+  const [exploredSpots, setExploredSpots] = useState(() => getExplored())
 
   const timerEnabled = config?.timer > 0
 
@@ -181,6 +184,9 @@ export default function GameScreen() {
     setTotalScore(prev => prev + score)
     if (score >= 60) {
       playCorrect(); vibrate([50])
+      // Mark location as explored for Fog of War
+      markExplored(currentQ.answer.lat, currentQ.answer.lng, currentQ.answer.name)
+      setExploredSpots(getExplored())
       setStreak(prev => { const n = prev + 1; if (n > bestStreak) setBestStreak(n); if (n >= 3) playStreak(); return n })
     } else { playWrong(); vibrate([30, 50, 30]); setStreak(0) }
     setResults(prev => [...prev, { question: currentQ, userPin: { ...userPin }, distance: dist, score }])
@@ -268,6 +274,10 @@ export default function GameScreen() {
         <div className="legend-section sidebar-nav">
           <button className="sidebar-nav-btn" onClick={() => handleQuit('/')}>Home</button>
           <button className="sidebar-nav-btn" onClick={() => handleQuit('/play')}>New Quiz</button>
+          <button className="sidebar-nav-btn" onClick={() => setShowFog(f => !f)}
+            style={{ color: showFog ? 'var(--primary)' : undefined }}>
+            {showFog ? '🌫️ Fog On' : '🌫️ Fog Off'}
+          </button>
           <button className="sidebar-nav-btn sidebar-quit" onClick={() => handleQuit('/')}>Quit</button>
         </div>
         <div className="legend-section">
@@ -295,6 +305,7 @@ export default function GameScreen() {
           distanceKm={lastResult?.distance}
           mapCenter={config?.region ? (REGIONS.find(r => r.id === config.region)?.center) : undefined}
           mapZoom={config?.region ? (REGIONS.find(r => r.id === config.region)?.zoom) : undefined}
+          fogOfWar={showFog ? exploredSpots : null}
         />
       </div>
 

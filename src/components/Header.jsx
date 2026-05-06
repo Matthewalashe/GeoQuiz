@@ -9,6 +9,7 @@ import {
   ChatMultipleRegular,
   GiftRegular,
   MapRegular,
+  CompassNorthwestRegular,
   WeatherSunnyRegular,
   WeatherMoonRegular
 } from '@fluentui/react-icons'
@@ -32,6 +33,7 @@ export default function Header({ theme, toggleTheme }) {
         <nav className="header-nav desktop-nav">
           <Link to="/" className={pathname === '/' ? 'active' : ''}>Home</Link>
           <Link to="/play" className={pathname === '/play' ? 'active' : ''}>Play</Link>
+          <Link to="/discovery" className={pathname === '/discovery' ? 'active' : ''}>Discover</Link>
           <Link to="/leaderboard" className={pathname === '/leaderboard' ? 'active' : ''}>Scores</Link>
           <Link to="/dashboard" className={pathname === '/dashboard' ? 'active' : ''}>Progress</Link>
           <Link to="/community" className={pathname === '/community' ? 'active' : ''}>Feed</Link>
@@ -69,9 +71,9 @@ export default function Header({ theme, toggleTheme }) {
           </span>
         </Link>
 
-        <Link to="/leaderboard" className={`tab-item ${pathname === '/leaderboard' ? 'active' : ''}`}>
-          <span className="tab-icon"><TrophyRegular fontSize={22} /></span>
-          <span className="tab-label">Scores</span>
+        <Link to="/discovery" className={`tab-item ${pathname === '/discovery' ? 'active' : ''}`}>
+          <span className="tab-icon"><CompassNorthwestRegular fontSize={22} /></span>
+          <span className="tab-label">Discover</span>
         </Link>
         <Link to="/dashboard" className={`tab-item ${pathname === '/dashboard' ? 'active' : ''}`}>
           <span className="tab-icon"><PersonRegular fontSize={22} /></span>
