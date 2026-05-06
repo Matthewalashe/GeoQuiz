@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import L from 'leaflet'
 import { DISCOVERY_CATEGORIES, getPOIsByCategory } from '../data/discovery.js'
@@ -110,7 +111,11 @@ const poiIcon = (sponsored) => L.divIcon({
 })
 
 export default function Discovery() {
-  const [activeCategory, setActiveCategory] = useState('all')
+  const location = useLocation()
+  const [activeCategory, setActiveCategory] = useState(() => {
+    const params = new URLSearchParams(location.search)
+    return params.get('category') || 'all'
+  })
   const [view, setView] = useState('list')
   const [search, setSearch] = useState('')
   const [userPos, setUserPos] = useState(null)
@@ -127,6 +132,15 @@ export default function Discovery() {
       )
     }
   }, [])
+
+  // Sync with URL category parameter
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const cat = params.get('category')
+    if (cat) {
+      setActiveCategory(cat)
+    }
+  }, [location.search])
 
   function handleCheckedIn(poi) {
     setCheckInToast(poi)

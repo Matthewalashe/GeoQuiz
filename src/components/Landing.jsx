@@ -51,12 +51,12 @@ const EVENTS = [
 ]
 
 const EXPLORE_CATEGORIES = [
-  { label: 'Restaurant & Bar', sub: 'Food & Dining', img: '/images/explore/restaurant.png' },
-  { label: 'Parks & Recreation', sub: 'Nature & Fun', img: '/images/explore/parks.png' },
-  { label: 'Nightlife & Lifestyle', sub: 'Entertainment', img: '/images/explore/nightlife.png' },
-  { label: 'Hotels & Travels', sub: 'Stay & Explore', img: '/images/explore/hotels.png' },
-  { label: 'Shops & Malls', sub: 'Shopping', img: '/images/explore/shopping.png' },
-  { label: 'Culture & Finance', sub: 'Heritage & Money', img: '/images/explore/culture.png' },
+  { label: 'Restaurant & Bar', sub: 'Food & Dining', img: '/images/explore/restaurant.png', id: 'food' },
+  { label: 'Parks & Recreation', sub: 'Nature & Fun', img: '/images/explore/parks.png', id: 'parks' },
+  { label: 'Nightlife & Lifestyle', sub: 'Entertainment', img: '/images/explore/nightlife.png', id: 'nightlife' },
+  { label: 'Hotels & Travels', sub: 'Stay & Explore', img: '/images/explore/hotels.png', id: 'hotels' },
+  { label: 'Shops & Malls', sub: 'Shopping', img: '/images/explore/shopping.png', id: 'shopping' },
+  { label: 'Culture & Finance', sub: 'Heritage & Money', img: '/images/explore/culture.png', id: 'art' },
 ]
 
 export default function Landing() {
@@ -144,7 +144,7 @@ export default function Landing() {
         </div>
         <div className="discover-grid">
           {EXPLORE_CATEGORIES.map(d => (
-            <Link to="/discovery" key={d.label} className="explore-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Link to={`/discovery?category=${d.id}`} key={d.label} className="explore-card" style={{ textDecoration: 'none', color: 'inherit' }}>
               <div className="explore-card-img">
                 <img src={d.img} alt={d.label} loading="lazy" />
               </div>
