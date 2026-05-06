@@ -216,11 +216,11 @@
 | 🧒 Kid-Friendly Activities | 🧒 | Fun Factory, Funtopia |
 | 📸 Photo Spots & Viewpoints | 📸 | Third Mainland Bridge, Lekki-Ikoyi Link |
 
-### Milestone 3.4 — Spin the Wheel (Session 11)
-- [ ] "Can't decide?" → random discovery per category
-- [ ] Sponsored spots = bigger wheel slices
-- [ ] "Navigate there" button
-- [ ] Spin history
+### Milestone 3.4 — Spin the Wheel ✅ (Session 11)
+- [x] "Can't decide?" → random discovery per category
+- [x] Sponsored spots = bigger wheel slices
+- [x] "Navigate there" button
+- [x] Spin history
 
 ### Milestone 3.5 — Deals & Offers Hub (Session 12)
 - [ ] Business-specific deals near quiz locations

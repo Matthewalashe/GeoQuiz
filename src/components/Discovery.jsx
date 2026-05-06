@@ -4,6 +4,7 @@ import L from 'leaflet'
 import { DISCOVERY_CATEGORIES, getPOIsByCategory } from '../data/discovery.js'
 import { distanceTo, saveCheckIn, hasCheckedIn } from '../engine/exploration.js'
 import { addXP } from '../engine/xp.js'
+import SpinWheel from './SpinWheel.jsx'
 import {
   LocationRegular, StarRegular, StarFilled, NavigationRegular,
   SearchRegular
@@ -110,11 +111,12 @@ const poiIcon = (sponsored) => L.divIcon({
 
 export default function Discovery() {
   const [activeCategory, setActiveCategory] = useState('all')
-  const [view, setView] = useState('list') // 'list' | 'map'
+  const [view, setView] = useState('list')
   const [search, setSearch] = useState('')
   const [userPos, setUserPos] = useState(null)
   const [checkInToast, setCheckInToast] = useState(null)
-  const [sortBy, setSortBy] = useState('default') // 'default' | 'distance' | 'rating'
+  const [sortBy, setSortBy] = useState('default')
+  const [showWheel, setShowWheel] = useState(false)
 
   // Request user location
   useEffect(() => {
@@ -155,6 +157,7 @@ export default function Discovery() {
 
   return (
     <section className="discovery">
+      {showWheel && <SpinWheel onClose={() => setShowWheel(false)} />}
       {/* Check-in toast */}
       {checkInToast && (
         <div className="checkin-toast">
@@ -178,16 +181,15 @@ export default function Discovery() {
           />
         </div>
 
-        {/* View toggle */}
-        <div className="disc-view-toggle">
-          <button
-            className={`disc-view-btn ${view === 'list' ? 'active' : ''}`}
-            onClick={() => setView('list')}
-          >☰ List</button>
-          <button
-            className={`disc-view-btn ${view === 'map' ? 'active' : ''}`}
-            onClick={() => setView('map')}
-          >🗺️ Map</button>
+        {/* View toggle + Spin button */}
+        <div className="disc-hero-actions">
+          <div className="disc-view-toggle">
+            <button className={`disc-view-btn ${view === 'list' ? 'active' : ''}`} onClick={() => setView('list')}>☰ List</button>
+            <button className={`disc-view-btn ${view === 'map' ? 'active' : ''}`} onClick={() => setView('map')}>🗺️ Map</button>
+          </div>
+          <button className="disc-spin-btn" onClick={() => setShowWheel(true)}>
+            🎡 Spin the Wheel
+          </button>
         </div>
       </div>
 
