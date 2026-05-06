@@ -116,7 +116,10 @@ export default function Discovery() {
     const params = new URLSearchParams(location.search)
     return params.get('category') || 'all'
   })
-  const [view, setView] = useState('list')
+  const [view, setView] = useState(() => {
+    const params = new URLSearchParams(location.search)
+    return params.get('view') || 'list'
+  })
   const [search, setSearch] = useState('')
   const [userPos, setUserPos] = useState(null)
   const [checkInToast, setCheckInToast] = useState(null)
@@ -133,13 +136,14 @@ export default function Discovery() {
     }
   }, [])
 
-  // Sync with URL category parameter
+  // Sync with URL parameters
   useEffect(() => {
     const params = new URLSearchParams(location.search)
     const cat = params.get('category')
-    if (cat) {
-      setActiveCategory(cat)
-    }
+    if (cat) setActiveCategory(cat)
+    
+    const v = params.get('view')
+    if (v === 'map' || v === 'list') setView(v)
   }, [location.search])
 
   function handleCheckedIn(poi) {

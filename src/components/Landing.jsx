@@ -59,6 +59,13 @@ const EXPLORE_CATEGORIES = [
   { label: 'Culture & Finance', sub: 'Heritage & Money', img: '/images/explore/culture.png', id: 'art' },
 ]
 
+const SWIPE_CARDS = [
+  { label: 'Places', link: '/discovery', img: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&q=80&w=600' },
+  { label: 'Games', link: '/play', img: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=600' },
+  { label: 'Museums', link: '/discovery?category=art', img: 'https://images.unsplash.com/photo-1518998053901-5348d3961a04?auto=format&fit=crop&q=80&w=600' },
+  { label: 'Map', link: '/discovery?view=map', img: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=600' },
+]
+
 export default function Landing() {
   const totalQ = questions.length + ABUJA_Q.length
   const [eventIdx, setEventIdx] = useState(0)
@@ -107,6 +114,20 @@ export default function Landing() {
               className={`nf-dot ${i === eventIdx ? 'active' : ''}`}
               onClick={() => setEventIdx(i)}
             />
+          ))}
+        </div>
+      </div>
+
+      {/* ═══ WHAT ARE YOU LOOKING FOR (Swipe Cards) ═══ */}
+      <div className="swipe-section">
+        <h3 className="swipe-title">What are you looking for?</h3>
+        <div className="swipe-container">
+          {SWIPE_CARDS.map(c => (
+            <Link to={c.link} key={c.label} className="swipe-card">
+              <img src={c.img} alt={c.label} loading="lazy" />
+              <div className="swipe-card-gradient" />
+              <h4 className="swipe-card-title">{c.label}</h4>
+            </Link>
           ))}
         </div>
       </div>
