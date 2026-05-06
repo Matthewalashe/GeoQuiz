@@ -76,6 +76,24 @@ export default function Dashboard() {
     setShowAvatarPicker(false)
   }
 
+  // Calculate sliding window for path nodes
+  let startIdx = Math.max(0, currentStopIdx - 1)
+  let endIdx = Math.min(JOURNEY_STOPS.length, startIdx + 3)
+  if (endIdx === JOURNEY_STOPS.length) startIdx = Math.max(0, endIdx - 3)
+
+  const pathNodes = []
+  if (startIdx > 0) {
+    pathNodes.push({ type: 'stop', stop: JOURNEY_STOPS[0], idx: 0 })
+    if (startIdx > 1) pathNodes.push({ type: 'ellipsis', reached: true, key: 'ell-start' })
+  }
+  for (let i = startIdx; i < endIdx; i++) {
+    pathNodes.push({ type: 'stop', stop: JOURNEY_STOPS[i], idx: i })
+  }
+  if (endIdx < JOURNEY_STOPS.length) {
+    if (endIdx < JOURNEY_STOPS.length - 1) pathNodes.push({ type: 'ellipsis', reached: false, key: 'ell-end' })
+    pathNodes.push({ type: 'stop', stop: JOURNEY_STOPS[JOURNEY_STOPS.length - 1], idx: JOURNEY_STOPS.length - 1 })
+  }
+
   return (
     <section className="dashboard">
 
@@ -178,41 +196,45 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ── Journey Map ── */}
-      <div className="neon-map">
-        <div className="neon-map-bg">
-          <div className="neon-grid" />
-          <div className="neon-glow-orb orb-1" />
-          <div className="neon-glow-orb orb-2" />
-          <div className="neon-glow-orb orb-3" />
+      {/* ── Exploration Path ── */}
+      <div className="db-path-card">
+        <div className="db-path-header">
+          <div>
+            <h3 className="db-path-title">Exploration Path</h3>
+            <p className="db-path-subtitle">Your journey across Lagos</p>
+          </div>
+          <div className="db-path-count">{currentStopIdx + 1} / {JOURNEY_STOPS.length}</div>
         </div>
-        <div className="neon-map-header">
-          <h3>Exploration Path</h3>
-          {nextStop && <span className="neon-next">Next → {nextStop.name} (Lv.{nextStop.level})</span>}
-        </div>
-        <div className="neon-player-pos">
-          <span className="neon-player-avatar">{avatar}</span>
-          <span className="neon-player-label">{JOURNEY_STOPS[currentStopIdx].name}</span>
-        </div>
-        <div className="neon-path">
-          {JOURNEY_STOPS.map((stop, i) => {
+
+        <div className="db-path-stepper">
+          {pathNodes.map((node) => {
+            if (node.type === 'ellipsis') {
+              return (
+                <div key={node.key} className={`db-path-step ellipsis-step ${node.reached ? 'reached' : ''}`}>
+                  <div className="db-path-ellipsis">⋮</div>
+                </div>
+              )
+            }
+
+            const { stop, idx } = node
             const reached = level >= stop.level
-            const isCurrent = i === currentStopIdx
+            const isCurrent = idx === currentStopIdx
+
             return (
-              <div key={i} className="neon-stop-wrap">
-                {i > 0 && <div className={`neon-wire ${reached ? 'active' : ''}`} style={reached ? { '--wire-color': stop.color } : {}} />}
-                <div className={`neon-stop ${reached ? 'reached' : 'locked'} ${isCurrent ? 'current' : ''}`}
-                  style={reached ? { '--stop-color': stop.color, borderColor: stop.color, boxShadow: `0 0 12px ${stop.color}40` } : {}}>
-                  <span className="neon-stop-num">{stop.level}</span>
+              <div key={idx} className={`db-path-step ${reached ? 'reached' : ''} ${isCurrent ? 'current' : ''}`}>
+                <div className="db-path-marker">{stop.level}</div>
+                <div className="db-path-content">
+                  <div className="db-path-name">{stop.name}</div>
+                  <div className="db-path-meta">
+                    {reached ? <span style={{ color: 'var(--green)' }}>✓ Explored</span> : <span>🔒 Locked</span>}
+                    {isCurrent && <span className="db-path-xp-tag">Next: {nextStop ? nextStop.name : 'Max Level'}</span>}
+                  </div>
                 </div>
-                <div className="neon-stop-name" style={reached ? { color: stop.color } : {}}>
-                  {reached ? stop.name : '—'}
-                </div>
+                {isCurrent && <div className="db-path-avatar">{avatar}</div>}
               </div>
             )
           })}
         </div>
-        <div className="neon-map-footer">{currentStopIdx + 1} / {JOURNEY_STOPS.length} stops explored</div>
       </div>
 
       {/* ── Recent check-ins ── */}
