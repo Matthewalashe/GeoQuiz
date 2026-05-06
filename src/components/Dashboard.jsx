@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   getXPData, getLevel, getLevelProgress, getLevelTitle, getXPToNextLevel,
-  getCurrentLeague, getNextLeague, LEAGUE_TIERS
+  getCurrentLeague, getNextLeague, LEAGUE_TIERS,
+  DAILY_REWARDS, getRewardsData, claimDailyReward, canClaimToday,
 } from '../engine/xp.js'
 import { getExplorationPercent, getCheckIns } from '../engine/exploration.js'
 
@@ -54,6 +55,23 @@ export default function Dashboard() {
   const nextLeague = getNextLeague(xp.totalXP)
   const exploredPct = getExplorationPercent()
   const checkIns = getCheckIns()
+
+  // Streak & Daily Rewards state
+  const [rewards, setRewards] = useState(getRewardsData)
+  const [canClaim, setCanClaim] = useState(canClaimToday)
+  const [claimResult, setClaimResult] = useState(null)
+  const [showConfetti, setShowConfetti] = useState(false)
+
+  function handleClaim() {
+    const result = claimDailyReward()
+    if (!result.alreadyClaimed) {
+      setClaimResult(result)
+      setCanClaim(false)
+      setRewards(getRewardsData())
+      setShowConfetti(true)
+      setTimeout(() => setShowConfetti(false), 2000)
+    }
+  }
 
   const totalGames = sessions.length
   const totalScore = sessions.reduce((s, g) => s + g.score, 0)
@@ -182,6 +200,76 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* ── Streak & Daily Rewards ── */}
+      {showConfetti && (
+        <div className="rw-confetti">
+          {Array.from({ length: 24 }).map((_, i) => (
+            <span key={i} className="rw-confetti-bit" style={{
+              '--x': `${Math.random() * 100}%`,
+              '--delay': `${Math.random() * 0.5}s`,
+              '--color': ['#00ff88','#fbbf24','#8b5cf6','#00d4ff','#ff6b35','#ef4444'][i % 6],
+            }} />
+          ))}
+        </div>
+      )}
+
+      <div className="db-streak-section">
+        <div className="db-section-header">
+          <h3 className="db-section-title">🔥 Streak &amp; Daily Rewards</h3>
+          <Link to="/rewards" className="db-section-link">Full Rewards →</Link>
+        </div>
+
+        {/* Streak banner */}
+        <div className="db-streak-banner">
+          <div className="db-streak-fire">
+            <span style={{ fontSize: '2.5rem' }}>🔥</span>
+            <div>
+              <div className="db-streak-count">{xp.streakDays || 0}</div>
+              <div className="db-streak-label">Day Streak</div>
+            </div>
+          </div>
+          {xp.streakFreezes > 0 && (
+            <div className="db-streak-freeze">❄️ {xp.streakFreezes} freeze{xp.streakFreezes > 1 ? 's' : ''} left</div>
+          )}
+        </div>
+
+        {/* 7-day calendar */}
+        <div className="rw-calendar db-cal">
+          {DAILY_REWARDS.map((r, i) => {
+            const dayNum = i + 1
+            const claimed = rewards.claimedDays?.includes(dayNum)
+            const isNext = !claimed && dayNum === (rewards.currentDay || 0) + 1
+            return (
+              <div key={i} className={`rw-day ${claimed ? 'claimed' : ''} ${isNext && canClaim ? 'today' : ''} ${isNext ? 'next' : ''}`}>
+                <div className="rw-day-num">Day {dayNum}</div>
+                <div className="rw-day-emoji">{r.emoji}</div>
+                <div className="rw-day-label">{r.label}</div>
+                {claimed && <div className="rw-day-check">✓</div>}
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Claim button */}
+        {canClaim ? (
+          <button className="rw-claim-btn db-claim-btn" onClick={handleClaim}>
+            Claim Today's Reward 🎁
+          </button>
+        ) : (
+          <div className="rw-claimed-msg">
+            {claimResult ? (
+              <div className="rw-claim-result">
+                <span className="rw-claim-emoji">{claimResult.reward.emoji}</span>
+                <span>{claimResult.reward.label} claimed!</span>
+                {claimResult.xpAwarded > 0 && <span className="rw-claim-xp">+{claimResult.xpAwarded} XP</span>}
+              </div>
+            ) : (
+              <p>✅ Today's reward claimed! Come back tomorrow.</p>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* ── Exploration progress bar ── */}
       {exploredPct > 0 && (
         <div className="db-explore-bar-wrap">
@@ -256,7 +344,7 @@ export default function Dashboard() {
       <div className="db-actions">
         <Link to="/play" className="btn btn-primary">Play Now</Link>
         <Link to="/discovery" className="btn btn-outline">🧭 Discover</Link>
-        <Link to="/rewards" className="btn btn-outline">🎁 Rewards</Link>
+        <Link to="/deals" className="btn btn-outline">🎁 Deals</Link>
         <Link to="/story" className="btn btn-outline">📖 Story</Link>
         <Link to="/achievements" className="btn btn-outline">Achievements</Link>
         <Link to="/leaderboard" className="btn btn-outline">🏆 Leaderboard</Link>

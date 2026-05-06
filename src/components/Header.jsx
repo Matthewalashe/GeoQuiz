@@ -73,9 +73,9 @@ export default function Header({ theme, toggleTheme }) {
           </span>
         </Link>
 
-        <Link to="/deals" className={`tab-item ${pathname === '/deals' ? 'active' : ''}`}>
-          <span className="tab-icon"><TagRegular fontSize={22} /></span>
-          <span className="tab-label">Deals</span>
+        <Link to="/community" className={`tab-item ${pathname === '/community' ? 'active' : ''}`}>
+          <span className="tab-icon"><ChatMultipleRegular fontSize={22} /></span>
+          <span className="tab-label">Feed</span>
         </Link>
         <Link to="/dashboard" className={`tab-item ${pathname === '/dashboard' ? 'active' : ''}`}>
           <span className="tab-icon"><PersonRegular fontSize={22} /></span>
