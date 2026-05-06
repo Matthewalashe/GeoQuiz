@@ -1,12 +1,12 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import L from 'leaflet'
-import { DISCOVERY_CATEGORIES, DISCOVERY_POIS, getPOIsByCategory } from '../data/discovery.js'
+import { DISCOVERY_CATEGORIES, getPOIsByCategory } from '../data/discovery.js'
 import { distanceTo, saveCheckIn, hasCheckedIn } from '../engine/exploration.js'
 import { addXP } from '../engine/xp.js'
 import {
   LocationRegular, StarRegular, StarFilled, NavigationRegular,
-  WifiWarningRegular, SearchRegular
+  SearchRegular
 } from '@fluentui/react-icons'
 
 // Star rating renderer
@@ -219,7 +219,7 @@ export default function Discovery() {
       {/* Location notice */}
       {!userPos && (
         <div className="disc-location-notice">
-          <WifiRegular fontSize={14} /> Enable location for distance info & check-ins
+          📶 Enable location for distance info &amp; check-ins
         </div>
       )}
 
