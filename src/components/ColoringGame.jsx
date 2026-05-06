@@ -1,51 +1,174 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeftRegular, CheckmarkCircleRegular, ArrowClockwiseRegular } from '@fluentui/react-icons'
+import { CheckmarkCircleRegular, ArrowClockwiseRegular } from '@fluentui/react-icons'
 import { addXP } from '../engine/xp.js'
 
+// ── PALETTE ──────────────────────────────────────────────────────────────────
 const PALETTE = [
-  '#fde047', // Yellow (Danfo)
-  '#22c55e', // Green
-  '#3b82f6', // Blue
-  '#ef4444', // Red
-  '#a855f7', // Purple
-  '#f97316', // Orange
-  '#000000', // Black
-  '#64748b', // Gray
-  '#ffffff', // White
+  { color: '#fde047', label: 'Danfo Yellow' },
+  { color: '#22c55e', label: 'Lagos Green' },
+  { color: '#3b82f6', label: 'Ocean Blue' },
+  { color: '#ef4444', label: 'Red' },
+  { color: '#a855f7', label: 'Purple' },
+  { color: '#f97316', label: 'Sunset Orange' },
+  { color: '#f472b6', label: 'Pink' },
+  { color: '#14b8a6', label: 'Teal' },
+  { color: '#000000', label: 'Black' },
+  { color: '#64748b', label: 'Gray' },
+  { color: '#ffffff', label: 'White' },
+  { color: '#a16207', label: 'Brown' },
 ]
 
+// ── SCENES ───────────────────────────────────────────────────────────────────
+const SCENES = {
+  danfo: {
+    id: 'danfo',
+    title: '🚐 Danfo Bus',
+    desc: 'Color the iconic Lagos yellow bus',
+    color: '#fde047',
+    minParts: 4,
+    parts: ['body', 'bumper', 'window1', 'window2', 'window3', 'stripe', 'wheel1', 'wheel2', 'headlight'],
+    guide: { body: '#fde047', bumper: '#1e293b', window1: '#64748b', window2: '#64748b', window3: '#64748b', stripe: '#1e293b', wheel1: '#1e293b', wheel2: '#1e293b', headlight: '#fde047' },
+    SVG: DanfoSVG,
+  },
+  market: {
+    id: 'market',
+    title: '🏪 Lagos Market',
+    desc: 'Bring a market scene to life with color',
+    color: '#f97316',
+    minParts: 3,
+    parts: ['stall1', 'stall2', 'stall3', 'roof1', 'roof2', 'roof3', 'ground', 'goods'],
+    guide: { stall1: '#ef4444', stall2: '#3b82f6', stall3: '#22c55e', roof1: '#a16207', roof2: '#a16207', roof3: '#a16207', ground: '#64748b', goods: '#fde047' },
+    SVG: MarketSVG,
+  },
+  house: {
+    id: 'house',
+    title: '🏠 Lagos Bungalow',
+    desc: 'Paint a classic Nigerian compound house',
+    color: '#22c55e',
+    minParts: 4,
+    parts: ['wall', 'roof', 'door', 'window1', 'window2', 'path', 'sky', 'grass'],
+    guide: { wall: '#fde047', roof: '#ef4444', door: '#a16207', window1: '#64748b', window2: '#64748b', path: '#d4a574', sky: '#3b82f6', grass: '#22c55e' },
+    SVG: HouseSVG,
+  },
+}
+
+const SCENE_LIST = Object.values(SCENES)
+
+// ── SVGs ─────────────────────────────────────────────────────────────────────
+function DanfoSVG({ fills, onFill }) {
+  const s = (part) => ({ fill: fills[part] || '#fff', cursor: onFill ? 'pointer' : 'default', transition: 'fill 0.15s' })
+  return (
+    <svg viewBox="0 0 400 260" className="color-svg" xmlns="http://www.w3.org/2000/svg">
+      <g stroke="#1e293b" strokeWidth="3.5" strokeLinejoin="round">
+        <path d="M 50 130 L 50 220 L 350 220 L 350 110 L 310 110 L 265 55 L 100 55 C 78 55 50 72 50 130 Z"
+          style={s('body')} onClick={() => onFill?.('body')} />
+        <rect x="40" y="212" width="320" height="18" rx="4" style={s('bumper')} onClick={() => onFill?.('bumper')} />
+        <path d="M 100 74 L 138 74 L 138 122 L 68 122 C 68 105 80 82 100 74 Z"
+          style={s('window1')} onClick={() => onFill?.('window1')} />
+        <rect x="158" y="74" width="40" height="48" rx="4" style={s('window2')} onClick={() => onFill?.('window2')} />
+        <path d="M 222 74 L 252 74 L 292 122 L 222 122 Z"
+          style={s('window3')} onClick={() => onFill?.('window3')} />
+        <path d="M 50 148 L 345 148 L 348 172 L 50 172 Z"
+          style={s('stripe')} onClick={() => onFill?.('stripe')} />
+        <circle cx="330" cy="190" r="11" style={s('headlight')} onClick={() => onFill?.('headlight')} />
+        <circle cx="120" cy="228" r="26" style={s('wheel1')} onClick={() => onFill?.('wheel1')} />
+        <circle cx="120" cy="228" r="10" fill="#94a3b8" pointerEvents="none" />
+        <circle cx="278" cy="228" r="26" style={s('wheel2')} onClick={() => onFill?.('wheel2')} />
+        <circle cx="278" cy="228" r="10" fill="#94a3b8" pointerEvents="none" />
+      </g>
+    </svg>
+  )
+}
+
+function MarketSVG({ fills, onFill }) {
+  const s = (part) => ({ fill: fills[part] || '#fff', cursor: onFill ? 'pointer' : 'default', transition: 'fill 0.15s' })
+  return (
+    <svg viewBox="0 0 400 260" className="color-svg" xmlns="http://www.w3.org/2000/svg">
+      <g stroke="#1e293b" strokeWidth="3" strokeLinejoin="round">
+        <rect x="5" y="240" width="390" height="20" style={s('ground')} onClick={() => onFill?.('ground')} />
+        {/* Stall 1 */}
+        <rect x="15" y="150" width="110" height="95" style={s('stall1')} onClick={() => onFill?.('stall1')} />
+        <polygon points="5,155 130,155 120,110 15,110" style={s('roof1')} onClick={() => onFill?.('roof1')} />
+        {/* Stall 2 */}
+        <rect x="145" y="140" width="110" height="105" style={s('stall2')} onClick={() => onFill?.('stall2')} />
+        <polygon points="135,145 265,145 255,95 145,95" style={s('roof2')} onClick={() => onFill?.('roof2')} />
+        {/* Stall 3 */}
+        <rect x="275" y="155" width="110" height="90" style={s('stall3')} onClick={() => onFill?.('stall3')} />
+        <polygon points="265,160 395,160 385,115 275,115" style={s('roof3')} onClick={() => onFill?.('roof3')} />
+        {/* Goods on tables */}
+        <ellipse cx="70" cy="215" rx="35" ry="12" style={s('goods')} onClick={() => onFill?.('goods')} />
+        <ellipse cx="200" cy="205" rx="35" ry="12" style={s('goods')} onClick={() => onFill?.('goods')} />
+        <ellipse cx="330" cy="220" rx="35" ry="12" style={s('goods')} onClick={() => onFill?.('goods')} />
+      </g>
+    </svg>
+  )
+}
+
+function HouseSVG({ fills, onFill }) {
+  const s = (part) => ({ fill: fills[part] || '#fff', cursor: onFill ? 'pointer' : 'default', transition: 'fill 0.15s' })
+  return (
+    <svg viewBox="0 0 400 280" className="color-svg" xmlns="http://www.w3.org/2000/svg">
+      <g stroke="#1e293b" strokeWidth="3" strokeLinejoin="round">
+        {/* Sky */}
+        <rect x="0" y="0" width="400" height="280" style={s('sky')} onClick={() => onFill?.('sky')} />
+        {/* Grass */}
+        <rect x="0" y="220" width="400" height="60" style={s('grass')} onClick={() => onFill?.('grass')} />
+        {/* Path */}
+        <polygon points="165,280 235,280 210,220 190,220" style={s('path')} onClick={() => onFill?.('path')} />
+        {/* House wall */}
+        <rect x="60" y="120" width="280" height="110" style={s('wall')} onClick={() => onFill?.('wall')} />
+        {/* Roof */}
+        <polygon points="40,125 200,35 360,125" style={s('roof')} onClick={() => onFill?.('roof')} />
+        {/* Door */}
+        <rect x="170" y="175" width="60" height="55" rx="4" style={s('door')} onClick={() => onFill?.('door')} />
+        {/* Windows */}
+        <rect x="85" y="145" width="55" height="45" rx="4" style={s('window1')} onClick={() => onFill?.('window1')} />
+        <rect x="260" y="145" width="55" height="45" rx="4" style={s('window2')} onClick={() => onFill?.('window2')} />
+      </g>
+    </svg>
+  )
+}
+
+// ── COMPONENT ────────────────────────────────────────────────────────────────
 export default function ColoringGame() {
   const navigate = useNavigate()
-  const [activeColor, setActiveColor] = useState(PALETTE[0])
+  const [selectedScene, setSelectedScene] = useState(null)
+  const [started, setStarted] = useState(false)
+  const [activeColor, setActiveColor] = useState(PALETTE[0].color)
+  const [fills, setFills] = useState({})
   const [won, setWon] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [showQuitModal, setShowQuitModal] = useState(false)
   const [pendingNav, setPendingNav] = useState(null)
 
-  // Track fills for each SVG element
-  const [fills, setFills] = useState({
-    body: '#ffffff',
-    window1: '#ffffff',
-    window2: '#ffffff',
-    window3: '#ffffff',
-    wheel1: '#ffffff',
-    wheel2: '#ffffff',
-    headlight: '#ffffff',
-    stripe: '#ffffff',
-    bumper: '#ffffff'
-  })
+  function startScene() {
+    const scene = SCENES[selectedScene]
+    const defaultFills = {}
+    scene.parts.forEach(p => (defaultFills[p] = '#ffffff'))
+    setFills(defaultFills)
+    setWon(false)
+    setActiveColor(PALETTE[0].color)
+    setStarted(true)
+  }
 
   function handleFill(part) {
     if (won) return
     setFills(prev => ({ ...prev, [part]: activeColor }))
   }
 
+  function handleReset() {
+    const scene = SCENES[selectedScene]
+    const defaultFills = {}
+    scene.parts.forEach(p => (defaultFills[p] = '#ffffff'))
+    setFills(defaultFills)
+  }
+
   function handleFinish() {
-    // Basic check: have they painted at least 3 things non-white?
-    const paintedCount = Object.values(fills).filter(c => c !== '#ffffff').length
-    if (paintedCount < 3) {
-      alert('Keep painting! Add some more color first.')
+    const scene = SCENES[selectedScene]
+    const painted = Object.values(fills).filter(c => c !== '#ffffff').length
+    if (painted < scene.minParts) {
+      alert(`Keep painting! Add color to at least ${scene.minParts} parts of the drawing.`)
       return
     }
     setWon(true)
@@ -58,27 +181,48 @@ export default function ColoringGame() {
     else navigate(dest)
   }
 
-  const guideFills = {
-    body: '#fde047',
-    window1: '#64748b',
-    window2: '#64748b',
-    window3: '#64748b',
-    wheel1: '#000000',
-    wheel2: '#000000',
-    headlight: '#fde047',
-    stripe: '#000000',
-    bumper: '#000000'
+  const scene = selectedScene ? SCENES[selectedScene] : null
+
+  // ── SCENE SELECTOR ───────────────────────────────────────────────────────
+  if (!started) {
+    return (
+      <div className="game-lobby">
+        <button className="gh-back" onClick={() => navigate('/play')}>← Back</button>
+        <h2 className="lobby-title">🎨 Coloring Book</h2>
+        <p className="lobby-sub">Pick a scene and bring it to life with color</p>
+        <div className="lobby-packs">
+          {SCENE_LIST.map(s => (
+            <button
+              key={s.id}
+              className={`lobby-pack-card coloring-lobby-card ${selectedScene === s.id ? 'active' : ''}`}
+              style={{ '--pack-color': s.color }}
+              onClick={() => setSelectedScene(s.id)}
+            >
+              <div className="coloring-preview-wrap">
+                <s.SVG fills={s.guide} onFill={null} />
+              </div>
+              <span className="lpc-label">{s.title}</span>
+              <span className="lpc-desc">{s.desc}</span>
+            </button>
+          ))}
+        </div>
+        <button
+          className="lobby-start-btn"
+          disabled={!selectedScene}
+          onClick={startScene}
+          style={{ background: selectedScene ? (SCENES[selectedScene]?.color || '#ec4899') : undefined }}
+        >
+          Start Coloring →
+        </button>
+      </div>
+    )
   }
 
-  function handleReset() {
-    const defaultFills = {}
-    Object.keys(fills).forEach(k => defaultFills[k] = '#ffffff')
-    setFills(defaultFills)
-  }
+  const SVGComponent = scene.SVG
 
+  // ── GAMEPLAY ─────────────────────────────────────────────────────────────
   return (
     <div className="game-screen">
-      {/* Quit modal */}
       {showQuitModal && (
         <div className="quit-overlay" onClick={() => setShowQuitModal(false)}>
           <div className="quit-modal" onClick={e => e.stopPropagation()}>
@@ -91,13 +235,11 @@ export default function ColoringGame() {
           </div>
         </div>
       )}
-
-      {/* Menu sidebar */}
       <div className={`legend-sidebar ${menuOpen ? 'open' : ''}`}>
         <div className="legend-section sidebar-nav">
           <button className="sidebar-nav-btn" onClick={() => handleQuit('/')}>Home</button>
-          <button className="sidebar-nav-btn" onClick={() => handleQuit('/play')}>New Game</button>
-          <button className="sidebar-nav-btn" onClick={() => window.location.reload()}>Restart</button>
+          <button className="sidebar-nav-btn" onClick={() => { setStarted(false); setSelectedScene(null) }}>Change Scene</button>
+          <button className="sidebar-nav-btn" onClick={handleReset}>Reset Colors</button>
           <button className="sidebar-nav-btn sidebar-quit" onClick={() => handleQuit('/')}>Quit</button>
         </div>
       </div>
@@ -105,58 +247,61 @@ export default function ColoringGame() {
         {menuOpen ? '◀' : '☰'}
       </button>
 
-      {/* Floating HUD */}
       <div className="game-hud" style={{ borderImage: 'none', borderColor: 'var(--border)' }}>
         <div className="hud-left">
-          <span className="hud-counter">Coloring Book</span>
+          <span className="hud-counter">🎨 {scene.title}</span>
         </div>
         <div className="hud-right">
-          <span className="hud-score">0</span>
+          <div className="color-active-dot" style={{ background: activeColor, border: '2px solid var(--border)', width: 24, height: 24, borderRadius: '50%' }} />
         </div>
       </div>
 
-      <div className="color-body" style={{ marginTop: '70px' }}>
+      <div className="color-body">
         {won ? (
-          <div className="cw-win">
+          <div className="game-end-card">
             <CheckmarkCircleRegular fontSize={64} style={{ color: '#ec4899' }} />
-            <h2>Masterpiece Complete!</h2>
-            <p>+100 XP</p>
+            <h2>Masterpiece! 🎨</h2>
             <div className="color-artwork-preview">
-              <DanfoSVG fills={fills} onFill={() => {}} />
+              <SVGComponent fills={fills} onFill={null} />
             </div>
-            <button className="btn btn-primary" onClick={() => navigate('/play')}>Back to Hub</button>
+            <p className="game-end-label">+100 XP earned</p>
+            <div className="game-end-actions">
+              <button className="btn btn-primary" onClick={() => { setStarted(false); setSelectedScene(null) }}>Color Another</button>
+              <button className="btn btn-outline" onClick={() => navigate('/play')}>Back to Hub</button>
+            </div>
           </div>
         ) : (
           <>
-            <div className="color-guide">
-              <span className="color-guide-label">Guide</span>
-              <div className="color-guide-svg">
-                <DanfoSVG fills={guideFills} onFill={() => {}} />
+            {/* Guide + Canvas row */}
+            <div className="color-layout">
+              <div className="color-guide-panel">
+                <span className="color-guide-label">Guide</span>
+                <SVGComponent fills={scene.guide} onFill={null} />
+              </div>
+              <div className="color-canvas-panel">
+                <SVGComponent fills={fills} onFill={handleFill} />
               </div>
             </div>
 
-            <div className="color-canvas-wrap">
-              <DanfoSVG fills={fills} onFill={handleFill} />
-            </div>
-
+            {/* Controls */}
             <div className="color-controls">
               <div className="color-palette">
-                {PALETTE.map(color => (
+                {PALETTE.map(({ color, label }) => (
                   <button
                     key={color}
                     className={`color-swatch ${activeColor === color ? 'active' : ''}`}
                     style={{ backgroundColor: color }}
+                    title={label}
                     onClick={() => setActiveColor(color)}
                   />
                 ))}
               </div>
-              
               <div className="color-actions">
                 <button className="btn btn-outline btn-sm" onClick={handleReset}>
                   <ArrowClockwiseRegular /> Reset
                 </button>
                 <button className="btn btn-primary btn-sm" onClick={handleFinish}>
-                  Finish Artwork
+                  ✓ Done!
                 </button>
               </div>
             </div>
@@ -164,82 +309,5 @@ export default function ColoringGame() {
         )}
       </div>
     </div>
-  )
-}
-
-function DanfoSVG({ fills, onFill }) {
-  return (
-    <svg viewBox="0 0 400 300" className="color-svg" xmlns="http://www.w3.org/2000/svg">
-      <g stroke="#1e293b" strokeWidth="4" strokeLinejoin="round">
-        {/* Main Body */}
-        <path 
-          id="body" 
-          d="M 50 140 L 50 240 L 350 240 L 350 120 L 310 120 L 260 60 L 100 60 C 80 60 50 80 50 140 Z" 
-          fill={fills.body} 
-          onClick={() => onFill('body')} 
-        />
-        
-        {/* Bumper */}
-        <rect 
-          id="bumper"
-          x="40" y="230" width="320" height="20" rx="5"
-          fill={fills.bumper}
-          onClick={() => onFill('bumper')}
-        />
-
-        {/* Windows */}
-        <path 
-          id="window1" 
-          d="M 100 80 L 140 80 L 140 130 L 70 130 C 70 110 80 90 100 80 Z" 
-          fill={fills.window1} 
-          onClick={() => onFill('window1')} 
-        />
-        <rect 
-          id="window2" 
-          x="160" y="80" width="40" height="50" rx="4" 
-          fill={fills.window2} 
-          onClick={() => onFill('window2')} 
-        />
-        <path 
-          id="window3" 
-          d="M 220 80 L 250 80 L 290 130 L 220 130 Z" 
-          fill={fills.window3} 
-          onClick={() => onFill('window3')} 
-        />
-
-        {/* The classic Danfo Stripe */}
-        <path 
-          id="stripe" 
-          d="M 50 160 L 345 160 L 348 185 L 50 185 Z" 
-          fill={fills.stripe} 
-          onClick={() => onFill('stripe')} 
-        />
-
-        {/* Headlight */}
-        <circle 
-          id="headlight" 
-          cx="330" cy="205" r="12" 
-          fill={fills.headlight} 
-          onClick={() => onFill('headlight')} 
-        />
-
-        {/* Wheels (drawn last to overlay body) */}
-        <circle 
-          id="wheel1" 
-          cx="120" cy="245" r="28" 
-          fill={fills.wheel1} 
-          onClick={() => onFill('wheel1')} 
-        />
-        <circle cx="120" cy="245" r="10" fill="#cbd5e1" pointerEvents="none" />
-        
-        <circle 
-          id="wheel2" 
-          cx="280" cy="245" r="28" 
-          fill={fills.wheel2} 
-          onClick={() => onFill('wheel2')} 
-        />
-        <circle cx="280" cy="245" r="10" fill="#cbd5e1" pointerEvents="none" />
-      </g>
-    </svg>
   )
 }
