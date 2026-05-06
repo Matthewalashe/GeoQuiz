@@ -4339,3 +4339,49 @@ a:hover { text-decoration: underline; }
   padding: 0.25rem;
 }
 .dark .color-guide-svg { background: #1e293b; }
+
+/* ── TRIVIA GAME ── */
+.trivia-body { justify-content: flex-start; }
+.trivia-timer-bar {
+  width: 100%; height: 6px; background: var(--surface-dim);
+  border-radius: 4px; margin-bottom: 1.5rem; overflow: hidden;
+}
+.trivia-timer-fill {
+  height: 100%; transition: width 1s linear, background 0.3s ease;
+}
+.trivia-q-card {
+  background: var(--surface); padding: 2rem 1.5rem; border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md); margin-bottom: 1.5rem; text-align: center;
+}
+.trivia-q-card h2 { font-family: var(--font-head); font-size: 1.25rem; color: var(--text); line-height: 1.5; margin: 0; }
+.trivia-options {
+  display: flex; flex-direction: column; gap: 0.75rem; width: 100%; max-width: 400px; margin: 0 auto;
+}
+.trivia-opt {
+  display: flex; justify-content: space-between; align-items: center;
+  background: var(--surface); color: var(--text); border: 2px solid var(--border);
+  padding: 1rem 1.25rem; border-radius: var(--radius-md); font-family: var(--font-body);
+  font-size: 1rem; cursor: pointer; text-align: left; transition: all 0.2s;
+}
+.trivia-opt:hover:not(:disabled) { border-color: var(--primary); transform: translateY(-2px); }
+.trivia-opt.correct { background: #dcfce7; border-color: #22c55e; color: #166534; }
+.trivia-opt.wrong { background: #fee2e2; border-color: #ef4444; color: #991b1b; }
+.dark .trivia-opt.correct { background: rgba(34,197,94,0.15); color: #4ade80; }
+.dark .trivia-opt.wrong { background: rgba(239,68,68,0.15); color: #f87171; }
+.trivia-opt.dimmed { opacity: 0.5; }
+.trivia-icon-res { font-size: 1.25rem; }
+.trivia-next-btn { margin-top: 2rem; width: 100%; max-width: 400px; align-self: center; }
+
+/* ── ADVENTURE GAME ── */
+.adv-body { justify-content: center; }
+.adv-story-card {
+  background: var(--surface); border-radius: var(--radius-xl); box-shadow: var(--shadow-lg);
+  overflow: hidden; max-width: 400px; width: 100%; margin: 0 auto; display: flex; flex-direction: column;
+}
+.adv-img { width: 100%; height: 200px; object-fit: cover; }
+.adv-text {
+  padding: 1.5rem; font-family: var(--font-body); font-size: 1.05rem; line-height: 1.6;
+  color: var(--text); border-bottom: 1px solid var(--border); margin: 0;
+}
+.adv-choices { padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; }
+.adv-choice-btn { white-space: normal; text-align: left; line-height: 1.4; padding: 0.85rem 1.25rem; }

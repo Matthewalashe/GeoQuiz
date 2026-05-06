@@ -18,6 +18,8 @@ import Rewards from './components/Rewards.jsx'
 import StoryMode from './components/StoryMode.jsx'
 import CrosswordGame from './components/CrosswordGame.jsx'
 import ColoringGame from './components/ColoringGame.jsx'
+import TriviaGame from './components/TriviaGame.jsx'
+import AdventureGame from './components/AdventureGame.jsx'
 import Discovery from './components/Discovery.jsx'
 import InstallPrompt from './components/InstallPrompt.jsx'
 import PageTransition from './components/PageTransition.jsx'
@@ -74,7 +76,7 @@ function SplashScreen({ onDone }) {
 
 export default function App() {
   const location = useLocation()
-  const GAME_ROUTES = ['/game', '/crossword', '/coloring', '/puzzle', '/wordgame']
+  const GAME_ROUTES = ['/game', '/crossword', '/coloring', '/puzzle', '/wordgame', '/trivia', '/adventure']
   const isGamePage = GAME_ROUTES.includes(location.pathname)
   const { theme, toggle: toggleTheme } = useTheme()
   const [showSplash, setShowSplash] = useState(() => {
@@ -139,6 +141,8 @@ export default function App() {
             <Route path="/wordgame" element={<WordGame />} />
             <Route path="/crossword" element={<CrosswordGame />} />
             <Route path="/coloring" element={<ColoringGame />} />
+            <Route path="/trivia" element={<TriviaGame />} />
+            <Route path="/adventure" element={<AdventureGame />} />
             <Route path="/rewards" element={<Rewards />} />
             <Route path="/story" element={<StoryMode />} />
             <Route path="/discovery" element={<Discovery />} />

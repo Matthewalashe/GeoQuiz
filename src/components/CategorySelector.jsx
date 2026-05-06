@@ -98,6 +98,32 @@ const GAMES = [
       { emoji: '🖼️', title: 'Finish artwork', desc: 'Complete your masterpiece to earn rewards.' },
     ],
   },
+  {
+    id: 'trivia',
+    name: 'Trivia',
+    tagline: 'Test your Nigerian knowledge',
+    color: '#0ea5e9',
+    icon: '🧠',
+    image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=800',
+    steps: [
+      { emoji: '⏱️', title: 'Beat the clock', desc: 'Answer questions before the timer runs out.' },
+      { emoji: '🤔', title: 'Multiple choice', desc: 'Select the correct answer from 4 options.' },
+      { emoji: '🏆', title: 'Score high', desc: 'Earn points and climb the leaderboard!' },
+    ],
+  },
+  {
+    id: 'adventure',
+    name: 'Adventure',
+    tagline: 'Survive a day in Lagos',
+    color: '#eab308',
+    icon: '🧭',
+    image: 'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?auto=format&fit=crop&q=80&w=800',
+    steps: [
+      { emoji: '📖', title: 'Read the story', desc: 'Navigate a text-based narrative set in Nigeria.' },
+      { emoji: '🔀', title: 'Make choices', desc: 'Your decisions affect the outcome.' },
+      { emoji: '❤️', title: 'Watch your health', desc: 'Reach the end without losing all your energy!' },
+    ],
+  },
 ]
 
 export default function CategorySelector() {
