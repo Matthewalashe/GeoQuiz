@@ -22,6 +22,9 @@ export default function CrosswordGame() {
   const [grid, setGrid] = useState(Array(5).fill().map(() => Array(5).fill('')))
   const [activeClue, setActiveClue] = useState({ dir: 'across', num: 1 })
   const [won, setWon] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [showQuitModal, setShowQuitModal] = useState(false)
+  const [pendingNav, setPendingNav] = useState(null)
   
   // Calculate which cells are valid
   const cellMap = Array(5).fill().map(() => Array(5).fill(false))
@@ -123,18 +126,52 @@ export default function CrosswordGame() {
     ['Z','X','C','V','B','N','M','BACKSPACE']
   ]
 
+  function handleQuit(dest) {
+    setPendingNav(dest)
+    if (!won) setShowQuitModal(true)
+    else navigate(dest)
+  }
+
   return (
     <div className="game-screen">
-      <header className="game-header">
-        <button className="gh-back-btn" onClick={() => navigate('/play')}>
-          <ArrowLeftRegular fontSize={24} />
-        </button>
-        <div className="gh-score">
-          <span className="gh-score-label">Mini Crossword</span>
+      {/* Quit modal */}
+      {showQuitModal && (
+        <div className="quit-overlay" onClick={() => setShowQuitModal(false)}>
+          <div className="quit-modal" onClick={e => e.stopPropagation()}>
+            <h3>Quit Game?</h3>
+            <p>Your progress will be lost.</p>
+            <div className="quit-actions">
+              <button className="btn btn-primary" onClick={() => setShowQuitModal(false)}>Keep Playing</button>
+              <button className="btn btn-outline quit-confirm" onClick={() => navigate(pendingNav || '/')}>Quit</button>
+            </div>
+          </div>
         </div>
-      </header>
+      )}
 
-      <div className="cw-body">
+      {/* Menu sidebar */}
+      <div className={`legend-sidebar ${menuOpen ? 'open' : ''}`}>
+        <div className="legend-section sidebar-nav">
+          <button className="sidebar-nav-btn" onClick={() => handleQuit('/')}>Home</button>
+          <button className="sidebar-nav-btn" onClick={() => handleQuit('/play')}>New Game</button>
+          <button className="sidebar-nav-btn" onClick={() => window.location.reload()}>Restart</button>
+          <button className="sidebar-nav-btn sidebar-quit" onClick={() => handleQuit('/')}>Quit</button>
+        </div>
+      </div>
+      <button className={`legend-toggle ${menuOpen ? 'shifted' : ''}`} onClick={() => setMenuOpen(!menuOpen)}>
+        {menuOpen ? '◀' : '☰'}
+      </button>
+
+      {/* Floating HUD */}
+      <div className="game-hud" style={{ borderImage: 'none', borderColor: 'var(--border)' }}>
+        <div className="hud-left">
+          <span className="hud-counter">Mini Crossword</span>
+        </div>
+        <div className="hud-right">
+          <span className="hud-score">0</span>
+        </div>
+      </div>
+
+      <div className="cw-body" style={{ marginTop: '70px' }}>
         {won ? (
           <div className="cw-win">
             <CheckmarkCircleRegular fontSize={64} style={{ color: '#22c55e' }} />

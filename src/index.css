@@ -4312,3 +4312,30 @@ a:hover { text-decoration: underline; }
 .color-artwork-preview {
   max-width: 250px; margin: 2rem auto;
 }
+
+.color-guide {
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+}
+.color-guide-label {
+  font-family: var(--font-head);
+  font-weight: bold;
+  color: var(--primary);
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+}
+.color-guide-svg {
+  width: 100px;
+  background: #f8fafc;
+  border-radius: var(--radius-sm);
+  padding: 0.25rem;
+}
+.dark .color-guide-svg { background: #1e293b; }

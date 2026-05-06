@@ -31,6 +31,9 @@ export default function WordGame() {
   const [hints, setHints] = useState(3)
   const [attempts, setAttempts] = useState(0)
   const [showInfo, setShowInfo] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [showQuitModal, setShowQuitModal] = useState(false)
+  const [pendingNav, setPendingNav] = useState(null)
 
   const w = words[idx]
 
@@ -200,13 +203,52 @@ export default function WordGame() {
     )
   }
 
+  function handleQuit(dest) {
+    setPendingNav(dest)
+    if (phase === 'playing') setShowQuitModal(true)
+    else navigate(dest)
+  }
+
   return (
-    <section className="word-game">
-      {/* HUD */}
-      <div className="wg-hud">
-        <span className="wg-hud-q">🔤 {idx + 1}/{words.length}</span>
-        <span className="wg-hud-score">{score} pts</span>
+    <section className="game-screen word-game">
+      {/* Quit modal */}
+      {showQuitModal && (
+        <div className="quit-overlay" onClick={() => setShowQuitModal(false)}>
+          <div className="quit-modal" onClick={e => e.stopPropagation()}>
+            <h3>Quit Game?</h3>
+            <p>Your progress will be lost.</p>
+            <div className="quit-actions">
+              <button className="btn btn-primary" onClick={() => setShowQuitModal(false)}>Keep Playing</button>
+              <button className="btn btn-outline quit-confirm" onClick={() => navigate(pendingNav || '/')}>Quit</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Menu sidebar */}
+      <div className={`legend-sidebar ${menuOpen ? 'open' : ''}`}>
+        <div className="legend-section sidebar-nav">
+          <button className="sidebar-nav-btn" onClick={() => handleQuit('/')}>Home</button>
+          <button className="sidebar-nav-btn" onClick={() => handleQuit('/play')}>New Game</button>
+          <button className="sidebar-nav-btn" onClick={() => window.location.reload()}>Restart</button>
+          <button className="sidebar-nav-btn sidebar-quit" onClick={() => handleQuit('/')}>Quit</button>
+        </div>
       </div>
+      <button className={`legend-toggle ${menuOpen ? 'shifted' : ''}`} onClick={() => setMenuOpen(!menuOpen)}>
+        {menuOpen ? '◀' : '☰'}
+      </button>
+
+      {/* Floating HUD */}
+      <div className="game-hud" style={{ borderImage: 'none', borderColor: 'var(--border)' }}>
+        <div className="hud-left">
+          <span className="hud-counter">🔤 {idx + 1}/{words.length}</span>
+        </div>
+        <div className="hud-right">
+          <span className="hud-score">{score} pts</span>
+        </div>
+      </div>
+
+      <div className="wg-body" style={{ marginTop: '70px', padding: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 
       {/* Clue */}
       <div className="wg-clue">
@@ -266,6 +308,7 @@ export default function WordGame() {
           </button>
         </div>
       )}
+      </div>
     </section>
   )
 }

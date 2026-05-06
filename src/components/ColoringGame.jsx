@@ -19,6 +19,9 @@ export default function ColoringGame() {
   const navigate = useNavigate()
   const [activeColor, setActiveColor] = useState(PALETTE[0])
   const [won, setWon] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [showQuitModal, setShowQuitModal] = useState(false)
+  const [pendingNav, setPendingNav] = useState(null)
 
   // Track fills for each SVG element
   const [fills, setFills] = useState({
@@ -49,6 +52,24 @@ export default function ColoringGame() {
     addXP('GAME_WIN', 100)
   }
 
+  function handleQuit(dest) {
+    setPendingNav(dest)
+    if (!won) setShowQuitModal(true)
+    else navigate(dest)
+  }
+
+  const guideFills = {
+    body: '#fde047',
+    window1: '#64748b',
+    window2: '#64748b',
+    window3: '#64748b',
+    wheel1: '#000000',
+    wheel2: '#000000',
+    headlight: '#fde047',
+    stripe: '#000000',
+    bumper: '#000000'
+  }
+
   function handleReset() {
     const defaultFills = {}
     Object.keys(fills).forEach(k => defaultFills[k] = '#ffffff')
@@ -57,16 +78,44 @@ export default function ColoringGame() {
 
   return (
     <div className="game-screen">
-      <header className="game-header">
-        <button className="gh-back-btn" onClick={() => navigate('/play')}>
-          <ArrowLeftRegular fontSize={24} />
-        </button>
-        <div className="gh-score">
-          <span className="gh-score-label">Coloring Book</span>
+      {/* Quit modal */}
+      {showQuitModal && (
+        <div className="quit-overlay" onClick={() => setShowQuitModal(false)}>
+          <div className="quit-modal" onClick={e => e.stopPropagation()}>
+            <h3>Quit Game?</h3>
+            <p>Your artwork will be lost.</p>
+            <div className="quit-actions">
+              <button className="btn btn-primary" onClick={() => setShowQuitModal(false)}>Keep Painting</button>
+              <button className="btn btn-outline quit-confirm" onClick={() => navigate(pendingNav || '/')}>Quit</button>
+            </div>
+          </div>
         </div>
-      </header>
+      )}
 
-      <div className="color-body">
+      {/* Menu sidebar */}
+      <div className={`legend-sidebar ${menuOpen ? 'open' : ''}`}>
+        <div className="legend-section sidebar-nav">
+          <button className="sidebar-nav-btn" onClick={() => handleQuit('/')}>Home</button>
+          <button className="sidebar-nav-btn" onClick={() => handleQuit('/play')}>New Game</button>
+          <button className="sidebar-nav-btn" onClick={() => window.location.reload()}>Restart</button>
+          <button className="sidebar-nav-btn sidebar-quit" onClick={() => handleQuit('/')}>Quit</button>
+        </div>
+      </div>
+      <button className={`legend-toggle ${menuOpen ? 'shifted' : ''}`} onClick={() => setMenuOpen(!menuOpen)}>
+        {menuOpen ? '◀' : '☰'}
+      </button>
+
+      {/* Floating HUD */}
+      <div className="game-hud" style={{ borderImage: 'none', borderColor: 'var(--border)' }}>
+        <div className="hud-left">
+          <span className="hud-counter">Coloring Book</span>
+        </div>
+        <div className="hud-right">
+          <span className="hud-score">0</span>
+        </div>
+      </div>
+
+      <div className="color-body" style={{ marginTop: '70px' }}>
         {won ? (
           <div className="cw-win">
             <CheckmarkCircleRegular fontSize={64} style={{ color: '#ec4899' }} />
@@ -79,6 +128,13 @@ export default function ColoringGame() {
           </div>
         ) : (
           <>
+            <div className="color-guide">
+              <span className="color-guide-label">Guide</span>
+              <div className="color-guide-svg">
+                <DanfoSVG fills={guideFills} onFill={() => {}} />
+              </div>
+            </div>
+
             <div className="color-canvas-wrap">
               <DanfoSVG fills={fills} onFill={handleFill} />
             </div>

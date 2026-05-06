@@ -40,8 +40,12 @@ export default function PuzzleGame() {
   const [moves, setMoves] = useState(0)
   const [phase, setPhase] = useState('preview') // preview | playing | solved | allDone
   const [timer, setTimer] = useState(0)
-  const [imgLoaded, setImgLoaded] = useState(false)
+  const [score, setScore] = useState(0)
   const [results, setResults] = useState([])
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [showQuitModal, setShowQuitModal] = useState(false)
+  const [pendingNav, setPendingNav] = useState(null)
+  const [imgLoaded, setImgLoaded] = useState(false)
   const intervalRef = useRef(null)
 
   const puzzle = PUZZLE_IMAGES[puzzleIdx]
@@ -134,13 +138,52 @@ export default function PuzzleGame() {
     )
   }
 
+  function handleQuit(dest) {
+    setPendingNav(dest)
+    if (phase === 'playing') setShowQuitModal(true)
+    else navigate(dest)
+  }
+
   return (
-    <section className="puzzle-game">
-      {/* HUD */}
-      <div className="pz-hud">
-        <span className="pz-hud-title">🧩 {puzzleIdx + 1}/{PUZZLE_IMAGES.length}</span>
-        <span className="pz-hud-info">{puzzle.title}</span>
+    <section className="game-screen puzzle-game">
+      {/* Quit modal */}
+      {showQuitModal && (
+        <div className="quit-overlay" onClick={() => setShowQuitModal(false)}>
+          <div className="quit-modal" onClick={e => e.stopPropagation()}>
+            <h3>Quit Game?</h3>
+            <p>Your progress will be lost.</p>
+            <div className="quit-actions">
+              <button className="btn btn-primary" onClick={() => setShowQuitModal(false)}>Keep Playing</button>
+              <button className="btn btn-outline quit-confirm" onClick={() => navigate(pendingNav || '/')}>Quit</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Menu sidebar */}
+      <div className={`legend-sidebar ${menuOpen ? 'open' : ''}`}>
+        <div className="legend-section sidebar-nav">
+          <button className="sidebar-nav-btn" onClick={() => handleQuit('/')}>Home</button>
+          <button className="sidebar-nav-btn" onClick={() => handleQuit('/play')}>New Game</button>
+          <button className="sidebar-nav-btn" onClick={() => window.location.reload()}>Restart</button>
+          <button className="sidebar-nav-btn sidebar-quit" onClick={() => handleQuit('/')}>Quit</button>
+        </div>
       </div>
+      <button className={`legend-toggle ${menuOpen ? 'shifted' : ''}`} onClick={() => setMenuOpen(!menuOpen)}>
+        {menuOpen ? '◀' : '☰'}
+      </button>
+
+      {/* Floating HUD */}
+      <div className="game-hud" style={{ borderImage: 'none', borderColor: 'var(--border)' }}>
+        <div className="hud-left">
+          <span className="hud-counter">🧩 {puzzleIdx + 1}/{PUZZLE_IMAGES.length}</span>
+        </div>
+        <div className="hud-right">
+          <span className="hud-score">{score} pts</span>
+        </div>
+      </div>
+
+      <div className="pg-body" style={{ marginTop: '70px', padding: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <div className="pz-stats">
         <span className="pz-stat">⏱ {formatTime(timer)}</span>
         <span className="pz-stat">🔄 {moves} moves</span>
@@ -194,6 +237,7 @@ export default function PuzzleGame() {
 
       {/* Hidden image preloader */}
       <img src={puzzle.image} alt="" style={{ display: 'none' }} onLoad={() => setImgLoaded(true)} />
+      </div>
     </section>
   )
 }

@@ -74,7 +74,8 @@ function SplashScreen({ onDone }) {
 
 export default function App() {
   const location = useLocation()
-  const isGamePage = location.pathname === '/game'
+  const GAME_ROUTES = ['/game', '/crossword', '/coloring', '/puzzle', '/wordgame']
+  const isGamePage = GAME_ROUTES.includes(location.pathname)
   const { theme, toggle: toggleTheme } = useTheme()
   const [showSplash, setShowSplash] = useState(() => {
     // Only show splash on fresh app loads, not on navigations
