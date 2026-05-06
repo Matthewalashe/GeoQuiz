@@ -93,7 +93,7 @@ export default function Landing() {
             <Link to="/play" className="nf-hero-btn nf-btn-play">
               <PlayCircleRegular fontSize={20} /> Start Quiz
             </Link>
-            <Link to="/play" className="nf-hero-btn nf-btn-explore">
+            <Link to="/discovery" className="nf-hero-btn nf-btn-explore">
               Explore <ArrowRightRegular fontSize={16} />
             </Link>
           </div>
@@ -138,11 +138,13 @@ export default function Landing() {
       <div className="discover-section">
         <div className="discover-header">
           <h3 className="discover-title">Explore the City</h3>
-          <span className="discover-see-all">See all <ChevronRightRegular fontSize={14} /></span>
+          <Link to="/discovery" className="discover-see-all" style={{ textDecoration: 'none' }}>
+            See all <ChevronRightRegular fontSize={14} />
+          </Link>
         </div>
         <div className="discover-grid">
           {EXPLORE_CATEGORIES.map(d => (
-            <div key={d.label} className="explore-card">
+            <Link to="/discovery" key={d.label} className="explore-card" style={{ textDecoration: 'none', color: 'inherit' }}>
               <div className="explore-card-img">
                 <img src={d.img} alt={d.label} loading="lazy" />
               </div>
@@ -150,10 +152,9 @@ export default function Landing() {
                 <h4 className="explore-card-title">{d.label}</h4>
                 <p className="explore-card-sub">{d.sub}</p>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
-        <p className="discover-hint">Coming soon — explore and discover places near you</p>
       </div>
     </section>
   )
