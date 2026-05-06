@@ -21,6 +21,7 @@ import ColoringGame from './components/ColoringGame.jsx'
 import TriviaGame from './components/TriviaGame.jsx'
 import AdventureGame from './components/AdventureGame.jsx'
 import Discovery from './components/Discovery.jsx'
+import DealsPage from './components/DealsPage.jsx'
 import InstallPrompt from './components/InstallPrompt.jsx'
 import PageTransition from './components/PageTransition.jsx'
 import { processDailyLogin, canClaimToday } from './engine/xp.js'
@@ -146,6 +147,7 @@ export default function App() {
             <Route path="/rewards" element={<Rewards />} />
             <Route path="/story" element={<StoryMode />} />
             <Route path="/discovery" element={<Discovery />} />
+            <Route path="/deals" element={<DealsPage />} />
           </Routes>
         </PageTransition>
       </main>

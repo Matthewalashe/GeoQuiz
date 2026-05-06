@@ -10,6 +10,7 @@ import {
   GiftRegular,
   MapRegular,
   CompassNorthwestRegular,
+  TagRegular,
   WeatherSunnyRegular,
   WeatherMoonRegular
 } from '@fluentui/react-icons'
@@ -34,6 +35,7 @@ export default function Header({ theme, toggleTheme }) {
           <Link to="/" className={pathname === '/' ? 'active' : ''}>Home</Link>
           <Link to="/play" className={pathname === '/play' ? 'active' : ''}>Play</Link>
           <Link to="/discovery" className={pathname === '/discovery' ? 'active' : ''}>Discover</Link>
+          <Link to="/deals" className={`${pathname === '/deals' ? 'active' : ''} nav-deals-link`}>🎁 Deals</Link>
           <Link to="/leaderboard" className={pathname === '/leaderboard' ? 'active' : ''}>Scores</Link>
           <Link to="/dashboard" className={pathname === '/dashboard' ? 'active' : ''}>Progress</Link>
           <Link to="/community" className={pathname === '/community' ? 'active' : ''}>Feed</Link>
@@ -71,9 +73,9 @@ export default function Header({ theme, toggleTheme }) {
           </span>
         </Link>
 
-        <Link to="/discovery" className={`tab-item ${pathname === '/discovery' ? 'active' : ''}`}>
-          <span className="tab-icon"><CompassNorthwestRegular fontSize={22} /></span>
-          <span className="tab-label">Discover</span>
+        <Link to="/deals" className={`tab-item ${pathname === '/deals' ? 'active' : ''}`}>
+          <span className="tab-icon"><TagRegular fontSize={22} /></span>
+          <span className="tab-label">Deals</span>
         </Link>
         <Link to="/dashboard" className={`tab-item ${pathname === '/dashboard' ? 'active' : ''}`}>
           <span className="tab-icon"><PersonRegular fontSize={22} /></span>
