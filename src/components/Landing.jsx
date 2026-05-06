@@ -5,6 +5,7 @@ import ABUJA_Q from '../data/questions-abuja.js'
 import { SPONSORS } from '../data/sponsors.js'
 import { SponsorCard } from './SponsoredBanner.jsx'
 import { getXPData, getLevel, getLevelTitle, canClaimToday, getCurrentLeague } from '../engine/xp.js'
+import { getNotifPermission, requestNotifPermission } from '../engine/notifications.js'
 
 import {
   CalendarRegular,
@@ -69,6 +70,29 @@ const SWIPE_CARDS = [
 export default function Landing() {
   const totalQ = questions.length + ABUJA_Q.length
   const [eventIdx, setEventIdx] = useState(0)
+  const [showPushPrompt, setShowPushPrompt] = useState(() => getNotifPermission() === 'default')
+
+  async function handleEnablePush() {
+    const res = await requestNotifPermission()
+    setShowPushPrompt(false)
+    if (res === 'granted') {
+      // Fire test native notification immediately
+      if ('serviceWorker' in navigator) {
+        try {
+          const reg = await navigator.serviceWorker.ready
+          reg.showNotification('🎉 Notifications Enabled!', {
+            body: 'You will now receive updates on your streak, daily challenges, and rewards.',
+            icon: '/icon-192.png',
+            vibrate: [100, 50, 100]
+          })
+        } catch(e) {
+          new Notification('🎉 Notifications Enabled!', { body: 'Updates are active.', icon: '/icon-192.png' })
+        }
+      } else if ('Notification' in window) {
+        new Notification('🎉 Notifications Enabled!', { body: 'Updates are active.', icon: '/icon-192.png' })
+      }
+    }
+  }
 
   // Auto-rotate hero
   useEffect(() => {
@@ -96,14 +120,18 @@ export default function Landing() {
             <span><CalendarRegular fontSize={14} /> {ev.date}</span>
             <span><LocationRegular fontSize={14} /> {ev.venue}</span>
           </div>
-          <div className="nf-hero-actions">
-            <Link to="/play" className="nf-hero-btn nf-btn-play">
-              <PlayCircleRegular fontSize={20} /> Start Quiz
-            </Link>
-            <Link to="/discovery" className="nf-hero-btn nf-btn-explore">
-              Explore <ArrowRightRegular fontSize={16} />
-            </Link>
-          </div>
+          {showPushPrompt && (
+            <div className="nf-push-prompt">
+              <div className="nf-push-text">
+                <strong>Enable Notifications</strong>
+                <p>Never miss a daily reward or let your streak freeze!</p>
+              </div>
+              <div className="nf-push-actions">
+                <button className="btn btn-primary btn-sm" onClick={handleEnablePush}>Allow</button>
+                <button className="btn btn-outline btn-sm" onClick={() => setShowPushPrompt(false)}>Later</button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Indicator dots */}
@@ -143,17 +171,6 @@ export default function Landing() {
 
       {/* Adire Strip */}
       <div className="adire-strip" />
-
-      {/* Sponsored Discoveries */}
-      <div className="landing-sponsors">
-        <h3 className="section-label-home">Discover</h3>
-        <div className="landing-sponsor-grid">
-          {SPONSORS.filter(s => s.active).slice(0, 3).map(s => (
-            <SponsorCard key={s.id} sponsor={s} />
-          ))}
-        </div>
-        <p className="sponsored-tag">Sponsored</p>
-      </div>
 
       {/* ═══ EXPLORE — Clean Photo Cards ═══ */}
       <div className="discover-section">
