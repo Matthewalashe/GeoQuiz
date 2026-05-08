@@ -24,6 +24,8 @@ import Discovery from './components/Discovery.jsx'
 import DealsPage from './components/DealsPage.jsx'
 import Explore from './components/Explore.jsx'
 import ListingDetail from './components/ListingDetail.jsx'
+import PassLanding from './components/PassLanding.jsx'
+import ListBusiness from './components/ListBusiness.jsx'
 import InstallPrompt from './components/InstallPrompt.jsx'
 import PageTransition from './components/PageTransition.jsx'
 import { processDailyLogin } from './engine/xp.js'
@@ -152,6 +154,8 @@ export default function App() {
             <Route path="/story" element={<StoryMode />} />
             <Route path="/discovery" element={<Discovery />} />
             <Route path="/deals" element={<DealsPage />} />
+            <Route path="/pass" element={<PassLanding />} />
+            <Route path="/list-your-business" element={<ListBusiness />} />
           </Routes>
         </PageTransition>
       </main>
