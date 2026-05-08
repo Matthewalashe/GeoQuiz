@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { PUZZLE_IMAGES } from '../data/postcards.js'
 import { playCorrect, playPinDrop, vibrate } from '../engine/audio.js'
 import { addXP } from '../engine/xp.js'
+import { autoSubmitScore } from '../engine/leaderboard.js'
+import PostGameLoop from './PostGameLoop.jsx'
 
 const GRID = 3
 
@@ -93,6 +95,8 @@ export default function PuzzleGame() {
   function nextPuzzle() {
     if (puzzleIdx + 1 >= PUZZLE_IMAGES.length) {
       setPhase('allDone')
+      // Submit final score to leaderboard
+      autoSubmitScore({ gameType: 'puzzle', score: score, maxScore: PUZZLE_IMAGES.length * 300, questionCount: PUZZLE_IMAGES.length })
       return
     }
     setPuzzleIdx(prev => prev + 1)
@@ -132,6 +136,7 @@ export default function PuzzleGame() {
             <button className="btn btn-outline" onClick={() => navigate('/')}>Home</button>
           </div>
         </div>
+        <PostGameLoop gameType="puzzle" score={score} onPlayAgain={restart} />
       </section>
     )
   }

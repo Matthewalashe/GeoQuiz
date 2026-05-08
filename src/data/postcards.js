@@ -292,6 +292,19 @@ export const PUZZLE_IMAGES = [
   { id: 'pz-07', title: 'Balogun Market', image: '/images/postcards/balogun-market.png', fact: 'Lagos Island\'s largest market generates ₦2 billion daily in trade.' },
   { id: 'pz-08', title: 'Makoko Community', image: '/images/postcards/makoko.png', fact: 'Over 250,000 people live on stilts above the Lagos Lagoon in Makoko.' },
   { id: 'pz-09', title: 'Computer Village', image: '/images/postcards/computer-village.png', fact: 'Africa\'s largest tech market in Ikeja with over 5,000 shops.' },
+  { id: 'pz-10', title: 'Badagry Heritage', image: '/images/postcards/badagry.png', fact: 'Badagry has the first two-storey building in Nigeria, built in 1845.' },
+  { id: 'pz-11', title: 'Tafawa Balewa Square', image: '/images/postcards/tafawa-balewa.png', fact: 'TBS hosted Nigeria\'s independence ceremony in 1960 and holds 18,000 people.' },
+  { id: 'pz-12', title: 'Abuja National Mosque', image: '/images/postcards/abuja-mosque.png', fact: 'The Abuja National Mosque accommodates over 15,000 worshippers.' },
+  { id: 'pz-13', title: 'Nike Art Gallery, Lekki', image: '/images/postcards/nike-art-gallery.png', fact: 'Nike Art Gallery houses over 8,000 artworks across 5 floors.' },
+  { id: 'pz-14', title: 'Osun-Osogbo Sacred Grove', image: '/images/postcards/osun-grove.png', fact: 'A UNESCO World Heritage Site and one of the last primary forests in southern Nigeria.' },
+  { id: 'pz-15', title: 'University of Lagos', image: '/images/postcards/unilag.png', fact: 'UNILAG was founded in 1962 on the Akoka lagoon front.' },
+  { id: 'pz-16', title: 'Danfo Bus Culture', image: '/images/postcards/danfo-bus.png', fact: 'Danfo VW T3 buses carry over 10 million Lagosians daily.' },
+  { id: 'pz-17', title: 'Egungun Festival', image: '/images/postcards/egungun-festival.png', fact: 'Egungun masquerade costumes can weigh over 50 kg and twirl at incredible speeds.' },
+  { id: 'pz-18', title: 'National Theatre Side', image: '/images/postcards/national-theatre.png', fact: 'The National Theatre is shaped like a military cap and cost $20 million to build in 1976.' },
+  { id: 'pz-19', title: 'Lagos Island Skyline', image: '/images/postcards/lekki-ikoyi-bridge.png', fact: 'Lagos Island is Nigeria\'s financial centre with the tallest buildings in West Africa.' },
+  { id: 'pz-20', title: 'Zuma Rock Sunset', image: '/images/postcards/zuma-rock.png', fact: 'Locals believe Zuma Rock has a human face that appears during certain lighting.' },
+  { id: 'pz-21', title: 'Third Mainland Night', image: '/images/postcards/third-mainland-bridge.png', fact: 'Third Mainland Bridge carries over 200,000 vehicles daily across the Lagos Lagoon.' },
+  { id: 'pz-22', title: 'Olumo Rock Panorama', image: '/images/postcards/olumo-rock.png', fact: 'The name Abeokuta means "under the rock" — referring to Olumo Rock.' },
 ]
 
 // ═══ CONTENT PACK CATEGORIES (for filtering in PostCards game) ═══

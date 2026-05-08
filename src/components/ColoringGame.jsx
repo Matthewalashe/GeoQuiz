@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CheckmarkCircleRegular, ArrowClockwiseRegular } from '@fluentui/react-icons'
 import { addXP } from '../engine/xp.js'
+import { autoSubmitScore } from '../engine/leaderboard.js'
+import PostGameLoop from './PostGameLoop.jsx'
 
 // ── PALETTE ──────────────────────────────────────────────────────────────────
 const PALETTE = [
@@ -52,6 +54,9 @@ const SCENES = {
     SVG: HouseSVG,
   },
 }
+
+import { EXTRA_SCENES } from '../data/coloringScenes.jsx'
+Object.assign(SCENES, EXTRA_SCENES)
 
 const SCENE_LIST = Object.values(SCENES)
 
@@ -173,6 +178,7 @@ export default function ColoringGame() {
     }
     setWon(true)
     addXP('GAME_WIN')
+    autoSubmitScore({ gameType: 'coloring', score: 100, maxScore: 100, questionCount: 1 })
   }
 
   function handleQuit(dest) {
@@ -258,6 +264,7 @@ export default function ColoringGame() {
 
       <div className="color-body">
         {won ? (
+          <>
           <div className="game-end-card">
             <CheckmarkCircleRegular fontSize={64} style={{ color: '#ec4899' }} />
             <h2>Masterpiece! 🎨</h2>
@@ -270,6 +277,8 @@ export default function ColoringGame() {
               <button className="btn btn-outline" onClick={() => navigate('/play')}>Back to Hub</button>
             </div>
           </div>
+          <PostGameLoop gameType="coloring" onPlayAgain={() => { setStarted(false); setSelectedScene(null) }} />
+          </>
         ) : (
           <>
             {/* Guide + Canvas row */}

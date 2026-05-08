@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { WORD_DATA } from '../data/wordgame.js'
 import { playCorrect, playWrong, playPinDrop, vibrate } from '../engine/audio.js'
+import { autoSubmitScore } from '../engine/leaderboard.js'
+import PostGameLoop from './PostGameLoop.jsx'
 
 function shuffle(arr) {
   const a = [...arr]
@@ -136,7 +138,12 @@ export default function WordGame() {
   function showDetails() { setShowInfo(true); setPhase('info') }
 
   function next() {
-    if (idx + 1 >= words.length) { setPhase('done'); return }
+    if (idx + 1 >= words.length) {
+      setPhase('done')
+      const maxPts = words.length * 100
+      autoSubmitScore({ gameType: 'word', score, maxScore: maxPts, questionCount: words.length })
+      return
+    }
     setIdx(prev => prev + 1)
   }
 
@@ -165,6 +172,7 @@ export default function WordGame() {
             <button className="btn btn-outline" onClick={() => navigate('/')}>Home</button>
           </div>
         </div>
+        <PostGameLoop gameType="word" score={score} onPlayAgain={() => window.location.reload()} />
       </section>
     )
   }

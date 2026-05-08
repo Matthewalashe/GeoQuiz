@@ -38,16 +38,17 @@ export async function submitWaitlist({ name, email, role, message, referral }) {
 }
 
 // ---- Leaderboard ----
-export async function submitScore({ playerName, score, maxScore, questionCount, categories, difficulty, avatar }) {
+export async function submitScore({ playerName, score, maxScore, questionCount, categories, difficulty, avatar, gameType = 'quiz' }) {
   if (!supabase) {
     const existing = JSON.parse(localStorage.getItem('geoquiz_leaderboard') || '[]')
     existing.push({
       player_name: playerName, score, max_score: maxScore,
       question_count: questionCount, categories, difficulty, avatar,
+      game_type: gameType,
       created_at: new Date().toISOString(),
     })
     existing.sort((a, b) => b.score - a.score)
-    localStorage.setItem('geoquiz_leaderboard', JSON.stringify(existing.slice(0, 50)))
+    localStorage.setItem('geoquiz_leaderboard', JSON.stringify(existing.slice(0, 100)))
     return { success: true, fallback: true }
   }
   const { error } = await supabase.from('leaderboard').insert([{
@@ -58,6 +59,7 @@ export async function submitScore({ playerName, score, maxScore, questionCount, 
     categories,
     difficulty,
     avatar,
+    game_type: gameType,
   }])
   if (error) throw error
   return { success: true }

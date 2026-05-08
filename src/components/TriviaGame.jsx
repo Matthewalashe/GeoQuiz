@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { CheckmarkCircleRegular, DismissCircleRegular } from '@fluentui/react-icons'
 import { playCorrect, playWrong, playTick, vibrate } from '../engine/audio.js'
 import { addXP } from '../engine/xp.js'
+import { autoSubmitScore } from '../engine/leaderboard.js'
 import { RewardsOverlay, useRewardSystem } from '../engine/rewards.jsx'
+import PostGameLoop from './PostGameLoop.jsx'
 
 // ── DATA ─────────────────────────────────────────────────────────────────────
 const PACKS = {
@@ -189,6 +191,7 @@ export default function TriviaGame() {
       const total = score
       addXP('GAME_WIN', total > 800 ? 200 : total > 400 ? 100 : 50)
       setPhase('done')
+      autoSubmitScore({ gameType: 'trivia', score: total, maxScore: questions.length * 150, questionCount: questions.length })
     } else {
       setIdx(prev => prev + 1)
       setSelectedOpt(null)
@@ -285,6 +288,7 @@ export default function TriviaGame() {
       {/* BODY */}
       <div className="trivia-body">
         {phase === 'done' ? (
+          <>
           <div className="game-end-card">
             <div className="game-end-trophy">{score > 800 ? '🏆' : score > 400 ? '🥈' : '🎖️'}</div>
             <h2>Quiz Complete!</h2>
@@ -298,6 +302,8 @@ export default function TriviaGame() {
               <button className="btn btn-outline" onClick={() => navigate('/play')}>Hub</button>
             </div>
           </div>
+          <PostGameLoop gameType="trivia" onPlayAgain={startGame} />
+          </>
         ) : (
           <>
             <div className="trivia-timer-bar">
