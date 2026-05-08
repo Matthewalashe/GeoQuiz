@@ -22,6 +22,8 @@ import TriviaGame from './components/TriviaGame.jsx'
 import AdventureGame from './components/AdventureGame.jsx'
 import Discovery from './components/Discovery.jsx'
 import DealsPage from './components/DealsPage.jsx'
+import Explore from './components/Explore.jsx'
+import ListingDetail from './components/ListingDetail.jsx'
 import InstallPrompt from './components/InstallPrompt.jsx'
 import PageTransition from './components/PageTransition.jsx'
 import { processDailyLogin } from './engine/xp.js'
@@ -128,6 +130,8 @@ export default function App() {
         <PageTransition>
           <Routes>
             <Route path="/" element={<Landing />} />
+            <Route path="/explore" element={<Explore />} />
+            <Route path="/explore/:id" element={<ListingDetail />} />
             <Route path="/play" element={<CategorySelector />} />
             <Route path="/game" element={<GameScreen />} />
             <Route path="/results" element={<ResultsScreen />} />
@@ -154,9 +158,8 @@ export default function App() {
       {!isGamePage && (
         <footer className="app-footer">
           <p>
-            GeoQuiz v3.0 — Lagos Edition &nbsp;|&nbsp;
+            Feferity — Experience Nigeria &nbsp;|&nbsp;
             By <a href="https://wa.me/2348184495633" target="_blank" rel="noopener noreferrer">WhiteArts Technologies</a> &nbsp;|&nbsp;
-            Conceived by LASPIC &nbsp;|&nbsp;
             <a href="mailto:donghinny91@gmail.com">Contact</a>
           </p>
         </footer>

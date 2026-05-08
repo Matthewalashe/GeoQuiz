@@ -3,11 +3,10 @@ import { getXPData, getLevel, getLevelProgress, getLevelTitle, canClaimToday } f
 
 import {
   HomeRegular,
+  CompassNorthwestRegular,
   PlayCircleRegular,
+  TicketDiagonalRegular,
   PersonRegular,
-  ChatMultipleRegular,
-  GiftRegular,
-  MapRegular,
   WeatherSunnyRegular,
   WeatherMoonRegular
 } from '@fluentui/react-icons'
@@ -24,19 +23,17 @@ export default function Header({ theme, toggleTheme }) {
       {/* Desktop top header */}
       <header className="header">
         <Link to="/" className="header-logo">
-          <MapRegular fontSize={22} style={{ color: 'var(--primary)' }} />
-          GeoQuiz
+          <span className="ff-wordmark">feferity</span>
         </Link>
 
         <nav className="header-nav desktop-nav">
           <Link to="/" className={pathname === '/' ? 'active' : ''}>Home</Link>
-          <Link to="/play" className={pathname === '/play' ? 'active' : ''}>Play</Link>
-          <Link to="/discovery" className={pathname === '/discovery' ? 'active' : ''}>Discover</Link>
-          <Link to="/deals" className={`${pathname === '/deals' ? 'active' : ''} nav-deals-link`}>🎁 Deals</Link>
+          <Link to="/explore" className={pathname.startsWith('/explore') ? 'active' : ''}>Explore</Link>
+          <Link to="/play" className={pathname === '/play' ? 'active' : ''}>Games</Link>
+          <Link to="/pass" className={pathname === '/pass' ? 'active' : ''}>Pass</Link>
           <Link to="/leaderboard" className={pathname === '/leaderboard' ? 'active' : ''}>Scores</Link>
-          <Link to="/dashboard" className={pathname === '/dashboard' ? 'active' : ''}>Progress</Link>
           <Link to="/community" className={pathname === '/community' ? 'active' : ''}>Feed</Link>
-          <Link to="/about" className={pathname === '/about' ? 'active' : ''}>About</Link>
+          <Link to="/list-your-business" className={pathname === '/list-your-business' ? 'active' : ''}>List Business</Link>
         </nav>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -52,27 +49,26 @@ export default function Header({ theme, toggleTheme }) {
         </div>
       </header>
 
-      {/* Mobile bottom tab bar */}
+      {/* Mobile bottom tab bar — 5 tabs */}
       <nav className="mobile-tab-bar">
         <Link to="/" className={`tab-item ${pathname === '/' ? 'active' : ''}`}>
           <span className="tab-icon"><HomeRegular fontSize={22} /></span>
           <span className="tab-label">Home</span>
         </Link>
-        <Link to="/play" className={`tab-item ${pathname === '/play' ? 'active' : ''}`}>
-          <span className="tab-icon"><PlayCircleRegular fontSize={22} /></span>
-          <span className="tab-label">Play</span>
+        <Link to="/explore" className={`tab-item ${pathname.startsWith('/explore') ? 'active' : ''}`}>
+          <span className="tab-icon"><CompassNorthwestRegular fontSize={22} /></span>
+          <span className="tab-label">Explore</span>
         </Link>
 
-        <Link to="/rewards" className="tab-center-btn" aria-label="Rewards">
+        <Link to="/play" className="tab-center-btn" aria-label="Games">
           <span className="tab-center-icon">
-            <GiftRegular fontSize={22} style={{ color: '#fff' }} />
-            {canClaimToday() && <span className="tab-reward-dot" />}
+            <PlayCircleRegular fontSize={22} style={{ color: '#fff' }} />
           </span>
         </Link>
 
-        <Link to="/community" className={`tab-item ${pathname === '/community' ? 'active' : ''}`}>
-          <span className="tab-icon"><ChatMultipleRegular fontSize={22} /></span>
-          <span className="tab-label">Feed</span>
+        <Link to="/pass" className={`tab-item ${pathname === '/pass' ? 'active' : ''}`}>
+          <span className="tab-icon"><TicketDiagonalRegular fontSize={22} /></span>
+          <span className="tab-label">Pass</span>
         </Link>
         <Link to="/dashboard" className={`tab-item ${pathname === '/dashboard' ? 'active' : ''}`}>
           <span className="tab-icon"><PersonRegular fontSize={22} /></span>
