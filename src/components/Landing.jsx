@@ -1,192 +1,118 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import { canClaimToday } from '../engine/xp.js'
-import { getNotifPermission, requestNotifPermission } from '../engine/notifications.js'
+import { Link, useNavigate } from 'react-router-dom'
+import { getXPData, getLevel, getLevelTitle, canClaimToday } from '../engine/xp.js'
+import { ChevronRightRegular } from '@fluentui/react-icons'
 
-import {
-  CalendarRegular,
-  LocationRegular,
-  ChevronRightRegular,
-} from '@fluentui/react-icons'
-
-// Real Lagos events — May 2026
-const EVENTS = [
-  {
-    id: 1,
-    title: 'Lagos Acoustic Experience',
-    date: 'May 29, 2026',
-    venue: 'Federal Palace Hotel & Casino',
-    tag: 'LIVE MUSIC',
-    img: '/images/events/event-hero.png',
-  },
-  {
-    id: 2,
-    title: 'African Business & Leadership Summit',
-    date: 'May 12, 2026',
-    venue: 'Harbour Point, Lagos',
-    tag: 'CONFERENCE',
-    img: '/images/explore/culture.png',
-  },
-  {
-    id: 3,
-    title: 'West Africa Automotive Show',
-    date: 'May 12, 2026',
-    venue: 'Landmark Centre, VI',
-    tag: 'EXHIBITION',
-    img: '/images/explore/shopping.png',
-  },
-  {
-    id: 4,
-    title: 'Lagos Real Estate Fest 2026',
-    date: 'May 26, 2026',
-    venue: 'Lagos Oriental Hotel',
-    tag: 'EXPO',
-    img: '/images/explore/hotels.png',
-  },
+// Daily challenge — rotates content every day
+const DAILY = [
+  { title: 'Pin 5 Lagos landmarks', mode: 'daily', icon: '📍' },
+  { title: 'Nigerian History Quiz', mode: 'daily', icon: '📜' },
+  { title: 'Guess the Street Food', mode: 'daily', icon: '🍲' },
 ]
 
-const EXPLORE_CATEGORIES = [
-  { label: 'Restaurant & Bar', sub: 'Food & Dining', img: '/images/explore/restaurant.png', id: 'food' },
-  { label: 'Parks & Recreation', sub: 'Nature & Fun', img: '/images/explore/parks.png', id: 'parks' },
-  { label: 'Nightlife & Lifestyle', sub: 'Entertainment', img: '/images/explore/nightlife.png', id: 'nightlife' },
-  { label: 'Hotels & Travels', sub: 'Stay & Explore', img: '/images/explore/hotels.png', id: 'hotels' },
-  { label: 'Shops & Malls', sub: 'Shopping', img: '/images/explore/shopping.png', id: 'shopping' },
-  { label: 'Culture & Finance', sub: 'Heritage & Money', img: '/images/explore/culture.png', id: 'art' },
+// Core games — shown as primary options
+const GAMES = [
+  { id: 'quiz', name: 'Map Quiz', desc: 'Pin locations on the map', icon: '🗺️', path: '/play', accent: 'var(--green)' },
+  { id: 'trivia', name: 'Trivia', desc: 'Quick-fire questions', icon: '🧠', path: '/trivia', accent: 'var(--secondary)' },
+  { id: 'crossword', name: 'Crossword', desc: 'Nigerian word puzzles', icon: '✏️', path: '/crossword', accent: 'var(--tertiary)' },
 ]
 
-const SWIPE_CARDS = [
-  { label: 'Places', link: '/discovery', img: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&q=80&w=600' },
-  { label: 'Games', link: '/play', img: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=600' },
-  { label: 'Museums', link: '/discovery?category=art', img: 'https://images.unsplash.com/photo-1518998053901-5348d3961a04?auto=format&fit=crop&q=80&w=600' },
-  { label: 'Map', link: '/discovery?view=map', img: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=600' },
+// More games — shown in a compact row
+const MORE = [
+  { name: 'Adventure', icon: '🎭', path: '/adventure' },
+  { name: 'Coloring', icon: '🎨', path: '/coloring' },
+  { name: 'Puzzle', icon: '🧩', path: '/puzzle' },
+  { name: 'Word', icon: '🔤', path: '/word' },
 ]
 
 export default function Landing() {
-  const [eventIdx, setEventIdx] = useState(0)
-  const [showPushPrompt, setShowPushPrompt] = useState(() => getNotifPermission() === 'default')
+  const navigate = useNavigate()
+  const xp = getXPData()
+  const level = getLevel(xp.totalXP)
+  const title = getLevelTitle(level)
+  const streak = xp.streakDays || 0
+  const playerName = localStorage.getItem('geoquiz_player') || 'Explorer'
+  const avatar = localStorage.getItem('geoquiz_avatar') || '🦅'
 
-  async function handleEnablePush() {
-    const res = await requestNotifPermission()
-    setShowPushPrompt(false)
-    if (res === 'granted') {
-      // Fire test native notification immediately
-      if ('serviceWorker' in navigator) {
-        try {
-          const reg = await navigator.serviceWorker.ready
-          reg.showNotification('🎉 Notifications Enabled!', {
-            body: 'You will now receive updates on your streak, daily challenges, and rewards.',
-            icon: '/icon-192.png',
-            vibrate: [100, 50, 100]
-          })
-        } catch {
-          new Notification('🎉 Notifications Enabled!', { body: 'Updates are active.', icon: '/icon-192.png' })
-        }
-      } else if ('Notification' in window) {
-        new Notification('🎉 Notifications Enabled!', { body: 'Updates are active.', icon: '/icon-192.png' })
-      }
-    }
-  }
+  // Last played game
+  const lastGame = localStorage.getItem('geoquiz_last_game') || 'quiz'
+  const lastInfo = [...GAMES, ...MORE.map(m => ({ ...m, id: m.name.toLowerCase() }))].find(g => g.id === lastGame || g.path === `/${lastGame}`)
 
-  // Auto-rotate hero
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setEventIdx(prev => (prev + 1) % EVENTS.length)
-    }, 6000)
-    return () => clearInterval(timer)
-  }, [])
-
-  const ev = EVENTS[eventIdx]
+  // Daily challenge — pick one based on day of year
+  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000)
+  const daily = DAILY[dayOfYear % DAILY.length]
 
   return (
-    <section className="landing netflix-landing">
-      {/* ═══ NETFLIX-STYLE HERO ═══ */}
-      <div className="nf-hero">
-        <div className="nf-hero-bg">
-          <img src={ev.img} alt={ev.title} key={ev.id} />
-          <div className="nf-hero-gradient" />
+    <section className="home-page">
+      {/* Greeting */}
+      <div className="home-greeting">
+        <div className="home-avatar">{avatar}</div>
+        <div>
+          <h2 className="home-hello">Hey, {playerName}</h2>
+          <span className="home-level">{title.emoji} Level {level} · {title.title}</span>
         </div>
-
-        <div className="nf-hero-content">
-          <span className="nf-hero-tag">{ev.tag}</span>
-          <h1 className="nf-hero-title">{ev.title}</h1>
-          <div className="nf-hero-meta">
-            <span><CalendarRegular fontSize={14} /> {ev.date}</span>
-            <span><LocationRegular fontSize={14} /> {ev.venue}</span>
-          </div>
-          {showPushPrompt && (
-            <div className="nf-push-prompt">
-              <div className="nf-push-text">
-                <strong>Enable Notifications</strong>
-                <p>Never miss a daily reward or let your streak freeze!</p>
-              </div>
-              <div className="nf-push-actions">
-                <button className="btn btn-primary btn-sm" onClick={handleEnablePush}>Allow</button>
-                <button className="btn btn-outline btn-sm" onClick={() => setShowPushPrompt(false)}>Later</button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Indicator dots */}
-        <div className="nf-hero-dots">
-          {EVENTS.map((_, i) => (
-            <button
-              key={i}
-              className={`nf-dot ${i === eventIdx ? 'active' : ''}`}
-              onClick={() => setEventIdx(i)}
-            />
-          ))}
-        </div>
+        {streak > 0 && <span className="home-streak">🔥 {streak}</span>}
       </div>
 
-      {/* ═══ WHAT ARE YOU LOOKING FOR (Swipe Cards) ═══ */}
-      <div className="swipe-section">
-        <h3 className="swipe-title">What are you looking for?</h3>
-        <div className="swipe-container">
-          {SWIPE_CARDS.map(c => (
-            <Link to={c.link} key={c.label} className="swipe-card">
-              <img src={c.img} alt={c.label} loading="lazy" />
-              <div className="swipe-card-gradient" />
-              <h4 className="swipe-card-title">{c.label}</h4>
-            </Link>
-          ))}
+      {/* Daily Challenge — big, tappable, urgent */}
+      <button className="home-daily" onClick={() => navigate('/play?mode=daily')}>
+        <div className="home-daily-left">
+          <span className="home-daily-badge">DAILY</span>
+          <strong>{daily.title}</strong>
+          <span className="home-daily-sub">New challenge every day</span>
         </div>
-      </div>
+        <span className="home-daily-icon">{daily.icon}</span>
+      </button>
 
-      {/* Daily Reward Banner */}
+      {/* Daily reward banner */}
       {canClaimToday() && (
-        <Link to="/rewards" className="rw-home-banner">
-          <span className="rw-hb-icon">🎁</span>
-          <span className="rw-hb-text">Claim your daily reward!</span>
-          <span className="rw-hb-arrow">→</span>
+        <Link to="/rewards" className="home-reward">
+          🎁 <span>Your daily reward is ready!</span> <span className="home-reward-go">Claim →</span>
         </Link>
       )}
 
-      {/* Adire Strip */}
-      <div className="adire-strip" />
+      {/* Continue playing — show last game */}
+      {lastInfo && (
+        <Link to={lastInfo.path || `/play`} className="home-continue">
+          <span className="home-continue-label">Continue playing</span>
+          <div className="home-continue-row">
+            <span className="home-continue-icon">{lastInfo.icon || '🗺️'}</span>
+            <strong>{lastInfo.name || 'Map Quiz'}</strong>
+            <ChevronRightRegular fontSize={18} />
+          </div>
+        </Link>
+      )}
 
-      {/* ═══ EXPLORE — Clean Photo Cards ═══ */}
-      <div className="discover-section">
-        <div className="discover-header">
-          <h3 className="discover-title">Explore the City</h3>
-          <Link to="/discovery" className="discover-see-all" style={{ textDecoration: 'none' }}>
-            See all <ChevronRightRegular fontSize={14} />
+      {/* Primary games */}
+      <h3 className="home-section-label">Play</h3>
+      <div className="home-game-grid">
+        {GAMES.map(g => (
+          <Link key={g.id} to={g.path} className="home-game-card" style={{ '--ga': g.accent }}>
+            <span className="home-game-icon">{g.icon}</span>
+            <strong>{g.name}</strong>
+            <span className="home-game-desc">{g.desc}</span>
           </Link>
-        </div>
-        <div className="discover-grid">
-          {EXPLORE_CATEGORIES.map(d => (
-            <Link to={`/discovery?category=${d.id}`} key={d.label} className="explore-card" style={{ textDecoration: 'none', color: 'inherit' }}>
-              <div className="explore-card-img">
-                <img src={d.img} alt={d.label} loading="lazy" />
-              </div>
-              <div className="explore-card-body">
-                <h4 className="explore-card-title">{d.label}</h4>
-                <p className="explore-card-sub">{d.sub}</p>
-              </div>
-            </Link>
-          ))}
-        </div>
+        ))}
       </div>
+
+      {/* More games — compact chips */}
+      <h3 className="home-section-label">More games</h3>
+      <div className="home-more-row">
+        {MORE.map(g => (
+          <Link key={g.name} to={g.path} className="home-more-chip">
+            <span>{g.icon}</span> {g.name}
+          </Link>
+        ))}
+      </div>
+
+      {/* Explore teaser */}
+      <Link to="/discovery" className="home-explore-teaser">
+        <div>
+          <strong>Explore Lagos</strong>
+          <span>Restaurants, parks, nightlife & more</span>
+        </div>
+        <ChevronRightRegular fontSize={18} />
+      </Link>
     </section>
   )
 }

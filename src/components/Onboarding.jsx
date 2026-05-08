@@ -1,43 +1,93 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
-const STEPS = [
-  { emoji: '📖', title: 'Read the Question', desc: 'Each question asks you to locate a real place in Lagos on the map.' },
-  { emoji: '👆', title: 'Tap the Map', desc: 'Drop your pin where you think the location is. The closer you get, the more points!' },
-  { emoji: '🏆', title: 'Score & Learn', desc: 'See how close you were, learn fun facts, and aim for the gold!' },
-]
+const AVATARS = ['🦅','🐆','🦎','🐘','🦜','🐢','🌴','🥁','🎭','🔥','⚡','🌊']
+const SUGGESTIONS = ['NaijaExplorer','LagosStar','MapKing','GeoNinja','QuizWhiz','PinMaster']
 
 export default function Onboarding({ onComplete }) {
+  const navigate = useNavigate()
   const [step, setStep] = useState(0)
+  const [name, setName] = useState('')
+  const [avatar, setAvatar] = useState(null)
+  const [closing, setClosing] = useState(false)
 
-  function next() {
-    if (step + 1 >= STEPS.length) {
-      localStorage.setItem('geoquiz_onboarded', '1')
+  function finish() {
+    const finalName = name.trim() || SUGGESTIONS[Math.floor(Math.random() * SUGGESTIONS.length)]
+    const finalAvatar = avatar || '🦅'
+    localStorage.setItem('geoquiz_player', finalName)
+    localStorage.setItem('geoquiz_avatar', finalAvatar)
+    localStorage.setItem('geoquiz_onboarded', '1')
+    setClosing(true)
+    setTimeout(() => {
       onComplete()
-    } else {
-      setStep(step + 1)
-    }
+      navigate('/play')
+    }, 280)
   }
 
-  const s = STEPS[step]
-
   return (
-    <div className="onboarding-overlay">
-      <div className="onboarding-modal">
-        <div className="onboarding-step-dots">
-          {STEPS.map((_, i) => (
-            <span key={i} className={`onboarding-dot ${i === step ? 'active' : ''}`} />
+    <div className={`ob-overlay${closing ? ' ob-out' : ''}`}>
+      <div className={`ob-card${closing ? ' ob-card-out' : ''}`}>
+
+        {step === 0 && (
+          <div className="ob-step">
+            <div className="ob-hero-icon">🗺️</div>
+            <h2>Welcome to GeoQuiz</h2>
+            <p className="ob-desc">
+              How well do you know Nigeria? Pin locations, solve crosswords,
+              race through trivia — and prove you're the real Naija champion.
+            </p>
+            <button className="ob-cta" onClick={() => setStep(1)}>Let's go →</button>
+          </div>
+        )}
+
+        {step === 1 && (
+          <div className="ob-step">
+            <div className="ob-hero-icon">✏️</div>
+            <h2>What should we call you?</h2>
+            <input
+              className="ob-name-input"
+              type="text"
+              placeholder="Your display name"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              maxLength={20}
+              autoFocus
+              onKeyDown={e => { if (e.key === 'Enter' && name.trim()) setStep(2) }}
+            />
+            <div className="ob-chips">
+              {SUGGESTIONS.slice(0, 3).map(n => (
+                <button key={n} className="ob-chip" onClick={() => { setName(n); setStep(2) }}>{n}</button>
+              ))}
+            </div>
+            <button className="ob-cta" disabled={!name.trim()} onClick={() => setStep(2)}>
+              Continue
+            </button>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="ob-step">
+            <div className="ob-hero-icon">{avatar || '🎭'}</div>
+            <h2>Pick your avatar</h2>
+            <div className="ob-avatar-grid">
+              {AVATARS.map(a => (
+                <button
+                  key={a}
+                  className={`ob-av${avatar === a ? ' picked' : ''}`}
+                  onClick={() => setAvatar(a)}
+                >{a}</button>
+              ))}
+            </div>
+            <button className="ob-cta" disabled={!avatar} onClick={finish}>
+              Start playing
+            </button>
+          </div>
+        )}
+
+        <div className="ob-progress">
+          {[0,1,2].map(i => (
+            <span key={i} className={`ob-pip${step === i ? ' now' : step > i ? ' past' : ''}`} />
           ))}
-        </div>
-        <div className="onboarding-emoji">{s.emoji}</div>
-        <h3 className="onboarding-title">{s.title}</h3>
-        <p className="onboarding-desc">{s.desc}</p>
-        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', marginTop: '1rem' }}>
-          <button className="btn btn-primary" onClick={next}>
-            {step + 1 >= STEPS.length ? 'Let\'s Go! 🚀' : 'Next →'}
-          </button>
-          <button className="btn btn-outline" onClick={() => { localStorage.setItem('geoquiz_onboarded', '1'); onComplete() }} style={{ fontSize: '0.8rem' }}>
-            Skip
-          </button>
         </div>
       </div>
     </div>
