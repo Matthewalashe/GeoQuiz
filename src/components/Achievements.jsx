@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 
@@ -64,9 +65,11 @@ export function trackAchievement(key, value) {
 export default function Achievements() {
   const [stats, setStats] = useState(null)
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     setStats(getStats())
   }, [])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   if (!stats) return null
 

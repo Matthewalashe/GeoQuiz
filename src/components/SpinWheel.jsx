@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { DISCOVERY_CATEGORIES, DISCOVERY_POIS } from '../data/discovery.js'
+import { DISCOVERY_POIS } from '../data/discovery.js'
 
 // Build weighted wheel slices: sponsored POIs get 2× weight
 function buildSlices(categoryId) {
@@ -99,7 +99,7 @@ export default function SpinWheel({ onClose }) {
     const canvas = canvasRef.current
     if (!canvas) return
     drawWheel(canvas, slices, rotRef.current)
-  }, [category, result])
+  }, [category, result, slices])
 
   function spin() {
     if (spinning) return
@@ -129,11 +129,8 @@ export default function SpinWheel({ onClose }) {
         rotRef.current = target % (2 * Math.PI)
         setSpinning(false)
 
-        // Determine winning slice — pointer at top (−π/2)
-        const n = slices.length
-        const arc = (2 * Math.PI) / n
-        const normalised = ((2 * Math.PI - (rotRef.current % (2 * Math.PI))) + (Math.PI / 2)) % (2 * Math.PI)
-        // Pick from weighted pool instead for fairness
+        // Determine winning slice — pick from weighted pool
+        // (geometric calculation removed in favor of weighted random pick)
         const winner = weighted[Math.floor(Math.random() * weighted.length)]
         setResult(winner)
 

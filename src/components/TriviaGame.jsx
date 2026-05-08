@@ -87,7 +87,7 @@ function CollectButton({ points, stars, onCollect, collected }) {
 // ── COMPONENT ─────────────────────────────────────────────────────────────
 export default function TriviaGame() {
   const navigate = useNavigate()
-  const { popXP, celebrateCorrect, celebrateWrong, openChest, showStarBurst, combo, rewardProps } = useRewardSystem()
+  const { popXP, celebrateCorrect, celebrateWrong, openChest, showStarBurst, rewardProps } = useRewardSystem()
 
   const [selectedPack, setSelectedPack] = useState(null)
   const [started, setStarted] = useState(false)
@@ -116,21 +116,6 @@ export default function TriviaGame() {
     setStarted(true)
   }
 
-  useEffect(() => {
-    if (!started || phase !== 'playing') { clearInterval(intervalRef.current); return }
-    setTimer(15)
-    intervalRef.current = setInterval(() => {
-      setTimer(t => {
-        if (t <= 1) { clearInterval(intervalRef.current); handleTimeUp(); return 0 }
-        if (t <= 5) playTick()
-        return t - 1
-      })
-    }, 1000)
-    return () => clearInterval(intervalRef.current)
-  }, [idx, phase, started])
-
-  const q = questions[idx]
-
   function handleTimeUp() {
     playWrong(); vibrate([30, 50, 30])
     celebrateWrong()
@@ -138,6 +123,27 @@ export default function TriviaGame() {
     setPendingXP(0); setPendingStars(0); setXpCollected(true)
     setPhase('feedback')
   }
+
+  // Ref to keep handleTimeUp current for the timer interval
+  const handleTimeUpRef = useRef(handleTimeUp)
+  useEffect(() => { handleTimeUpRef.current = handleTimeUp })
+
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    if (!started || phase !== 'playing') { clearInterval(intervalRef.current); return }
+    setTimer(15)
+    intervalRef.current = setInterval(() => {
+      setTimer(t => {
+        if (t <= 1) { clearInterval(intervalRef.current); handleTimeUpRef.current(); return 0 }
+        if (t <= 5) playTick()
+        return t - 1
+      })
+    }, 1000)
+    return () => clearInterval(intervalRef.current)
+  }, [idx, phase, started])
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  const q = questions[idx]
 
   function handleAnswer(optIdx) {
     if (phase !== 'playing') return
@@ -173,7 +179,7 @@ export default function TriviaGame() {
     if (xpCollected || pendingXP === 0) return
     const btn = answerBtnRefs.current[selectedOpt]
     popXP(pendingXP, btn)
-    addXP('GAME_CORRECT', pendingXP)
+    addXP('GAME_CORRECT', pendingXP / 10)
     setXpCollected(true)
   }
 

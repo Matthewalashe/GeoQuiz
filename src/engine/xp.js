@@ -30,6 +30,8 @@ export const XP_REWARDS = {
   CORRECT_ANSWER: 10,
   PERFECT_PIN: 25,
   COMPLETE_GAME: 100,
+  GAME_WIN: 100,
+  GAME_CORRECT: 10,
   DAILY_LOGIN: 25,
   STREAK_DAY: 5,
   SHARE_RESULT: 20,
@@ -243,7 +245,7 @@ function defaultLeague() {
   }
 }
 
-function saveLeague(data) { localStorage.setItem(LEAGUE_KEY, JSON.stringify(data)) }
+export function saveLeague(data) { localStorage.setItem(LEAGUE_KEY, JSON.stringify(data)) }
 
 export function getCurrentLeague(totalXP) {
   let league = LEAGUE_TIERS[0]
@@ -270,9 +272,13 @@ export function generateLeaguePeers(playerXP, playerName) {
     'Dayo', 'Chiamaka', 'Femi', 'Blessing', 'Uche', 'Sade', 'Kabiru',
     'Nkechi', 'Taiwo', 'Fatima', 'Gbenga', 'Chioma', 'Jide', 'Hadiza',
   ]
+  // Scale peer XP relative to league tier boundaries for realism
+  const tierMin = league.minXP
+  const nextTier = getNextLeague(playerXP)
+  const tierMax = nextTier ? nextTier.minXP : playerXP * 2
   const peers = names.map((name, i) => ({
     name,
-    xp: Math.max(0, Math.round(playerXP * (0.3 + Math.random() * 1.4))),
+    xp: Math.max(tierMin, Math.round(tierMin + Math.random() * (tierMax - tierMin))),
     avatar: ['🧭', '🌍', '🎯', '🔥', '⭐', '🏅', '🎮', '💎', '🚀', '🌟'][i % 10],
     isPlayer: false,
   }))
@@ -336,8 +342,17 @@ export function claimDailyReward() {
   if (reward.type === 'freeze') {
     data.streakFreezes = Math.min((data.streakFreezes || 0) + 1, 3)
   }
-  if (reward.type === 'skin' && !data.mapSkins.includes('neon')) {
-    data.mapSkins.push('neon')
+  if (reward.type === 'skin') {
+    // Grant a skin the player doesn't own yet, cycling through available skins
+    const allSkins = ['neon', 'dark', 'satellite', 'vintage', 'watercolor']
+    const unowned = allSkins.filter(s => !data.mapSkins.includes(s))
+    if (unowned.length > 0) {
+      data.mapSkins.push(unowned[0])
+    } else {
+      // All skins owned — grant bonus XP instead
+      xpAwarded += 50
+      data.totalXP += 50
+    }
   }
   if (reward.type === 'badge') {
     const badge = `weekly-${rewards.cycleStart}`

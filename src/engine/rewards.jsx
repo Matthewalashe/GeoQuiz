@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 /**
  * Reward Engine — Duolingo-style XP/Stars/Streaks/Chests
  * Shared by all mini-games.

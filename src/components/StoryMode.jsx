@@ -54,8 +54,17 @@ export default function StoryMode() {
                   style={sp.completed ? { borderColor: ch.color, boxShadow: `0 0 12px ${ch.color}40` } : {}}
                   onClick={() => {
                     if (!isLocked) {
-                      // Navigate to quiz with this chapter's category
-                      navigate(`/game?category=${ch.categoryFilter}&count=${stage.questions}&campaign=${ch.id}&stage=${stage.id}`)
+                      // Navigate to quiz with proper state (GameScreen reads location.state)
+                      navigate('/game', {
+                        state: {
+                          categories: ch.categoryFilter ? [ch.categoryFilter] : [],
+                          difficulty: 'all',
+                          count: stage.questions || 5,
+                          timer: 0,
+                          campaign: ch.id,
+                          stage: stage.id,
+                        }
+                      })
                     }
                   }}
                   disabled={isLocked}

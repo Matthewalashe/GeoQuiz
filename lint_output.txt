@@ -1,0 +1,380 @@
+﻿
+> gamegis@0.0.0 lint
+> eslint .
+
+
+C:\Users\RLG\OneDrive\Desktop\GameGIS\public\sw.js
+  52:5   error  'clients' is not defined  no-undef
+  58:14  error  'clients' is not defined  no-undef
+
+C:\Users\RLG\OneDrive\Desktop\GameGIS\src\App.jsx
+   28:51  error  'requestNotifPermission' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     no-unused-vars
+   90:10  error  'showRewardDot' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     no-unused-vars
+  101:7   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+   99 |     const result = processDailyLogin()
+  100 |     if (!result.alreadyLoggedIn) {
+> 101 |       setDailyToast(result)
+      |       ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  102 |       setTimeout(() => setDailyToast(null), 4000)
+  103 |     }
+  104 |     setShowRewardDot(canClaimToday())  react-hooks/set-state-in-effect
+
+C:\Users\RLG\OneDrive\Desktop\GameGIS\src\components\Achievements.jsx
+  54:17  error  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       react-refresh/only-export-components
+  68:5   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  66 |
+  67 |   useEffect(() => {
+> 68 |     setStats(getStats())
+     |     ^^^^^^^^ Avoid calling setState() directly within an effect
+  69 |   }, [])
+  70 |
+  71 |   if (!stats) return null  react-hooks/set-state-in-effect
+
+C:\Users\RLG\OneDrive\Desktop\GameGIS\src\components\CategorySelector.jsx
+    3:31  error    'getFilteredQuestions' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       no-unused-vars
+  147:61  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  145 |
+  146 |   useEffect(() => {
+> 147 |     if (preselected && !selectedCats.includes(preselected)) setSelectedCats([preselected])
+      |                                                             ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  148 |   }, [preselected])
+  149 |
+  150 |   function toggleCat(id) { setSelectedCats(p => p.includes(id) ? p.filter(c => c !== id) : [...p, id]) }  react-hooks/set-state-in-effect
+  148:6   warning  React Hook useEffect has a missing dependency: 'selectedCats'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        react-hooks/exhaustive-deps
+
+C:\Users\RLG\OneDrive\Desktop\GameGIS\src\components\Challenge.jsx
+   1:10  error  'useState' is defined but never used                                                                                            no-unused-vars
+   1:20  error  'useEffect' is defined but never used                                                                                           no-unused-vars
+   3:10  error  'fetchLeaderboard' is defined but never used                                                                                    no-unused-vars
+   6:17  error  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+  19:17  error  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\RLG\OneDrive\Desktop\GameGIS\src\components\Community.jsx
+  225:21  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  223 |   }, [])
+  224 |
+> 225 |   useEffect(() => { loadPosts() }, [loadPosts])
+      |                     ^^^^^^^^^ Avoid calling setState() directly within an effect
+  226 |
+  227 |   function handleSetName() {
+  228 |     if (username.trim().length < 2) return  react-hooks/set-state-in-effect
+  282:9   error  'title' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    no-unused-vars
+
+C:\Users\RLG\OneDrive\Desktop\GameGIS\src\components\Dashboard.jsx
+    5:36  error  'LEAGUE_TIERS' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               no-unused-vars
+   55:9   error  'nextLeague' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        no-unused-vars
+   80:9   error  'bestStreak' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        no-unused-vars
+  208:25  error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  206 |           {Array.from({ length: 24 }).map((_, i) => (
+  207 |             <span key={i} className="rw-confetti-bit" style={{
+> 208 |               '--x': `${Math.random() * 100}%`,
+      |                         ^^^^^^^^^^^^^ Cannot call impure function
+  209 |               '--delay': `${Math.random() * 0.5}s`,
+  210 |               '--color': ['#00ff88','#fbbf24','#8b5cf6','#00d4ff','#ff6b35','#ef4444'][i % 6],
+  211 |             }} />  react-hooks/purity
+  209:29  error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  207 |             <span key={i} className="rw-confetti-bit" style={{
+  208 |               '--x': `${Math.random() * 100}%`,
+> 209 |               '--delay': `${Math.random() * 0.5}s`,
+      |                             ^^^^^^^^^^^^^ Cannot call impure function
+  210 |               '--color': ['#00ff88','#fbbf24','#8b5cf6','#00d4ff','#ff6b35','#ef4444'][i % 6],
+  211 |             }} />
+  212 |           ))}                                      react-hooks/purity
+
+C:\Users\RLG\OneDrive\Desktop\GameGIS\src\components\DealsPage.jsx
+   94:63  error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  92 |                   <div className="deal-qr-grid">
+  93 |                     {Array.from({ length: 100 }).map((_, i) => (
+> 94 |                       <div key={i} className={`deal-qr-cell ${Math.random() > 0.5 ? 'filled' : ''}`} />
+     |                                                               ^^^^^^^^^^^^^ Cannot call impure function
+  95 |                     ))}
+  96 |                   </div>
+  97 |                   <p className="deal-voucher-id">GQ-{deal.id.toUpperCase()}-{Date.now().toString(36).toUpperCase()}</p>  react-hooks/purity
+   97:78  error  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+   95 |                     ))}
+   96 |                   </div>
+>  97 |                   <p className="deal-voucher-id">GQ-{deal.id.toUpperCase()}-{Date.now().toString(36).toUpperCase()}</p>
+      |                                                                              ^^^^^^^^^^ Cannot call impure function
+   98 |                   <p className="deal-voucher-hint">Show this screen to staff</p>
+   99 |                 </div>
+  100 |                 <div className="deal-voucher-pulse" style={{ borderColor: deal.color }} />         react-hooks/purity
+  137:9   error  'navigate' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  no-unused-vars
+
+C:\Users\RLG\OneDrive\Desktop\GameGIS\src\components\Discovery.jsx
+  143:14  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  141 |     const params = new URLSearchParams(location.search)
+  142 |     const cat = params.get('category')
+> 143 |     if (cat) setActiveCategory(cat)
+      |              ^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  144 |     
+  145 |     const v = params.get('view')
+  146 |     if (v === 'map' || v === 'list') setView(v)  react-hooks/set-state-in-effect
+
+C:\Users\RLG\OneDrive\Desktop\GameGIS\src\components\GameScreen.jsx
+  118:5   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  116 |       : getFilteredQuestions(config.categories, config.difficulty)
+  117 |     const picked = pickRandomQuestions(pool, config.count, config.seed)
+> 118 |     setQuestions(picked)
+      |     ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  119 |     let progress = 0
+  120 |     const loadInterval = setInterval(() => {
+  121 |       progress += Math.random() * 5 + 3  react-hooks/set-state-in-effect
+  140:5   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  138 |   useEffect(() => {
+  139 |     if (!timerEnabled || phase !== 'placing') return
+> 140 |     setTimeLeft(config.timer)
+      |     ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  141 |     const interval = setInterval(() => {
+  142 |       setTimeLeft(prev => {
+  143 |         if (prev <= 1) { clearInterval(interval); return 0 }                                        react-hooks/set-state-in-effect
+  149:6   warning  React Hook useEffect has missing dependencies: 'config.timer' and 'phase'. Either include them or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 react-hooks/exhaustive-deps
+  149:19  warning  React Hook useEffect has a complex expression in the dependency array. Extract it to a separate variable so it can be statically checked                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      react-hooks/exhaustive-deps
+  154:6   warning  React Hook useEffect has missing dependencies: 'handleTimeout', 'phase', and 'timerEnabled'. Either include them or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               react-hooks/exhaustive-deps
+
+C:\Users\RLG\OneDrive\Desktop\GameGIS\src\components\Header.jsx
+   7:3  error  'TrophyRegular' is defined but never used            no-unused-vars
+  12:3  error  'CompassNorthwestRegular' is defined but never used  no-unused-vars
+  13:3  error  'TagRegular' is defined but never used               no-unused-vars
+
+C:\Users\RLG\OneDrive\Desktop\GameGIS\src\components\Landing.jsx
+   5:10  error  'SPONSORS' is defined but never used           no-unused-vars
+   6:10  error  'SponsorCard' is defined but never used        no-unused-vars
+   7:10  error  'getXPData' is defined but never used          no-unused-vars
+   7:21  error  'getLevel' is defined but never used           no-unused-vars
+   7:31  error  'getLevelTitle' is defined but never used      no-unused-vars
+   7:61  error  'getCurrentLeague' is defined but never used   no-unused-vars
+  13:3   error  'PlayCircleRegular' is defined but never used  no-unused-vars
+  15:3   error  'ArrowRightRegular' is defined but never used  no-unused-vars
+  71:9   error  'totalQ' is assigned a value but never used    no-unused-vars
+  88:17  error  'e' is defined but never used                  no-unused-vars
+
+C:\Users\RLG\OneDrive\Desktop\GameGIS\src\components\Leaderboard.jsx
+   32:15  error  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  30 |   }
+  31 |
+> 32 |   const now = Date.now()
+     |               ^^^^^^^^^^ Cannot call impure function
+  33 |   const filtered = entries.filter(e => {
+  34 |     if (tab === 'all') return true
+  35 |     const created = new Date(e.created_at).getTime()  react-hooks/purity
+  116:23  error  'podiumLabel' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    no-unused-vars
+
+C:\Users\RLG\OneDrive\Desktop\GameGIS\src\components\MapView.jsx
+  44:17  error  Empty block statement  no-empty
+
+C:\Users\RLG\OneDrive\Desktop\GameGIS\src\components\PuzzleGame.jsx
+  43:17  error  'setScore' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         no-unused-vars
+  66:5   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  64 |   useEffect(() => {
+  65 |     if (!imgLoaded) return
+> 66 |     setPhase('preview')
+     |     ^^^^^^^^ Avoid calling setState() directly within an effect
+  67 |     const t = setTimeout(() => {
+  68 |       setTiles(shuffleTiles())
+  69 |       setPhase('playing')  react-hooks/set-state-in-effect
+
+C:\Users\RLG\OneDrive\Desktop\GameGIS\src\components\ResultsScreen.jsx
+   3:20  error  'getScoreClass' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     no-unused-vars
+  48:7   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  46 |     if (data?.results) {
+  47 |       const xp = awardGameXP(data.results, data.config)
+> 48 |       setXpResult(xp)
+     |       ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  49 |     }
+  50 |   }, [data, navigate])
+  51 |  react-hooks/set-state-in-effect
+
+C:\Users\RLG\OneDrive\Desktop\GameGIS\src\components\Rewards.jsx
+   1:20  error  'useEffect' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                no-unused-vars
+  45:25  error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  43 |           {Array.from({ length: 30 }).map((_, i) => (
+  44 |             <span key={i} className="rw-confetti-bit" style={{
+> 45 |               '--x': `${Math.random() * 100}%`,
+     |                         ^^^^^^^^^^^^^ Cannot call impure function
+  46 |               '--delay': `${Math.random() * 0.5}s`,
+  47 |               '--color': ['#00ff88', '#fbbf24', '#8b5cf6', '#00d4ff', '#ff6b35', '#ef4444'][i % 6],
+  48 |             }} />  react-hooks/purity
+  46:29  error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  44 |             <span key={i} className="rw-confetti-bit" style={{
+  45 |               '--x': `${Math.random() * 100}%`,
+> 46 |               '--delay': `${Math.random() * 0.5}s`,
+     |                             ^^^^^^^^^^^^^ Cannot call impure function
+  47 |               '--color': ['#00ff88', '#fbbf24', '#8b5cf6', '#00d4ff', '#ff6b35', '#ef4444'][i % 6],
+  48 |             }} />
+  49 |           ))}                                      react-hooks/purity
+
+C:\Users\RLG\OneDrive\Desktop\GameGIS\src\components\SpinWheel.jsx
+    2:10  error    'DISCOVERY_CATEGORIES' is defined but never used                                                           no-unused-vars
+  102:6   warning  React Hook useEffect has a missing dependency: 'slices'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  134:15  error    'arc' is assigned a value but never used                                                                   no-unused-vars
+  135:15  error    'normalised' is assigned a value but never used                                                            no-unused-vars
+
+C:\Users\RLG\OneDrive\Desktop\GameGIS\src\components\TriviaGame.jsx
+   90:78  error    'combo' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       no-unused-vars
+  121:5   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  119 |   useEffect(() => {
+  120 |     if (!started || phase !== 'playing') { clearInterval(intervalRef.current); return }
+> 121 |     setTimer(15)
+      |     ^^^^^^^^ Avoid calling setState() directly within an effect
+  122 |     intervalRef.current = setInterval(() => {
+  123 |       setTimer(t => {
+  124 |         if (t <= 1) { clearInterval(intervalRef.current); handleTimeUp(); return 0 }                                                                                                                                                                                                 react-hooks/set-state-in-effect
+  124:59  error    Error: Cannot access variable before it is declared
+
+`handleTimeUp` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+  122 |     intervalRef.current = setInterval(() => {
+  123 |       setTimer(t => {
+> 124 |         if (t <= 1) { clearInterval(intervalRef.current); handleTimeUp(); return 0 }
+      |                                                           ^^^^^^^^^^^^ `handleTimeUp` accessed before it is declared
+  125 |         if (t <= 5) playTick()
+  126 |         return t - 1
+  127 |       })
+
+  132 |   const q = questions[idx]
+  133 |
+> 134 |   function handleTimeUp() {
+      |   ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 135 |     playWrong(); vibrate([30, 50, 30])
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 136 |     celebrateWrong()
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 137 |     setStreak(0)
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 138 |     setPendingXP(0); setPendingStars(0); setXpCollected(true)
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 139 |     setPhase('feedback')
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 140 |   }
+      | ^^^^ `handleTimeUp` is declared here
+  141 |
+  142 |   function handleAnswer(optIdx) {
+  143 |     if (phase !== 'playing') return  react-hooks/immutability
+  130:6   warning  React Hook useEffect has a missing dependency: 'handleTimeUp'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  react-hooks/exhaustive-deps
+
+C:\Users\RLG\OneDrive\Desktop\GameGIS\src\components\WordGame.jsx
+  44:5  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  42 |     if (!w) return
+  43 |     const s = scrambleWord(w.word)
+> 44 |     setScrambled(s.map((ch, i) => ({ id: `s-${i}`, letter: ch })))
+     |     ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  45 |     setPlaced(Array(w.word.length).fill(null))
+  46 |     setPhase('playing')
+  47 |     setAttempts(0)  react-hooks/set-state-in-effect
+  49:6  warning  React Hook useEffect has a missing dependency: 'w'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        react-hooks/exhaustive-deps
+
+C:\Users\RLG\OneDrive\Desktop\GameGIS\src\data\deals.js
+  158:5  error  Duplicate key 'questUnlock'  no-dupe-keys
+  197:5  error  Duplicate key 'questUnlock'  no-dupe-keys
+
+C:\Users\RLG\OneDrive\Desktop\GameGIS\src\engine\audio.js
+  23:12  error  'e' is defined but never used  no-unused-vars
+  73:47  error  'e' is defined but never used  no-unused-vars
+
+C:\Users\RLG\OneDrive\Desktop\GameGIS\src\engine\rewards.jsx
+  158:17  error  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\RLG\OneDrive\Desktop\GameGIS\src\engine\xp.js
+  246:10  error  'saveLeague' is defined but never used       no-unused-vars
+  266:9   error  'league' is assigned a value but never used  no-unused-vars
+
+Γ£û 71 problems (64 errors, 7 warnings)
+

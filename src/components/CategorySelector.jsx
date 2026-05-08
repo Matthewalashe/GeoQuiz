@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { CATEGORIES, REGIONS, getFilteredQuestions, getQuestionsByRegion } from '../data/questions.js'
+import { CATEGORIES, REGIONS, getQuestionsByRegion } from '../data/questions.js'
 
 const QUESTION_COUNTS = [10, 15, 20, 25, 30]
 const DIFFICULTIES = [
@@ -143,9 +143,11 @@ export default function CategorySelector() {
 
   const available = getQuestionsByRegion(region, selectedCats, difficulty)
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (preselected && !selectedCats.includes(preselected)) setSelectedCats([preselected])
-  }, [preselected])
+  }, [preselected, selectedCats])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   function toggleCat(id) { setSelectedCats(p => p.includes(id) ? p.filter(c => c !== id) : [...p, id]) }
 
@@ -308,7 +310,7 @@ export default function CategorySelector() {
     <section className="play-page">
       <div className="gh-header">
         <h1 className="gh-title">Choose Your Game</h1>
-        <p className="gh-subtitle">4 ways to explore Nigeria</p>
+        <p className="gh-subtitle">{GAMES.length} ways to explore Nigeria</p>
       </div>
 
       <div className="gh-grid">

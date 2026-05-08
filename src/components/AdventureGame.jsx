@@ -237,7 +237,7 @@ export default function AdventureGame() {
       playCorrect()
       vibrate([50, 50, 50])
       const finalXP = xp + choice.xp + 100
-      addXP('GAME_WIN', finalXP)
+      addXP('GAME_WIN', Math.ceil(finalXP / 100))
       // Perfect health bonus
       if (newHealth >= 80) {
         setTimeout(() => openChest(50), 400)

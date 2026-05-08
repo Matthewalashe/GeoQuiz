@@ -4,13 +4,10 @@ import { getXPData, getLevel, getLevelProgress, getLevelTitle, canClaimToday } f
 import {
   HomeRegular,
   PlayCircleRegular,
-  TrophyRegular,
   PersonRegular,
   ChatMultipleRegular,
   GiftRegular,
   MapRegular,
-  CompassNorthwestRegular,
-  TagRegular,
   WeatherSunnyRegular,
   WeatherMoonRegular
 } from '@fluentui/react-icons'

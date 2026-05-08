@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { DEALS, DEAL_CATEGORIES } from '../data/deals.js'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -66,6 +65,9 @@ function DealCard({ deal, onClaim }) {
 // ── Claim Modal ────────────────────────────────────────────────────────────────
 function ClaimModal({ deal, onClose }) {
   const [claimed, setClaimed] = useState(false)
+  // Pre-compute QR pattern and voucher ID to avoid impure calls during render
+  const [qrCells] = useState(() => Array.from({ length: 100 }, () => Math.random() > 0.5))
+  const [voucherId] = useState(() => `GQ-${deal.id.toUpperCase()}-${Date.now().toString(36).toUpperCase()}`)
   if (!deal) return null
 
   return (
@@ -90,11 +92,11 @@ function ClaimModal({ deal, onClose }) {
               <div className="deal-voucher">
                 <div className="deal-voucher-inner">
                   <div className="deal-qr-grid">
-                    {Array.from({ length: 100 }).map((_, i) => (
-                      <div key={i} className={`deal-qr-cell ${Math.random() > 0.5 ? 'filled' : ''}`} />
+                    {qrCells.map((filled, i) => (
+                      <div key={i} className={`deal-qr-cell ${filled ? 'filled' : ''}`} />
                     ))}
                   </div>
-                  <p className="deal-voucher-id">GQ-{deal.id.toUpperCase()}-{Date.now().toString(36).toUpperCase()}</p>
+                  <p className="deal-voucher-id">{voucherId}</p>
                   <p className="deal-voucher-hint">Show this screen to staff</p>
                 </div>
                 <div className="deal-voucher-pulse" style={{ borderColor: deal.color }} />
@@ -134,7 +136,6 @@ function ClaimModal({ deal, onClose }) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function DealsPage() {
-  const navigate = useNavigate()
   const [activeCategory, setActiveCategory] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [claimingDeal, setClaimingDeal] = useState(null)

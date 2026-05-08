@@ -20,7 +20,7 @@ function playTone(freq, duration, type = 'sine', vol = 0.3) {
     gain.connect(c.destination)
     osc.start(c.currentTime)
     osc.stop(c.currentTime + duration)
-  } catch (e) { /* silent fail on browsers that block audio */ }
+  } catch { /* silent fail on browsers that block audio */ }
 }
 
 // Correct answer — cheerful ascending chime
@@ -70,5 +70,5 @@ export function playPerfect() {
 
 // Mobile haptic feedback
 export function vibrate(pattern = [50]) {
-  try { navigator.vibrate?.(pattern) } catch (e) { /* not supported */ }
+  try { navigator.vibrate?.(pattern) } catch { /* not supported */ }
 }

@@ -43,15 +43,16 @@ const PUZZLES = [
     label: '🇳🇬 Nigeria Knows',
     desc: 'History, geography & leaders',
     color: '#22c55e',
-    size: 5,
+    size: 6,
     across: [
       { num: 1, text: "Nigeria's federal capital territory", answer: 'ABUJA', row: 0, col: 0 },
       { num: 4, text: 'Tallest rock in Nigeria (725m)', answer: 'ZUMA', row: 3, col: 1 },
+      { num: 5, text: 'Nigeria\'s currency', answer: 'NAIRA', row: 5, col: 0 },
     ],
     down: [
-      { num: 1, text: "Igbo war leader — Biafran general", answer: 'OJUKWU', row: 0, col: 0 },
+      { num: 1, text: 'The first president of Nigeria', answer: 'AZIKI', row: 0, col: 0 },
       { num: 2, text: "Nigeria's longest river (shared name)", answer: 'BENUE', row: 0, col: 2 },
-      { num: 3, text: 'Nobel Laureate: Wole ___', answer: 'SOYINKA', row: 0, col: 4 },
+      { num: 3, text: 'Nobel Laureate: Wole ___', answer: 'SOYINK', row: 0, col: 4 },
     ]
   }
 ]
@@ -71,7 +72,8 @@ export default function CrosswordGame() {
   const puzzle = selectedPuzzle ? PUZZLES.find(p => p.id === selectedPuzzle) : null
 
   function startPuzzle() {
-    setGrid(Array(5).fill(null).map(() => Array(5).fill('')))
+    const sz = puzzle.size || 5
+    setGrid(Array(sz).fill(null).map(() => Array(sz).fill('')))
     setActiveClue({ dir: 'across', num: puzzle.across[0].num })
     setWon(false)
     setStarted(true)
@@ -79,9 +81,10 @@ export default function CrosswordGame() {
 
   // Build derived maps only when a puzzle is active
   let cellMap = [], numMap = [], activeCells = [], currentClue = null
+  const gridSize = puzzle?.size || 5
   if (puzzle && started) {
-    cellMap = Array(5).fill(null).map(() => Array(5).fill(false))
-    numMap = Array(5).fill(null).map(() => Array(5).fill(null));
+    cellMap = Array(gridSize).fill(null).map(() => Array(gridSize).fill(false))
+    numMap = Array(gridSize).fill(null).map(() => Array(gridSize).fill(null));
 
     [...puzzle.across, ...puzzle.down].forEach(clue => {
       const isAcross = puzzle.across.includes(clue)
@@ -89,7 +92,7 @@ export default function CrosswordGame() {
       for (let i = 0; i < clue.answer.length; i++) {
         const r = isAcross ? clue.row : clue.row + i
         const c = isAcross ? clue.col + i : clue.col
-        if (r < 5 && c < 5) cellMap[r][c] = true
+        if (r < gridSize && c < gridSize) cellMap[r][c] = true
       }
     })
 
@@ -147,7 +150,7 @@ export default function CrosswordGame() {
     })
     if (isWin) {
       setWon(true)
-      addXP('GAME_WIN', 100)
+      addXP('GAME_WIN')
       showStarBurst(3)
       setTimeout(() => openChest(100), 800)
     }

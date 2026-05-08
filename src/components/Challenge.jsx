@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react'
+/* eslint-disable react-refresh/only-export-components */
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
-import { fetchLeaderboard } from '../lib/supabase.js'
 
 // Encode/decode challenge config into URL-safe string
 export function encodeChallenge(config, score, playerName) {

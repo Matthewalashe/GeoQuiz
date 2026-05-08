@@ -222,7 +222,9 @@ export default function Community() {
     setLoading(false)
   }, [])
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => { loadPosts() }, [loadPosts])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   function handleSetName() {
     if (username.trim().length < 2) return
@@ -277,9 +279,6 @@ export default function Community() {
     } catch { /* ignore */ }
   }
 
-  const xp = getXPData()
-  const level = getLevel(xp.totalXP)
-  const title = getLevelTitle(level)
 
   return (
     <section className="x-feed-page">

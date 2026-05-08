@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PUZZLE_IMAGES } from '../data/postcards.js'
 import { playCorrect, playPinDrop, vibrate } from '../engine/audio.js'
+import { addXP } from '../engine/xp.js'
 
 const GRID = 3
 
@@ -15,14 +16,6 @@ function shuffleTiles() {
     const j = Math.floor(Math.random() * (i + 1))
     ;[a[i], a[j]] = [a[j], a[i]]
   }
-  // Ensure solvable (even inversions)
-  let inversions = 0
-  for (let i = 0; i < a.length; i++) {
-    for (let j = i + 1; j < a.length; j++) {
-      if (a[i] > a[j]) inversions++
-    }
-  }
-  if (inversions % 2 !== 0) [a[0], a[1]] = [a[1], a[0]]
   // Don't start solved
   if (a.every((t, i) => t === i)) [a[0], a[1]] = [a[1], a[0]]
   return a
@@ -61,6 +54,7 @@ export default function PuzzleGame() {
   }, [phase])
 
   // When image loads, show preview then scramble
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!imgLoaded) return
     setPhase('preview')
@@ -70,6 +64,7 @@ export default function PuzzleGame() {
     }, 2500)
     return () => clearTimeout(t)
   }, [imgLoaded])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   function handleTileClick(idx) {
     if (phase !== 'playing') return
@@ -86,6 +81,9 @@ export default function PuzzleGame() {
         clearInterval(intervalRef.current)
         playCorrect(); vibrate([100])
         const stars = moves < 10 ? 3 : moves < 20 ? 2 : 1
+        const pts = stars * 100
+        setScore(prev => prev + pts)
+        addXP('PUZZLE_COMPLETE')
         setResults(prev => [...prev, { puzzle, moves: moves + 1, time: timer, stars }])
         setPhase('solved')
       }

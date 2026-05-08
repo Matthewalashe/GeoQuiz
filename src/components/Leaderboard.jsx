@@ -29,7 +29,7 @@ export default function Leaderboard({ isEmbedded = false }) {
     return new Date(dateStr).toLocaleDateString('en-NG', { month: 'short', day: 'numeric' })
   }
 
-  const now = Date.now()
+  const [now] = useState(() => Date.now())
   const filtered = entries.filter(e => {
     if (tab === 'all') return true
     const created = new Date(e.created_at).getTime()
@@ -113,7 +113,6 @@ export default function Leaderboard({ isEmbedded = false }) {
                 const myAvatar = localStorage.getItem('geoquiz_avatar') || '🎭'
                 const avatar = e.avatar || (isMe ? myAvatar : '🎭')
                 const pct = e.max_score > 0 ? Math.round((e.score / e.max_score) * 100) : 0
-                const podiumLabel = idx === 0 ? '1st' : idx === 1 ? '2nd' : '3rd'
                 const podiumEmoji = idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'
                 return (
                   <div key={e.id || idx} className={`lb-podium-item lb-pos-${idx + 1} ${isMe ? 'lb-is-me' : ''}`}>

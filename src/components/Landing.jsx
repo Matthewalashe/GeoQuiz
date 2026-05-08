@@ -1,18 +1,12 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import questions from '../data/questions.js'
-import ABUJA_Q from '../data/questions-abuja.js'
-import { SPONSORS } from '../data/sponsors.js'
-import { SponsorCard } from './SponsoredBanner.jsx'
-import { getXPData, getLevel, getLevelTitle, canClaimToday, getCurrentLeague } from '../engine/xp.js'
+import { canClaimToday } from '../engine/xp.js'
 import { getNotifPermission, requestNotifPermission } from '../engine/notifications.js'
 
 import {
   CalendarRegular,
   LocationRegular,
-  PlayCircleRegular,
   ChevronRightRegular,
-  ArrowRightRegular
 } from '@fluentui/react-icons'
 
 // Real Lagos events — May 2026
@@ -68,7 +62,6 @@ const SWIPE_CARDS = [
 ]
 
 export default function Landing() {
-  const totalQ = questions.length + ABUJA_Q.length
   const [eventIdx, setEventIdx] = useState(0)
   const [showPushPrompt, setShowPushPrompt] = useState(() => getNotifPermission() === 'default')
 
@@ -85,7 +78,7 @@ export default function Landing() {
             icon: '/icon-192.png',
             vibrate: [100, 50, 100]
           })
-        } catch(e) {
+        } catch {
           new Notification('🎉 Notifications Enabled!', { body: 'Updates are active.', icon: '/icon-192.png' })
         }
       } else if ('Notification' in window) {

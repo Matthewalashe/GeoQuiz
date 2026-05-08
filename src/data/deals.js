@@ -155,7 +155,6 @@ export const DEALS = [
     color: '#6366f1',
     sponsor: true,
     featured: false,
-    questUnlock: 'Score 500+ on Lagos quiz',
     image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=600',
   },
 
@@ -194,7 +193,6 @@ export const DEALS = [
     color: '#a855f7',
     sponsor: true,
     featured: false,
-    questUnlock: 'Complete Culture & Vibes trivia',
     image: 'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?auto=format&fit=crop&q=80&w=600',
   },
 

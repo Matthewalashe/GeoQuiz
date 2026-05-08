@@ -24,8 +24,8 @@ import Discovery from './components/Discovery.jsx'
 import DealsPage from './components/DealsPage.jsx'
 import InstallPrompt from './components/InstallPrompt.jsx'
 import PageTransition from './components/PageTransition.jsx'
-import { processDailyLogin, canClaimToday } from './engine/xp.js'
-import { scheduleNotifChecks, getNotifPermission, requestNotifPermission } from './engine/notifications.js'
+import { processDailyLogin } from './engine/xp.js'
+import { scheduleNotifChecks, getNotifPermission } from './engine/notifications.js'
 
 // Dark mode hook
 function useTheme() {
@@ -87,7 +87,6 @@ export default function App() {
   })
 
   const [dailyToast, setDailyToast] = useState(null)
-  const [showRewardDot, setShowRewardDot] = useState(false)
 
   function handleSplashDone() {
     setShowSplash(false)
@@ -95,16 +94,17 @@ export default function App() {
   }
 
   // Process daily login XP
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     const result = processDailyLogin()
     if (!result.alreadyLoggedIn) {
       setDailyToast(result)
       setTimeout(() => setDailyToast(null), 4000)
     }
-    setShowRewardDot(canClaimToday())
     // Start notification scheduler
     if (getNotifPermission() === 'granted') scheduleNotifChecks()
   }, [])
+  /* eslint-enable react-hooks/set-state-in-effect */  
 
   return (
     <div className={`app ${isGamePage ? 'fullscreen-game' : ''}`}>

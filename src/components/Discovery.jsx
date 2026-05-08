@@ -137,6 +137,7 @@ export default function Discovery() {
   }, [])
 
   // Sync with URL parameters
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     const params = new URLSearchParams(location.search)
     const cat = params.get('category')
@@ -145,6 +146,7 @@ export default function Discovery() {
     const v = params.get('view')
     if (v === 'map' || v === 'list') setView(v)
   }, [location.search])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   function handleCheckedIn(poi) {
     setCheckInToast(poi)

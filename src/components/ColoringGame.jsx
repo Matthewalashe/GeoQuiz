@@ -172,7 +172,7 @@ export default function ColoringGame() {
       return
     }
     setWon(true)
-    addXP('GAME_WIN', 100)
+    addXP('GAME_WIN')
   }
 
   function handleQuit(dest) {

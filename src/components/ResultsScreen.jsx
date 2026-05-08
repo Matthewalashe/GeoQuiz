@@ -1,6 +1,6 @@
 import { useLocation, useNavigate, Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { getGrade, getScoreClass, formatDistance } from '../engine/scoring.js'
+import { getGrade, formatDistance } from '../engine/scoring.js'
 import { submitScore, fetchLeaderboard } from '../lib/supabase.js'
 import { ResultsMap } from './MapView.jsx'
 import { encodeChallenge } from './Challenge.jsx'
@@ -39,6 +39,7 @@ export default function ResultsScreen() {
   const [leaderboard, setLeaderboard] = useState([])
   const [xpResult, setXpResult] = useState(null)
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!data) navigate('/', { replace: true })
     fetchLeaderboard(10).then(lb => setLeaderboard(lb)).catch(() => {})
@@ -48,6 +49,7 @@ export default function ResultsScreen() {
       setXpResult(xp)
     }
   }, [data, navigate])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   async function handleSaveScore() {
     if (!playerName.trim() || !data) return

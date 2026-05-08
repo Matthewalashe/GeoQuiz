@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getFilteredQuestions, getQuestionsByRegion, pickRandomQuestions, REGIONS } from '../data/questions.js'
 import { haversineDistance, calculateScore, getScoreClass, formatDistance } from '../engine/scoring.js'
@@ -107,8 +107,14 @@ export default function GameScreen() {
   const [showFog, setShowFog] = useState(false)
   const [exploredSpots, setExploredSpots] = useState(() => getExplored())
 
+  // Refs to avoid stale closures in timer effects
+  const userPinRef = useRef(null)
+  const currentQRef = useRef(null)
+  const phaseRef = useRef('loading')
+
   const timerEnabled = config?.timer > 0
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!config) return
     const pool = config.region
@@ -127,6 +133,7 @@ export default function GameScreen() {
     }, 180)
     return () => clearInterval(loadInterval)
   }, [config])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     if (phase === 'loading') return
@@ -135,6 +142,7 @@ export default function GameScreen() {
     return () => window.removeEventListener('beforeunload', handler)
   }, [phase])
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!timerEnabled || phase !== 'placing') return
     setTimeLeft(config.timer)
@@ -146,14 +154,31 @@ export default function GameScreen() {
       })
     }, 1000)
     return () => clearInterval(interval)
-  }, [currentIdx, phase === 'placing', timerEnabled])
+  }, [currentIdx, phase, timerEnabled]) // eslint-disable-line react-hooks/exhaustive-deps
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     if (!timerEnabled || phase !== 'placing' || timeLeft > 0) return
-    handleTimeout()
-  }, [timeLeft])
+    // Use refs for current state to avoid stale closures
+    const pin = userPinRef.current
+    const q = currentQRef.current
+    if (!q) return
+    playTimeUp(); vibrate([100, 50, 100])
+    if (pin) {
+      confirmPin()
+    } else {
+      setStreak(0); playWrong(); vibrate([30, 50, 30])
+      setResults(prev => [...prev, { question: q, userPin: { lat: 0, lng: 0 }, distance: 999, score: 0, timedOut: true }])
+      setPhase('feedback')
+    }
+  }, [timeLeft]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const currentQ = questions[currentIdx]
+
+  // Keep refs in sync with state
+  useEffect(() => { userPinRef.current = userPin }, [userPin])
+  useEffect(() => { currentQRef.current = currentQ }, [currentQ])
+  useEffect(() => { phaseRef.current = phase }, [phase])
 
   const handleMapClick = useCallback((latlng) => {
     if (phase !== 'placing') return
@@ -161,16 +186,6 @@ export default function GameScreen() {
     setUserPin(latlng)
   }, [phase])
 
-  function handleTimeout() {
-    if (!currentQ) return
-    playTimeUp(); vibrate([100, 50, 100])
-    if (userPin) { confirmPin() }
-    else {
-      setStreak(0); playWrong(); vibrate([30, 50, 30])
-      setResults(prev => [...prev, { question: currentQ, userPin: { lat: 0, lng: 0 }, distance: 999, score: 0, timedOut: true }])
-      setPhase('feedback')
-    }
-  }
 
   function confirmPin() {
     if (!userPin || !currentQ) return

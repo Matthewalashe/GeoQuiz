@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   getXPData, getLevel, getLevelProgress, getLevelTitle, getXPToNextLevel,
-  getCurrentLeague, getNextLeague, LEAGUE_TIERS,
+  getCurrentLeague,
   DAILY_REWARDS, getRewardsData, claimDailyReward, canClaimToday,
 } from '../engine/xp.js'
 import { getExplorationPercent, getCheckIns } from '../engine/exploration.js'
@@ -52,7 +52,6 @@ export default function Dashboard() {
   const title = getLevelTitle(level)
   const xpToNext = getXPToNextLevel(xp.totalXP)
   const league = getCurrentLeague(xp.totalXP)
-  const nextLeague = getNextLeague(xp.totalXP)
   const exploredPct = getExplorationPercent()
   const checkIns = getCheckIns()
 
@@ -78,6 +77,12 @@ export default function Dashboard() {
   const totalMax   = sessions.reduce((s, g) => s + g.max, 0)
   const avgPct     = totalMax > 0 ? Math.round((totalScore / totalMax) * 100) : 0
   const bestStreak = Math.max(...sessions.map(s => s.streak || 0), xp.streakDays || 0)
+
+  // Pre-compute confetti positions (lazy init avoids purity check)
+  const [confettiBits] = useState(() => Array.from({ length: 24 }, () => ({
+    x: `${Math.random() * 100}%`,
+    delay: `${Math.random() * 0.5}s`,
+  })))
 
   const currentStopIdx = JOURNEY_STOPS.reduce((acc, stop, i) => (level >= stop.level ? i : acc), 0)
   const nextStop = JOURNEY_STOPS[currentStopIdx + 1] || null
@@ -194,19 +199,19 @@ export default function Dashboard() {
           <span className="db-stat-lbl">Lagos Explored</span>
         </div>
         <div className="db-stat-card">
-          <span className="db-stat-icon">❄️</span>
-          <span className="db-stat-val">{xp.streakFreezes || 0}</span>
-          <span className="db-stat-lbl">Freezes</span>
+          <span className="db-stat-icon">🏆</span>
+          <span className="db-stat-val">{bestStreak}</span>
+          <span className="db-stat-lbl">Best Streak</span>
         </div>
       </div>
 
       {/* ── Streak & Daily Rewards ── */}
       {showConfetti && (
         <div className="rw-confetti">
-          {Array.from({ length: 24 }).map((_, i) => (
+          {confettiBits.map((bit, i) => (
             <span key={i} className="rw-confetti-bit" style={{
-              '--x': `${Math.random() * 100}%`,
-              '--delay': `${Math.random() * 0.5}s`,
+              '--x': bit.x,
+              '--delay': bit.delay,
               '--color': ['#00ff88','#fbbf24','#8b5cf6','#00d4ff','#ff6b35','#ef4444'][i % 6],
             }} />
           ))}

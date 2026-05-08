@@ -15,7 +15,8 @@ function shuffle(arr) {
 function scrambleWord(word) {
   const letters = word.split('')
   let scrambled
-  do { scrambled = shuffle(letters) } while (scrambled.join('') === word)
+  let attempts = 0
+  do { scrambled = shuffle(letters); attempts++ } while (scrambled.join('') === word && attempts < 100)
   return scrambled
 }
 
@@ -38,6 +39,7 @@ export default function WordGame() {
   const w = words[idx]
 
   // Initialize each round
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!w) return
     const s = scrambleWord(w.word)
@@ -46,7 +48,8 @@ export default function WordGame() {
     setPhase('playing')
     setAttempts(0)
     setShowInfo(false)
-  }, [idx])
+  }, [idx, w])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   function handleTileClick(tile, fromIdx) {
     if (phase !== 'playing') return

@@ -1,3 +1,4 @@
+ 
 import { useEffect, useRef, useState } from 'react'
 import { MapContainer, TileLayer, Marker, CircleMarker, Polyline, GeoJSON, Tooltip, useMapEvents, useMap } from 'react-leaflet'
 import L from 'leaflet'
@@ -41,7 +42,7 @@ function FogOfWar({ explored }) {
           ctx.beginPath()
           ctx.arc(pt.x, pt.y, r * 1.25, 0, Math.PI * 2)
           ctx.fill()
-        } catch {}
+        } catch { /* ignore out-of-bounds points */ }
       })
       ctx.globalCompositeOperation = 'source-over'
     }

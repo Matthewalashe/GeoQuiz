@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   getXPData, getLevel, getLevelProgress, getLevelTitle, getXPToNextLevel,
@@ -14,6 +14,12 @@ export default function Rewards() {
   const [canClaim, setCanClaim] = useState(canClaimToday)
   const [claimResult, setClaimResult] = useState(null)
   const [showConfetti, setShowConfetti] = useState(false)
+
+  // Pre-compute confetti positions (lazy init runs once, avoids purity issues)
+  const [confettiBits] = useState(() => Array.from({ length: 30 }, () => ({
+    x: `${Math.random() * 100}%`,
+    delay: `${Math.random() * 0.5}s`,
+  })))
 
   const level = getLevel(xp.totalXP)
   const title = getLevelTitle(level)
@@ -40,10 +46,10 @@ export default function Rewards() {
       {/* Confetti burst */}
       {showConfetti && (
         <div className="rw-confetti">
-          {Array.from({ length: 30 }).map((_, i) => (
+          {confettiBits.map((bit, i) => (
             <span key={i} className="rw-confetti-bit" style={{
-              '--x': `${Math.random() * 100}%`,
-              '--delay': `${Math.random() * 0.5}s`,
+              '--x': bit.x,
+              '--delay': bit.delay,
               '--color': ['#00ff88', '#fbbf24', '#8b5cf6', '#00d4ff', '#ff6b35', '#ef4444'][i % 6],
             }} />
           ))}
