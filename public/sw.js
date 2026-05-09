@@ -1,4 +1,4 @@
-const CACHE = 'geoquiz-v7'
+const CACHE = 'feferity-v1'
 const ASSETS = ['/', '/index.html']
 
 self.addEventListener('install', e => {
@@ -16,7 +16,11 @@ self.addEventListener('activate', e => {
 })
 
 self.addEventListener('fetch', e => {
-  if (e.request.url.includes('supabase') || e.request.method !== 'GET') return
+  // Skip non-GET, API calls, and dev server HMR
+  if (e.request.method !== 'GET') return
+  if (e.request.url.includes('supabase')) return
+  if (e.request.url.includes('/@vite')) return
+  if (e.request.url.includes('node_modules')) return
 
   e.respondWith(
     fetch(e.request)
@@ -29,22 +33,21 @@ self.addEventListener('fetch', e => {
   )
 })
 
-// ═══ Push Notification Handlers ═══
+// Push Notification Handlers
 self.addEventListener('push', e => {
   const data = e.data ? e.data.json() : {}
-  const title = data.title || '🌍 GeoQuiz'
+  const title = data.title || 'Feferity'
   const options = {
-    body: data.body || 'New activity in GeoQuiz!',
+    body: data.body || 'Something new on Feferity!',
     icon: data.icon || '/icon-192.png',
     badge: '/icon-192.png',
-    tag: data.tag || 'geoquiz',
+    tag: data.tag || 'feferity',
     vibrate: [100, 50, 100],
     data: { url: data.url || '/' },
   }
   e.waitUntil(self.registration.showNotification(title, options))
 })
 
-// Open app when notification is clicked
 self.addEventListener('notificationclick', e => {
   e.notification.close()
   const url = e.notification.data?.url || '/'
