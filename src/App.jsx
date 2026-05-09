@@ -68,10 +68,9 @@ function SplashScreen({ onDone }) {
   return (
     <div className={`splash-screen ${fadeOut ? 'fade-out' : ''}`}>
       <div className="splash-logo">
-        <span className="splash-dot" />
-        GeoQuiz
+        <span className="ff-wordmark" style={{ fontSize: '2rem' }}>feferity</span>
       </div>
-      <div className="splash-tagline">Explore Nigeria</div>
+      <div className="splash-tagline">Experience Nigeria</div>
       <div className="splash-bar-wrap">
         <div className="splash-bar" style={{ width: `${progress}%` }} />
       </div>

@@ -6062,6 +6062,107 @@ a:hover { text-decoration: underline; }
 .home-explore-teaser strong { display: block; font-family: var(--font-head); font-size: 0.88rem; }
 .home-explore-teaser span { font-size: 0.72rem; color: var(--text-secondary); }
 
+/* Anco & Owambe section headers */
+.home-anco-header {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  margin-bottom: 0.6rem;
+}
+.home-section-title {
+  font-family: var(--font-head); font-size: 1.15rem; font-weight: 800;
+  margin: 0; letter-spacing: -0.02em; line-height: 1;
+}
+.home-section-meaning {
+  font-size: 0.68rem; color: var(--text-secondary); font-style: italic;
+}
+.home-see-all {
+  font-family: var(--font-head); font-weight: 600; font-size: 0.75rem;
+  color: var(--teal); text-decoration: none;
+}
+.home-see-all:hover { text-decoration: underline; }
+
+/* Anco — Featured horizontal scroll */
+.home-anco { margin-bottom: 1.25rem; }
+.home-featured-row {
+  display: flex; gap: 0.6rem; overflow-x: auto; padding-bottom: 0.5rem;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.home-featured-row::-webkit-scrollbar { display: none; }
+.home-feat-card {
+  flex-shrink: 0; width: 200px; border-radius: var(--radius-md);
+  overflow: hidden; background: var(--surface); border: 1px solid var(--border);
+  text-decoration: none; color: inherit; transition: all var(--transition);
+}
+.home-feat-card:hover { box-shadow: var(--shadow-sm); transform: translateY(-2px); text-decoration: none; }
+.home-feat-card img { width: 100%; height: 110px; object-fit: cover; display: block; }
+.home-feat-info { padding: 0.5rem 0.6rem; }
+.home-feat-info strong { display: block; font-family: var(--font-head); font-size: 0.8rem; line-height: 1.2; }
+.home-feat-info span { font-size: 0.65rem; color: var(--text-secondary); }
+
+/* Quick category chips — 3x2 grid */
+.home-quick-cats {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem;
+  margin-bottom: 1.25rem;
+}
+.home-qcat {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 0.6rem 0.3rem; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); text-decoration: none; color: inherit;
+  transition: all var(--transition); text-align: center;
+}
+.home-qcat:hover { border-color: var(--teal); box-shadow: var(--shadow-xs); text-decoration: none; }
+.home-qcat-icon { font-size: 1.2rem; margin-bottom: 0.15rem; }
+.home-qcat-label { font-family: var(--font-head); font-weight: 600; font-size: 0.68rem; }
+
+/* Owambe — Events section */
+.home-owambe { margin-bottom: 1.25rem; }
+.home-owambe-cards { display: flex; flex-direction: column; gap: 0.4rem; }
+.home-owambe-card {
+  display: flex; align-items: center; gap: 0.65rem;
+  padding: 0.65rem 0.75rem; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius-md);
+  text-decoration: none; color: inherit; transition: all var(--transition);
+}
+.home-owambe-card:hover { border-color: var(--secondary); text-decoration: none; }
+.home-owambe-icon { font-size: 1.3rem; flex-shrink: 0; }
+.home-owambe-card strong { display: block; font-family: var(--font-head); font-size: 0.82rem; }
+.home-owambe-card span { font-size: 0.68rem; color: var(--text-secondary); }
+
+/* Top rated grid */
+.home-toprated-grid {
+  display: flex; flex-direction: column; gap: 0.35rem;
+  margin-bottom: 1.25rem;
+}
+.home-tr-card {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.5rem 0.65rem; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  text-decoration: none; color: inherit; transition: all var(--transition);
+}
+.home-tr-card:hover { border-color: var(--primary); text-decoration: none; }
+.home-tr-icon { font-size: 1.1rem; flex-shrink: 0; }
+.home-tr-card strong { display: block; font-family: var(--font-head); font-size: 0.8rem; }
+.home-tr-card span { font-size: 0.65rem; color: var(--text-secondary); }
+
+/* Feferity Pass teaser */
+.home-pass-teaser {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 1.1rem; margin-bottom: 1.25rem;
+  background: linear-gradient(135deg, var(--teal-light), var(--primary-light));
+  border: 1px solid var(--teal); border-radius: var(--radius-lg);
+  text-decoration: none; color: inherit; transition: all var(--transition);
+}
+.home-pass-teaser:hover { box-shadow: var(--shadow-sm); text-decoration: none; }
+.home-pass-left { display: flex; flex-direction: column; gap: 0.1rem; }
+.home-pass-badge {
+  display: inline-block; width: fit-content;
+  font-family: var(--font-head); font-weight: 700; font-size: 0.55rem;
+  letter-spacing: 0.1em; color: #fff; background: var(--teal);
+  padding: 0.1rem 0.4rem; border-radius: var(--radius-full);
+}
+.home-pass-left strong { font-family: var(--font-head); font-size: 0.95rem; }
+.home-pass-left span { font-size: 0.72rem; color: var(--text-secondary); }
+.home-pass-icon { font-size: 1.8rem; }
+
 /* ═══════════════════════════════════════════════════════════════════════════
    EXPLORE DIRECTORY
    ═══════════════════════════════════════════════════════════════════════════ */

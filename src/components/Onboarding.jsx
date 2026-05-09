@@ -30,11 +30,11 @@ export default function Onboarding({ onComplete }) {
 
         {step === 0 && (
           <div className="ob-step">
-            <div className="ob-hero-icon">🗺️</div>
-            <h2>Welcome to GeoQuiz</h2>
+            <div className="ob-hero-icon">🌍</div>
+            <h2>Welcome to Feferity</h2>
             <p className="ob-desc">
-              How well do you know Nigeria? Pin locations, solve crosswords,
-              race through trivia — and prove you're the real Naija champion.
+              Discover attractions, find the best restaurants, grab event tickets,
+              play games, and experience Nigeria like never before.
             </p>
             <button className="ob-cta" onClick={() => setStep(1)}>Let's go →</button>
           </div>
