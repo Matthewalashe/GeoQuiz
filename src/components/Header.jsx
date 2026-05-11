@@ -23,7 +23,7 @@ export default function Header({ theme, toggleTheme }) {
       {/* Desktop top header */}
       <header className="header">
         <Link to="/" className="header-logo">
-          <span className="ff-wordmark">feferity</span>
+          <span className="ff-wordmark">wanda</span>
         </Link>
 
         <nav className="header-nav desktop-nav">

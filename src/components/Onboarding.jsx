@@ -31,7 +31,7 @@ export default function Onboarding({ onComplete }) {
         {step === 0 && (
           <div className="ob-step">
             <div className="ob-hero-icon">🌍</div>
-            <h2>Welcome to Feferity</h2>
+            <h2>Welcome to Wanda</h2>
             <p className="ob-desc">
               Discover attractions, find the best restaurants, grab event tickets,
               play games, and experience Nigeria like never before.

@@ -1,7 +1,9 @@
-// Feferity - Lagos Seed Listings (50 real places)
+// Wanda - Lagos Seed Listings (50 real places)
+
+import { LISTING_IMAGES } from './siteAssets.js'
 
 const L = (id,name,cat,sub,area,price,rating,phone,wa,web,ig,hours,lat,lng,desc,tags) =>
-  ({id,name,category:cat,subcategory:sub,area,priceRange:price,rating,phone,whatsapp:wa,website:web,instagram:ig,hours,lat,lng,description:desc,tags,photos:[`/images/listings/${id}.jpg`],status:'approved'})
+  ({id,name,category:cat,subcategory:sub,area,priceRange:price,rating,phone,whatsapp:wa,website:web,instagram:ig,hours,lat,lng,description:desc,tags,photos: LISTING_IMAGES[id]?.length ? LISTING_IMAGES[id] : [`/images/listings/${id}.jpg`],status:'approved'})
 
 const N1 = '\u20A6'
 const N2 = '\u20A6\u20A6'

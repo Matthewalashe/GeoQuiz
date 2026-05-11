@@ -68,7 +68,7 @@ function SplashScreen({ onDone }) {
   return (
     <div className={`splash-screen ${fadeOut ? 'fade-out' : ''}`}>
       <div className="splash-logo">
-        <span className="ff-wordmark" style={{ fontSize: '2rem' }}>feferity</span>
+        <span className="ff-wordmark" style={{ fontSize: '2rem' }}>wanda</span>
       </div>
       <div className="splash-tagline">Experience Nigeria</div>
       <div className="splash-bar-wrap">
@@ -161,7 +161,7 @@ export default function App() {
       {!isGamePage && (
         <footer className="app-footer">
           <p>
-            Feferity — Experience Nigeria &nbsp;|&nbsp;
+            Wanda — Experience Nigeria &nbsp;|&nbsp;
             By <a href="https://wa.me/2348184495633" target="_blank" rel="noopener noreferrer">WhiteArts Technologies</a> &nbsp;|&nbsp;
             <a href="mailto:donghinny91@gmail.com">Contact</a>
           </p>

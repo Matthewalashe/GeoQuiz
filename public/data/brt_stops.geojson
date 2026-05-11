@@ -1,0 +1,1747 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Ikorodu",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.502187133000016,
+          6.621071835999999
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Aruna1",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.491692990999993,
+          6.624774234999982
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Agric1",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.486466705999982,
+          6.62557185199999
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Owutu1",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.478092999999984,
+          6.619946000000012
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Majidun Ogolonto1",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.472200036000008,
+          6.619699709000018
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Majidun Awori1",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.461927699999992,
+          6.618749944999971
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Ajegunle1",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.431431999999988,
+          6.609631000000022
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Irawo1",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.421162614000015,
+          6.610376907999989
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Idera1",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.414509193999988,
+          6.611948845999995
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Owode Onirin1",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.408478014000007,
+          6.607858728999987
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Mile12_1",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.401883999999979,
+          6.604602999999991
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Ketu1",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.385684451999991,
+          6.597240746000028
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Ojota1",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.379369554999996,
+          6.588635487000016
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "New Garage1",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.375634490999988,
+          6.583456428999996
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Maryland1",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.368942973000006,
+          6.574237931000004
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Idiroko1",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.366611457999982,
+          6.566148136999996
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Anthony1",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.366824369000012,
+          6.556915894000026
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Obanikoro1",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.36697674199999,
+          6.545776531000014
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Palmgrove1",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.367078146000027,
+          6.540768820000022
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Onipanu1",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.367249095999982,
+          6.532522232999991
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Fadeyi1",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.367406199999992,
+          6.523907799999979
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Barracks1",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.363803999999986,
+          6.505892999999996
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Stadium1",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.361911999999996,
+          6.498595999999996
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Iponri1",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.365157000000023,
+          6.485579999999986
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Costain1",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.368649000000024,
+          6.482727000000019
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Leventis1",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.380832999999979,
+          6.455268999999997
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "CMS",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": 0,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.390999999999993,
+          6.448759000000006
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "TBS",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.401580000000006,
+          6.445010000000004
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Costain2",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.368827000000003,
+          6.482806000000001
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Stadium2",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.361788000000008,
+          6.495947000000002
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Barracks2",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.363978600000004,
+          6.505808199999974
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Fadeyi2",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.367546389,
+          6.525514166999997
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Onipanu2",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.367438637999998,
+          6.532907265999994
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Palmgrove2",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.367297499999991,
+          6.541033056000023
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Obanikoro2",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.367194430000016,
+          6.546064609000029
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Anthony2",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.366966133999991,
+          6.557287069000002
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Idiroko2",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.366816409999993,
+          6.566105645999998
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Maryland2",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.369723508,
+          6.575058418999986
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "New Garage2",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.37639858700002,
+          6.58427113999998
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Ojota2",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.378755172000001,
+          6.587525047999985
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Ketu2",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.385219761999991,
+          6.596355560000009
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Mile12_2",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.400000000000012,
+          6.605490000000001
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Owode Onirin2",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.409243907999988,
+          6.608604387000012
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Idera2",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.415559539000004,
+          6.612046692999978
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Irawo2",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.422058418999994,
+          6.609835971999996
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Ajegunle2",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.432499000000022,
+          6.60937699999999
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Majidun Awori2",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.462914866999975,
+          6.618955916999987
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Majidun Ogolonto2",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.47327292000001,
+          6.619563829000006
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Owutu2",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.479042999999971,
+          6.620117000000012
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Agric2",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.487587869000022,
+          6.625345386999997
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Aruna2",
+        "descriptio": "",
+        "timestamp": "",
+        "begin": "",
+        "end": "",
+        "altitudeMo": "",
+        "tessellate": -1,
+        "extrude": 0,
+        "visibility": -1,
+        "drawOrder": null,
+        "icon": "",
+        "stop_name": "Ikorodu - TBS Stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.492551038000005,
+          6.624562652999981
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Barracks 1",
+        "FolderPath": "Barracks 1.kmz",
+        "SymbolID": 0,
+        "AltMode": -1,
+        "Base": 0,
+        "Snippet": "",
+        "PopupInfo": "",
+        "HasLabel": -1,
+        "LabelID": 0,
+        "stop_name": "Barracks 1"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.22890703500002,
+          6.45970049500005
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Barracks 2",
+        "FolderPath": "Barracks 2.kmz",
+        "SymbolID": 0,
+        "AltMode": -1,
+        "Base": 0,
+        "Snippet": "",
+        "PopupInfo": "",
+        "HasLabel": -1,
+        "LabelID": 0,
+        "stop_name": "Barracks 2"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.230289183000025,
+          6.460030389000053
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "iyana Iba1",
+        "FolderPath": "iyana Iba1.kmz",
+        "SymbolID": 0,
+        "AltMode": -1,
+        "Base": 0,
+        "Snippet": "",
+        "PopupInfo": "",
+        "HasLabel": -1,
+        "LabelID": 0,
+        "stop_name": "Iyana Iba 1"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.2048651940000354,
+          6.460516145000042
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "iyana Iba 2",
+        "FolderPath": "iyana Iba 2.kmz",
+        "SymbolID": 0,
+        "AltMode": -1,
+        "Base": 0,
+        "Snippet": "",
+        "PopupInfo": "",
+        "HasLabel": -1,
+        "LabelID": 0,
+        "stop_name": "Iyana Iba 2"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.2027136130000713,
+          6.461093890000029
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "LASU Bus Stop 2",
+        "FolderPath": "LASU Bus Stop.kmz",
+        "SymbolID": 0,
+        "AltMode": -1,
+        "Base": 0,
+        "Snippet": "",
+        "PopupInfo": "",
+        "HasLabel": -1,
+        "LabelID": 0,
+        "stop_name": "LASU 2"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.2015483520000316,
+          6.462728599000059
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "LASU Bus Stop 1",
+        "FolderPath": "LASU Bus Stop 2.kmz",
+        "SymbolID": 0,
+        "AltMode": -1,
+        "Base": 0,
+        "Snippet": "",
+        "PopupInfo": "",
+        "HasLabel": -1,
+        "LabelID": 0,
+        "stop_name": "LASU Bus Stop 1"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.201028971000028,
+          6.462080563000029
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ID": 41,
+        "SN": 16,
+        "LIST_OF_BU": "Abule Ado",
+        "DIRECTIONP": "East",
+        "GPS_WAY_PO": "",
+        "X_COORDINA": 528401,
+        "Y_COORDINA": 713595,
+        "stop_name": "LBE_stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.25685,
+          6.455779
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ID": 42,
+        "SN": 16,
+        "LIST_OF_BU": "Abule Ado",
+        "DIRECTIONP": "West",
+        "GPS_WAY_PO": "",
+        "X_COORDINA": 528401,
+        "Y_COORDINA": 713628,
+        "stop_name": "LBE_stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.25685,
+          6.456078
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ID": 37,
+        "SN": 14,
+        "LIST_OF_BU": "Oluti",
+        "DIRECTIONP": "East",
+        "GPS_WAY_PO": "",
+        "X_COORDINA": 530787,
+        "Y_COORDINA": 713894,
+        "stop_name": "LBE_stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.278429,
+          6.458473
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ID": 38,
+        "SN": 14,
+        "LIST_OF_BU": "Oluti",
+        "DIRECTIONP": "West",
+        "GPS_WAY_PO": "",
+        "X_COORDINA": 530777,
+        "Y_COORDINA": 713929,
+        "stop_name": "LBE_stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.278339,
+          6.458789
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ID": 35,
+        "SN": 13,
+        "LIST_OF_BU": "Agboju",
+        "DIRECTIONP": "East",
+        "GPS_WAY_PO": "",
+        "X_COORDINA": 531486,
+        "Y_COORDINA": 713984,
+        "stop_name": "LBE_stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.284751,
+          6.459283
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ID": 36,
+        "SN": 13,
+        "LIST_OF_BU": "Agboju",
+        "DIRECTIONP": "West",
+        "GPS_WAY_PO": "",
+        "X_COORDINA": 531493,
+        "Y_COORDINA": 714014,
+        "stop_name": "LBE_stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.284815,
+          6.459555
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ID": 31,
+        "SN": 11,
+        "LIST_OF_BU": "Mile 2",
+        "DIRECTIONP": "East",
+        "GPS_WAY_PO": "",
+        "X_COORDINA": 534496,
+        "Y_COORDINA": 714038,
+        "stop_name": "LBE_stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.311973,
+          6.459756
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ID": 32,
+        "SN": 11,
+        "LIST_OF_BU": "Mile 2",
+        "DIRECTIONP": "West",
+        "GPS_WAY_PO": "",
+        "X_COORDINA": 534502,
+        "Y_COORDINA": 714072,
+        "stop_name": "LBE_stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.312027,
+          6.460064
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ID": 29,
+        "SN": 10,
+        "LIST_OF_BU": "Alaba",
+        "DIRECTIONP": "East",
+        "GPS_WAY_PO": "",
+        "X_COORDINA": 535900,
+        "Y_COORDINA": 714560,
+        "stop_name": "LBE_stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.324673,
+          6.46447
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ID": 30,
+        "SN": 10,
+        "LIST_OF_BU": "Alaba",
+        "DIRECTIONP": "West",
+        "GPS_WAY_PO": "",
+        "X_COORDINA": 535888,
+        "Y_COORDINA": 714573,
+        "stop_name": "LBE_stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.324565,
+          6.464588
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ID": 28,
+        "SN": 9,
+        "LIST_OF_BU": "Alafia",
+        "DIRECTIONP": "West",
+        "GPS_WAY_PO": "",
+        "X_COORDINA": 537403,
+        "Y_COORDINA": 715661,
+        "stop_name": "LBE_stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.338272,
+          6.474421
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ID": 27,
+        "SN": 9,
+        "LIST_OF_BU": "Alafia",
+        "DIRECTIONP": "East",
+        "GPS_WAY_PO": "",
+        "X_COORDINA": 537431,
+        "Y_COORDINA": 715644,
+        "stop_name": "LBE_stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.338526,
+          6.474267
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ID": 26,
+        "SN": 8,
+        "LIST_OF_BU": "Orile Iganmu",
+        "DIRECTIONP": "West",
+        "GPS_WAY_PO": "",
+        "X_COORDINA": 537831,
+        "Y_COORDINA": 715949,
+        "stop_name": "LBE_stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.342145,
+          6.477024
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ID": 25,
+        "SN": 8,
+        "LIST_OF_BU": "Orile Iganmu",
+        "DIRECTIONP": "East",
+        "GPS_WAY_PO": "",
+        "X_COORDINA": 537848,
+        "Y_COORDINA": 715935,
+        "stop_name": "LBE_stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.342299,
+          6.476897
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ID": 24,
+        "SN": 7,
+        "LIST_OF_BU": "Doyin Orile",
+        "DIRECTIONP": "West",
+        "GPS_WAY_PO": "",
+        "X_COORDINA": 538573,
+        "Y_COORDINA": 716195,
+        "stop_name": "LBE_stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.348857,
+          6.479244
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ID": 23,
+        "SN": 7,
+        "LIST_OF_BU": "Doyin Orile",
+        "DIRECTIONP": "East",
+        "GPS_WAY_PO": "",
+        "X_COORDINA": 538575,
+        "Y_COORDINA": 716183,
+        "stop_name": "LBE_stops"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.348875,
+          6.479136
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "OKOMAIKO 1",
+        "FolderPath": "OKOMAIKO 1.kmz",
+        "SymbolID": 0,
+        "AltMode": -1,
+        "Base": 0,
+        "Snippet": "",
+        "PopupInfo": "",
+        "HasLabel": -1,
+        "LabelID": 0,
+        "stop_name": "Okokomaiko"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.1754119000000287,
+          6.4806286000000455
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Volks Bus Stop 1",
+        "FolderPath": "Volks Bus Stop 1.kmz",
+        "SymbolID": 0,
+        "AltMode": -1,
+        "Base": 0,
+        "Snippet": "",
+        "PopupInfo": "",
+        "HasLabel": -1,
+        "LabelID": 0,
+        "stop_name": "Volks 1"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.2092369530000724,
+          6.459287314000051
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Name": "Volks Bus Stop 2",
+        "FolderPath": "Volks Bus Stop 2.kmz",
+        "SymbolID": 0,
+        "AltMode": -1,
+        "Base": 0,
+        "Snippet": "",
+        "PopupInfo": "",
+        "HasLabel": -1,
+        "LabelID": 0,
+        "stop_name": "Volks 2"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.2107445600000233,
+          6.4598197130000585
+        ]
+      }
+    }
+  ]
+}

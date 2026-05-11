@@ -110,7 +110,7 @@ export default function Landing() {
       <div className="home-anco-header" style={{ marginTop: '0.5rem' }}>
         <div>
           <h3 className="home-section-title">Top Rated</h3>
-          <span className="home-section-meaning">Highest rated on Feferity</span>
+          <span className="home-section-meaning">Highest rated on Wanda</span>
         </div>
         <Link to="/explore" className="home-see-all">Browse →</Link>
       </div>
@@ -126,11 +126,11 @@ export default function Landing() {
         ))}
       </div>
 
-      {/* Feferity Pass teaser */}
+      {/* Wanda Pass teaser */}
       <Link to="/pass" className="home-pass-teaser">
         <div className="home-pass-left">
           <span className="home-pass-badge">NEW</span>
-          <strong>Feferity Pass</strong>
+          <strong>Wanda Pass</strong>
           <span>One pass, multiple attractions. Coming soon.</span>
         </div>
         <span className="home-pass-icon">🎟️</span>
@@ -150,7 +150,7 @@ export default function Landing() {
       <Link to="/list-your-business" className="home-explore-teaser">
         <div>
           <strong>Own a business?</strong>
-          <span>List it on Feferity for free</span>
+          <span>List it on Wanda for free</span>
         </div>
         <ChevronRightRegular fontSize={18} />
       </Link>

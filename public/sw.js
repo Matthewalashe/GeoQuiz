@@ -1,4 +1,4 @@
-const CACHE = 'feferity-v1'
+const CACHE = 'wanda-v1'
 const ASSETS = ['/', '/index.html']
 
 self.addEventListener('install', e => {
@@ -36,12 +36,12 @@ self.addEventListener('fetch', e => {
 // Push Notification Handlers
 self.addEventListener('push', e => {
   const data = e.data ? e.data.json() : {}
-  const title = data.title || 'Feferity'
+  const title = data.title || 'Wanda'
   const options = {
-    body: data.body || 'Something new on Feferity!',
+    body: data.body || 'Something new on Wanda!',
     icon: data.icon || '/icon-192.png',
     badge: '/icon-192.png',
-    tag: data.tag || 'feferity',
+    tag: data.tag || 'wanda',
     vibrate: [100, 50, 100],
     data: { url: data.url || '/' },
   }

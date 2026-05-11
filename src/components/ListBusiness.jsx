@@ -70,7 +70,7 @@ export default function ListBusiness() {
         <div className="lb-success">
           <span className="lb-success-icon">🎉</span>
           <h2>Listing submitted!</h2>
-          <p>We will review your business and add it to Feferity within 24-48 hours.</p>
+          <p>We will review your business and add it to Wanda within 24-48 hours.</p>
           <Link to="/explore" className="lb-back-link">Browse directory →</Link>
         </div>
       </section>

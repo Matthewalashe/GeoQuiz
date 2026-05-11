@@ -1,7 +1,11 @@
 import { useState, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet'
 import { LISTINGS, CATEGORIES, PRICE_LABELS } from '../data/listings.js'
-import { SearchRegular, MapRegular, ListRegular, StarRegular } from '@fluentui/react-icons'
+import { SearchRegular, MapRegular, ListRegular, StarRegular, VehicleBusRegular, VehicleSubwayRegular } from '@fluentui/react-icons'
+import TransitLayers from './TransitLayers.jsx'
+
+const LAGOS_CENTER = [6.52, 3.40]
 
 export default function Explore() {
   const [params] = useSearchParams()
@@ -9,6 +13,8 @@ export default function Explore() {
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState(initCat)
   const [view, setView] = useState('list') // 'list' | 'map'
+  const [showBRT, setShowBRT] = useState(true)
+  const [showRail, setShowRail] = useState(true)
 
   const filtered = useMemo(() => {
     let results = LISTINGS
@@ -67,32 +73,75 @@ export default function Explore() {
         )}
       </div>
 
-      {/* Listing cards */}
-      <div className="ex-grid">
-        {filtered.map(listing => (
-          <Link key={listing.id} to={`/explore/${listing.id}`} className="ex-card">
-            <div className="ex-card-img">
-              <img
-                src={listing.photos?.[0] || '/images/postcards/national-theatre.png'}
-                alt={listing.name}
-                loading="lazy"
-                onError={e => { e.target.src = '/images/postcards/national-theatre.png' }}
-              />
-              <span className="ex-card-price">{listing.priceRange}</span>
-            </div>
-            <div className="ex-card-body">
-              <h3 className="ex-card-name">{listing.name}</h3>
-              <p className="ex-card-sub">{listing.subcategory} · {listing.area}</p>
-              <div className="ex-card-meta">
-                <span className="ex-card-rating">
-                  <StarRegular fontSize={13} /> {listing.rating}
-                </span>
-                <span className="ex-card-hours">{listing.hours?.split(',')[0]}</span>
+      {/* MAP VIEW */}
+      {view === 'map' && (
+        <div className="ex-map-wrap">
+          {/* Transit toggle chips */}
+          <div className="ex-transit-toggles">
+            <button
+              className={`ex-transit-chip${showBRT ? ' active' : ''}`}
+              onClick={() => setShowBRT(v => !v)}
+            >
+              🚌 BRT
+            </button>
+            <button
+              className={`ex-transit-chip${showRail ? ' active' : ''}`}
+              onClick={() => setShowRail(v => !v)}
+            >
+              🚆 Rail
+            </button>
+          </div>
+          <MapContainer center={LAGOS_CENTER} zoom={11} style={{ width: '100%', height: '100%' }} zoomControl={true} attributionControl={false}>
+            <TileLayer
+              url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+              attribution="&copy; CartoDB &copy; OpenStreetMap"
+            />
+            <TransitLayers showBRT={showBRT} showRail={showRail} />
+            {/* Listing markers */}
+            {filtered.map(l => (
+              <CircleMarker
+                key={l.id}
+                center={[l.lat, l.lng]}
+                radius={6}
+                pathOptions={{ color: '#C8963E', weight: 2, fillColor: '#C8963E', fillOpacity: 0.8 }}
+              >
+                <Tooltip direction="top" offset={[0, -6]}>
+                  <strong>{l.name}</strong><br />{l.subcategory} · ⭐ {l.rating}
+                </Tooltip>
+              </CircleMarker>
+            ))}
+          </MapContainer>
+        </div>
+      )}
+
+      {/* LIST VIEW */}
+      {view === 'list' && (
+        <div className="ex-grid">
+          {filtered.map(listing => (
+            <Link key={listing.id} to={`/explore/${listing.id}`} className="ex-card">
+              <div className="ex-card-img">
+                <img
+                  src={listing.photos?.[0] || '/images/postcards/national-theatre.png'}
+                  alt={listing.name}
+                  loading="lazy"
+                  onError={e => { e.target.src = '/images/postcards/national-theatre.png' }}
+                />
+                <span className="ex-card-price">{listing.priceRange}</span>
               </div>
-            </div>
-          </Link>
-        ))}
-      </div>
+              <div className="ex-card-body">
+                <h3 className="ex-card-name">{listing.name}</h3>
+                <p className="ex-card-sub">{listing.subcategory} · {listing.area}</p>
+                <div className="ex-card-meta">
+                  <span className="ex-card-rating">
+                    <StarRegular fontSize={13} /> {listing.rating}
+                  </span>
+                  <span className="ex-card-hours">{listing.hours?.split(',')[0]}</span>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
 
       {filtered.length === 0 && (
         <div className="ex-empty">

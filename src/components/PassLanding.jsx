@@ -53,7 +53,7 @@ export default function PassLanding() {
         name: name.trim(),
         email: email.trim(),
         role: 'pass_interest',
-        message: interest || 'Feferity Pass waitlist',
+        message: interest || 'Wanda Pass waitlist',
       })
     } catch (err) {
       console.error(err)
@@ -67,7 +67,7 @@ export default function PassLanding() {
       {/* Hero */}
       <div className="pass-hero">
         <span className="pass-badge">COMING SOON</span>
-        <h1 className="pass-title">Feferity Pass</h1>
+        <h1 className="pass-title">Wanda Pass</h1>
         <p className="pass-subtitle">
           One pass. Multiple attractions. Zero hassle.
           <br />
@@ -150,7 +150,7 @@ export default function PassLanding() {
           <div className="pass-waitlist-done">
             <span>🎉</span>
             <h3>You are on the list!</h3>
-            <p>We will notify you when the Feferity Pass launches.</p>
+            <p>We will notify you when the Wanda Pass launches.</p>
             <Link to="/explore" className="pass-explore-link">Explore Lagos while you wait →</Link>
           </div>
         ) : (

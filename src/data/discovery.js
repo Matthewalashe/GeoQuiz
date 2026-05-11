@@ -3,6 +3,8 @@
 // Phase 3, Milestone 3.3
 // ============================================
 
+import { SITE_IMAGES, SITE_LOGOS } from './siteAssets.js'
+
 export const DISCOVERY_CATEGORIES = [
   { id: 'all',        icon: '🗺️',  label: 'All' },
   { id: 'food',       icon: '🍽️',  label: 'Food' },
@@ -113,6 +115,13 @@ export const DISCOVERY_POIS = [
   { id: 'w2', name: 'Lagos State Library', category: 'wifi', lat: 6.4560, lng: 3.3985, area: 'Lagos Island', rating: 4.0, description: 'Free public library with reading rooms and WiFi.', sponsored: false, cta: 'Get Directions', mapUrl: 'https://maps.google.com/?q=Lagos+State+Central+Library' },
   { id: 'w3', name: 'The Palms Food Court', category: 'wifi', lat: 6.4487, lng: 3.5419, area: 'Lekki', rating: 4.1, description: 'Free WiFi while you dine at The Palms mall.', sponsored: false, cta: 'Get Directions', mapUrl: 'https://maps.google.com/?q=The+Palms+Shopping+Mall+Lekki' },
 ]
+
+// Enrich each POI with its real downloaded image and logo
+DISCOVERY_POIS.forEach(poi => {
+  poi.image = SITE_IMAGES[poi.id]?.[0] || null
+  poi.images = SITE_IMAGES[poi.id] || []
+  poi.logo = SITE_LOGOS[poi.id] || null
+})
 
 export function getPOIsByCategory(categoryId) {
   if (categoryId === 'all') return DISCOVERY_POIS

@@ -6252,6 +6252,37 @@ a:hover { text-decoration: underline; }
 }
 .ex-empty span { font-size: 2.5rem; display: block; margin-bottom: 0.5rem; }
 
+/* ── Explore Map View ── */
+.ex-map-wrap {
+  position: relative; width: 100%; height: 55vh; min-height: 360px;
+  border-radius: var(--radius-lg); overflow: hidden;
+  border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+  margin-bottom: 1rem;
+}
+.ex-transit-toggles {
+  position: absolute; top: 10px; right: 10px; z-index: 800;
+  display: flex; gap: 0.35rem;
+}
+.ex-transit-chip {
+  padding: 0.35rem 0.7rem; border-radius: var(--radius-full);
+  border: 1px solid var(--border); background: var(--surface);
+  font-family: var(--font-head); font-size: 0.72rem; font-weight: 600;
+  cursor: pointer; transition: all var(--transition);
+  box-shadow: var(--shadow-sm); color: var(--text-secondary);
+}
+.ex-transit-chip:hover { border-color: var(--primary); }
+.ex-transit-chip.active { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
+
+/* Transit tooltips */
+.transit-tooltip {
+  font-family: var(--font-head) !important; font-size: 0.75rem !important;
+  font-weight: 600 !important; padding: 0.3rem 0.6rem !important;
+  border-radius: var(--radius-sm) !important;
+  background: var(--surface) !important; color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    LISTING DETAIL
    ═══════════════════════════════════════════════════════════════════════════ */
