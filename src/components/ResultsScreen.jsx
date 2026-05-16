@@ -4,8 +4,6 @@ import { getGrade, formatDistance } from '../engine/scoring.js'
 import { submitScore, fetchLeaderboard } from '../lib/supabase.js'
 import { ResultsMap } from './MapView.jsx'
 import { encodeChallenge } from './Challenge.jsx'
-import { JourneyCard, SponsorCard } from './SponsoredBanner.jsx'
-import { SPONSORS } from '../data/sponsors.js'
 import { awardGameXP, getLevel, getLevelTitle, getLevelProgress, getXPToNextLevel } from '../engine/xp.js'
 import { playPerfect, playLevelUp, playXPGain, playCorrect, vibrateSuccess, vibrateLevelUp } from '../engine/audio.js'
 import {
@@ -305,21 +303,7 @@ export default function ResultsScreen() {
         <Link to="/" className="btn btn-outline"><HomeRegular /> Home</Link>
       </div>
 
-      {/* Journey Card */}
-      <JourneyCard results={data.results} />
 
-      {/* Discover Section */}
-      <div className="results-share glass-subtle" style={{ padding: '1.25rem' }}>
-        <h4 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
-          <LocationRegular /> Discover Near Your Quiz Areas
-        </h4>
-        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0.3rem 0 1rem' }}>
-          Places to visit based on areas you explored
-        </p>
-        <div className="results-sponsor-grid">
-          {SPONSORS.filter(s => s.active).map(s => <SponsorCard key={s.id} sponsor={s} />)}
-        </div>
-      </div>
 
       {/* Social Share */}
       {(() => {

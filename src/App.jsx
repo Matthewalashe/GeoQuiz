@@ -135,12 +135,31 @@ export default function App() {
       const alreadySynced = localStorage.getItem('geoquiz_synced')
       if (!alreadySynced) {
         await syncLocalProgress(userId)
-        // Re-fetch profile to get updated stats
         const updated = await getProfile(userId)
         setProfile(updated)
       }
     } catch (err) {
-      console.error('Profile fetch error:', err)
+      console.warn('Profile fetch failed, creating fallback profile:', err.message)
+      // Profile doesn't exist yet — build a client-side fallback
+      // This happens if the trigger hasn't fired or the profiles table is missing
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const fallback = {
+            id: user.id,
+            username: user.user_metadata?.username || user.email?.split('@')[0] || 'Explorer',
+            full_name: user.user_metadata?.full_name || '',
+            avatar_url: user.user_metadata?.avatar_url || localStorage.getItem('geoquiz_avatar') || '🧭',
+            role: 'user',
+            total_xp: 0,
+            streak_days: 0,
+            level: 1,
+          }
+          setProfile(fallback)
+          // Try inserting the profile row
+          await supabase.from('profiles').upsert(fallback, { onConflict: 'id' }).select()
+        }
+      } catch { /* If even this fails, the user still sees a working dashboard with fallback data */ }
     }
   }
 
