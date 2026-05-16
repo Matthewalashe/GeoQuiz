@@ -1,6 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { CATEGORIES, REGIONS, getQuestionsByRegion } from '../data/questions.js'
+import {
+  MapRegular, CameraRegular, PuzzlePieceRegular, TextFontRegular,
+  DocumentEditRegular, ColorRegular, PaintBrushRegular, BrainCircuitRegular,
+  BookRegular, CompassNorthwestRegular, LocationRegular, TrophyRegular,
+  ImageRegular, TextFirstLineRegular, BookOpenRegular, EyeRegular,
+  ArrowSwapRegular, StarRegular, LightbulbRegular, KeyboardRegular,
+  SparkleRegular, TimerRegular, QuestionCircleRegular, HeartRegular,
+  CalendarLtrRegular, FlashRegular
+} from '@fluentui/react-icons'
 
 const QUESTION_COUNTS = [10, 15, 20, 25, 30]
 const DIFFICULTIES = [
@@ -24,12 +33,12 @@ const GAMES = [
     name: 'Map Quiz',
     tagline: 'Pin the location on the map',
     color: '#00c853',
-    icon: '🗺️',
+    icon: <MapRegular />,
     image: '/images/postcards/third-mainland-bridge.png',
     steps: [
-      { emoji: '📍', title: 'Read the clue', desc: 'Each question describes a real Nigerian location.' },
-      { emoji: '🗺️', title: 'Drop your pin', desc: 'Tap the map where you think it is.' },
-      { emoji: '🏆', title: 'Score points', desc: 'Closer pin = higher score. 100 pts max!' },
+      { emoji: <LocationRegular />, title: 'Read the clue', desc: 'Each question describes a real Nigerian location.' },
+      { emoji: <MapRegular />, title: 'Drop your pin', desc: 'Tap the map where you think it is.' },
+      { emoji: <TrophyRegular />, title: 'Score points', desc: 'Closer pin = higher score. 100 pts max!' },
     ],
     modes: ['daily', 'blitz', 'custom'],
   },
@@ -38,12 +47,12 @@ const GAMES = [
     name: 'PostCards',
     tagline: 'Guess landmarks from photos',
     color: '#8b5cf6',
-    icon: '📷',
+    icon: <CameraRegular />,
     image: '/images/postcards/national-theatre.png',
     steps: [
-      { emoji: '🖼️', title: 'See the postcard', desc: 'A photo of a Nigerian landmark appears.' },
-      { emoji: '🅰️', title: 'Pick your answer', desc: 'Choose from 4 options — A, B, C or D.' },
-      { emoji: '📖', title: 'Learn a fact', desc: 'Get a fun fact after every answer!' },
+      { emoji: <ImageRegular />, title: 'See the postcard', desc: 'A photo of a Nigerian landmark appears.' },
+      { emoji: <TextFontRegular />, title: 'Pick your answer', desc: 'Choose from 4 options — A, B, C or D.' },
+      { emoji: <BookOpenRegular />, title: 'Learn a fact', desc: 'Get a fun fact after every answer!' },
     ],
   },
   {
@@ -51,12 +60,12 @@ const GAMES = [
     name: 'Puzzle',
     tagline: 'Rearrange the image',
     color: '#06b6d4',
-    icon: '🧩',
+    icon: <PuzzlePieceRegular />,
     image: '/images/postcards/zuma-rock.png',
     steps: [
-      { emoji: '👀', title: 'Memorize', desc: 'See the full image for 2.5 seconds.' },
-      { emoji: '🔀', title: 'Swap tiles', desc: 'Tap two tiles to swap. Rearrange the 3×3 grid.' },
-      { emoji: '⭐', title: 'Earn stars', desc: 'Fewer moves = more stars. 3★ under 10 moves!' },
+      { emoji: <EyeRegular />, title: 'Memorize', desc: 'See the full image for 2.5 seconds.' },
+      { emoji: <ArrowSwapRegular />, title: 'Swap tiles', desc: 'Tap two tiles to swap. Rearrange the 3×3 grid.' },
+      { emoji: <StarRegular />, title: 'Earn stars', desc: 'Fewer moves = more stars. 3★ under 10 moves!' },
     ],
   },
   {
@@ -64,12 +73,12 @@ const GAMES = [
     name: 'Guess the Word',
     tagline: 'Unscramble & learn history',
     color: '#f59e0b',
-    icon: '🔤',
+    icon: <TextFontRegular />,
     image: '/images/postcards/badagry.png',
     steps: [
-      { emoji: '🔤', title: 'Read the clue', desc: 'A hint about a Nigerian place, person or event.' },
-      { emoji: '🅰️', title: 'Tap letters', desc: 'Place scrambled letters in the right order.' },
-      { emoji: '📚', title: 'Discover history', desc: 'Rich historical info + footnotes after each word!' },
+      { emoji: <TextFontRegular />, title: 'Read the clue', desc: 'A hint about a Nigerian place, person or event.' },
+      { emoji: <TextFirstLineRegular />, title: 'Tap letters', desc: 'Place scrambled letters in the right order.' },
+      { emoji: <BookRegular />, title: 'Discover history', desc: 'Rich historical info + footnotes after each word!' },
     ],
   },
   {
@@ -77,12 +86,12 @@ const GAMES = [
     name: 'Crossword',
     tagline: 'Solve Nigerian trivia clues',
     color: '#3b82f6',
-    icon: '📝',
+    icon: <DocumentEditRegular />,
     image: 'https://images.unsplash.com/photo-1594680874312-3ee32c933a35?auto=format&fit=crop&q=80&w=800',
     steps: [
-      { emoji: '💡', title: 'Read the clue', desc: 'Tap a row or column to read the clue.' },
-      { emoji: '⌨️', title: 'Type the word', desc: 'Fill in the blanks with Nigerian landmarks and culture.' },
-      { emoji: '🎉', title: 'Complete puzzle', desc: 'Fill the entire grid to win XP!' },
+      { emoji: <LightbulbRegular />, title: 'Read the clue', desc: 'Tap a row or column to read the clue.' },
+      { emoji: <KeyboardRegular />, title: 'Type the word', desc: 'Fill in the blanks with Nigerian landmarks and culture.' },
+      { emoji: <SparkleRegular />, title: 'Complete puzzle', desc: 'Fill the entire grid to win XP!' },
     ],
   },
   {
@@ -90,12 +99,12 @@ const GAMES = [
     name: 'Coloring',
     tagline: 'Paint Nigerian landmarks',
     color: '#ec4899',
-    icon: '🎨',
+    icon: <ColorRegular />,
     image: 'https://images.unsplash.com/photo-1605721911519-3dfeb3be25e7?auto=format&fit=crop&q=80&w=800',
     steps: [
-      { emoji: '🎨', title: 'Pick a color', desc: 'Select a vibrant color from your palette.' },
-      { emoji: '🖌️', title: 'Tap to paint', desc: 'Tap any section of the drawing to fill it in.' },
-      { emoji: '🖼️', title: 'Finish artwork', desc: 'Complete your masterpiece to earn rewards.' },
+      { emoji: <ColorRegular />, title: 'Pick a color', desc: 'Select a vibrant color from your palette.' },
+      { emoji: <PaintBrushRegular />, title: 'Tap to paint', desc: 'Tap any section of the drawing to fill it in.' },
+      { emoji: <ImageRegular />, title: 'Finish artwork', desc: 'Complete your masterpiece to earn rewards.' },
     ],
   },
   {
@@ -103,12 +112,12 @@ const GAMES = [
     name: 'Trivia',
     tagline: 'Test your Nigerian knowledge',
     color: '#0ea5e9',
-    icon: '🧠',
+    icon: <BrainCircuitRegular />,
     image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=800',
     steps: [
-      { emoji: '⏱️', title: 'Beat the clock', desc: 'Answer questions before the timer runs out.' },
-      { emoji: '🤔', title: 'Multiple choice', desc: 'Select the correct answer from 4 options.' },
-      { emoji: '🏆', title: 'Score high', desc: 'Earn points and climb the leaderboard!' },
+      { emoji: <TimerRegular />, title: 'Beat the clock', desc: 'Answer questions before the timer runs out.' },
+      { emoji: <QuestionCircleRegular />, title: 'Multiple choice', desc: 'Select the correct answer from 4 options.' },
+      { emoji: <TrophyRegular />, title: 'Score high', desc: 'Earn points and climb the leaderboard!' },
     ],
   },
   {
@@ -116,12 +125,12 @@ const GAMES = [
     name: 'Adventure',
     tagline: 'Survive a day in Lagos',
     color: '#eab308',
-    icon: '🧭',
+    icon: <CompassNorthwestRegular />,
     image: 'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?auto=format&fit=crop&q=80&w=800',
     steps: [
-      { emoji: '📖', title: 'Read the story', desc: 'Navigate a text-based narrative set in Nigeria.' },
-      { emoji: '🔀', title: 'Make choices', desc: 'Your decisions affect the outcome.' },
-      { emoji: '❤️', title: 'Watch your health', desc: 'Reach the end without losing all your energy!' },
+      { emoji: <BookOpenRegular />, title: 'Read the story', desc: 'Navigate a text-based narrative set in Nigeria.' },
+      { emoji: <ArrowSwapRegular />, title: 'Make choices', desc: 'Your decisions affect the outcome.' },
+      { emoji: <HeartRegular />, title: 'Watch your health', desc: 'Reach the end without losing all your energy!' },
     ],
   },
 ]
@@ -232,11 +241,11 @@ export default function CategorySelector() {
         <h3 className="gi-section-title">Quick Start</h3>
         <div className="gi-quick-modes">
           <button className="gi-qm" onClick={startDaily}>
-            <span className="gi-qm-icon">📅</span>
+            <span className="gi-qm-icon"><CalendarLtrRegular /></span>
             <div><strong>Daily Challenge</strong><br/><span>{todayStr} · 10Q · 45s</span></div>
           </button>
           <button className="gi-qm gi-qm-blitz" onClick={startBlitz}>
-            <span className="gi-qm-icon">⚡</span>
+            <span className="gi-qm-icon"><FlashRegular /></span>
             <div><strong>Blitz Mode</strong><br/><span>30Q · 5 min race</span></div>
           </button>
         </div>

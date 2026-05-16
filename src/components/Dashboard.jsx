@@ -5,7 +5,13 @@ import {
   getCurrentLeague,
   DAILY_REWARDS, getRewardsData, claimDailyReward, canClaimToday,
 } from '../engine/xp.js'
+import { signOut } from '../lib/supabase.js'
 import { getExplorationPercent, getCheckIns } from '../engine/exploration.js'
+import {
+  EditRegular, FireRegular, GamesRegular, TargetRegular, LocationRegular,
+  MapRegular, TrophyRegular, CloudRegular, GiftRegular, CheckmarkCircleRegular,
+  WeatherSnowflakeRegular, CompassNorthwestRegular, BookRegular, EarthRegular
+} from '@fluentui/react-icons'
 
 const AVATARS = [
   '🎭','🗿','👑','🐚','⚡','🔱','🛡️','🦅','🌀','🌍','🪘','🏺','🌴','🔥','🐆','🐘',
@@ -38,7 +44,7 @@ const JOURNEY_STOPS = [
   { level: 50, name: 'Grandmaster',       color: '#fbbf24' },
 ]
 
-export default function Dashboard() {
+export default function Dashboard({ session, profile }) {
   const [sessions] = useState(() => JSON.parse(localStorage.getItem('geoquiz_sessions') || '[]'))
   const [playerName, setPlayerName] = useState(() => localStorage.getItem('geoquiz_player') || 'Explorer')
   const [avatar, setAvatar] = useState(() => localStorage.getItem('geoquiz_avatar') || '🧭')
@@ -47,11 +53,18 @@ export default function Dashboard() {
   const [showAvatarPicker, setShowAvatarPicker] = useState(false)
 
   const xp = getXPData()
-  const level = getLevel(xp.totalXP)
-  const progress = getLevelProgress(xp.totalXP)
-  const title = getLevelTitle(level)
-  const xpToNext = getXPToNextLevel(xp.totalXP)
-  const league = getCurrentLeague(xp.totalXP)
+  
+  // Cloud data overrides if logged in
+  const displayXP = profile ? profile.total_xp : xp.totalXP
+  const displayLevel = getLevel(displayXP)
+  const displayTitle = getLevelTitle(displayLevel)
+  const displayStreak = profile ? profile.streak_days : (xp.streakDays || 0)
+  const displayPlayerName = profile ? (profile.username || profile.full_name || 'Explorer') : playerName
+  const displayAvatar = profile ? (profile.avatar_url || '🧭') : avatar
+
+  const progress = getLevelProgress(displayXP)
+  const xpToNext = getXPToNextLevel(displayXP)
+  const league = getCurrentLeague(displayXP)
   const exploredPct = getExplorationPercent()
   const checkIns = getCheckIns()
 
@@ -124,7 +137,7 @@ export default function Dashboard() {
       <div className="db-profile-card">
         <div className="db-avatar-wrap" onClick={() => setShowAvatarPicker(!showAvatarPicker)}>
           <span className="db-avatar">{avatar}</span>
-          <span className="db-avatar-edit">✎</span>
+          <span className="db-avatar-edit"><EditRegular fontSize={14} /></span>
         </div>
         <div className="db-profile-info">
           {editing ? (
@@ -134,18 +147,21 @@ export default function Dashboard() {
               <button className="btn btn-primary btn-sm" onClick={saveName}>Save</button>
             </div>
           ) : (
-            <div className="db-name" onClick={() => { setEditing(true); setEditName(playerName) }}>
-              {playerName} <span className="db-name-pen">✎</span>
+            <div className="db-name" onClick={() => { setEditing(true); setEditName(displayPlayerName) }}>
+              {displayPlayerName} <span className="db-name-pen"><EditRegular fontSize={14} /></span>
             </div>
           )}
           <div className="db-title-row">
-            <span className="db-level-badge" style={{ background: league.color }}>Lv.{level}</span>
-            <span className="db-title">{title.emoji} {title.title}</span>
+            <span className="db-level-badge" style={{ background: league.color }}>Lv.{displayLevel}</span>
+            <span className="db-title">{displayTitle.emoji} {displayTitle.title}</span>
             <span className="db-league-badge" style={{ background: league.color + '22', color: league.color, border: `1px solid ${league.color}` }}>
               {league.emoji} {league.name}
             </span>
           </div>
         </div>
+        {session && (
+          <button className="db-signout" onClick={() => signOut()}>Logout</button>
+        )}
       </div>
 
       {showAvatarPicker && (
@@ -159,8 +175,8 @@ export default function Dashboard() {
       {/* ── XP Progress Bar ── */}
       <div className="db-xp-card">
         <div className="db-xp-header">
-          <span className="db-xp-label">Level {level} → {level + 1}</span>
-          <span className="db-xp-value">{xp.totalXP.toLocaleString()} XP</span>
+          <span className="db-xp-label">Level {displayLevel} → {displayLevel + 1}</span>
+          <span className="db-xp-value">{displayXP.toLocaleString()} XP</span>
         </div>
         <div className="db-xp-track">
           <div className="db-xp-fill" style={{ width: `${progress * 100}%` }} />
@@ -174,36 +190,50 @@ export default function Dashboard() {
       {/* ── Stats Grid ── */}
       <div className="db-stats-grid">
         <div className="db-stat-card">
-          <span className="db-stat-icon">🔥</span>
-          <span className="db-stat-val">{xp.streakDays || 0}</span>
+          <span className="db-stat-icon"><FireRegular /></span>
+          <span className="db-stat-val">{displayStreak}</span>
           <span className="db-stat-lbl">Day Streak</span>
         </div>
         <div className="db-stat-card">
-          <span className="db-stat-icon">🎮</span>
+          <span className="db-stat-icon"><GamesRegular /></span>
           <span className="db-stat-val">{totalGames}</span>
           <span className="db-stat-lbl">Games Played</span>
         </div>
         <div className="db-stat-card">
-          <span className="db-stat-icon">🎯</span>
+          <span className="db-stat-icon"><TargetRegular /></span>
           <span className="db-stat-val">{avgPct}%</span>
           <span className="db-stat-lbl">Avg Score</span>
         </div>
         <div className="db-stat-card">
-          <span className="db-stat-icon">📍</span>
+          <span className="db-stat-icon"><LocationRegular /></span>
           <span className="db-stat-val">{checkIns.length}</span>
           <span className="db-stat-lbl">Check-ins</span>
         </div>
         <div className="db-stat-card">
-          <span className="db-stat-icon">🗺️</span>
+          <span className="db-stat-icon"><MapRegular /></span>
           <span className="db-stat-val">{exploredPct}%</span>
           <span className="db-stat-lbl">Lagos Explored</span>
         </div>
         <div className="db-stat-card">
-          <span className="db-stat-icon">🏆</span>
+          <span className="db-stat-icon"><TrophyRegular /></span>
           <span className="db-stat-val">{bestStreak}</span>
           <span className="db-stat-lbl">Best Streak</span>
         </div>
       </div>
+
+      {/* Guest Save Progress CTA */}
+      {!session && (
+        <div className="db-guest-cta">
+          <div className="db-guest-cta-inner">
+            <span className="db-guest-icon"><CloudRegular fontSize={28} /></span>
+            <div>
+              <strong>Save your progress to the cloud</strong>
+              <p>Create an account to keep your XP, streaks, and levels safe.</p>
+            </div>
+            <Link to="/auth" className="btn btn-primary btn-sm">Sign Up</Link>
+          </div>
+        </div>
+      )}
 
       {/* ── Streak & Daily Rewards ── */}
       {showConfetti && (
@@ -220,21 +250,21 @@ export default function Dashboard() {
 
       <div className="db-streak-section">
         <div className="db-section-header">
-          <h3 className="db-section-title">🔥 Streak &amp; Daily Rewards</h3>
+          <h3 className="db-section-title"><FireRegular fontSize={18} style={{ color: '#f97316' }} /> Streak &amp; Daily Rewards</h3>
           <Link to="/rewards" className="db-section-link">Full Rewards →</Link>
         </div>
 
         {/* Streak banner */}
         <div className="db-streak-banner">
           <div className="db-streak-fire">
-            <span style={{ fontSize: '2.5rem' }}>🔥</span>
+            <span style={{ color: '#f97316' }}><FireRegular fontSize={40} /></span>
             <div>
               <div className="db-streak-count">{xp.streakDays || 0}</div>
               <div className="db-streak-label">Day Streak</div>
             </div>
           </div>
           {xp.streakFreezes > 0 && (
-            <div className="db-streak-freeze">❄️ {xp.streakFreezes} freeze{xp.streakFreezes > 1 ? 's' : ''} left</div>
+            <div className="db-streak-freeze"><WeatherSnowflakeRegular /> {xp.streakFreezes} freeze{xp.streakFreezes > 1 ? 's' : ''} left</div>
           )}
         </div>
 
@@ -258,7 +288,7 @@ export default function Dashboard() {
         {/* Claim button */}
         {canClaim ? (
           <button className="rw-claim-btn db-claim-btn" onClick={handleClaim}>
-            Claim Today's Reward 🎁
+            Claim Today's Reward <GiftRegular fontSize={18} />
           </button>
         ) : (
           <div className="rw-claimed-msg">
@@ -269,7 +299,7 @@ export default function Dashboard() {
                 {claimResult.xpAwarded > 0 && <span className="rw-claim-xp">+{claimResult.xpAwarded} XP</span>}
               </div>
             ) : (
-              <p>✅ Today's reward claimed! Come back tomorrow.</p>
+              <p><CheckmarkCircleRegular style={{ color: 'var(--green)', verticalAlign: 'middle' }} /> Today's reward claimed! Come back tomorrow.</p>
             )}
           </div>
         )}
@@ -279,7 +309,7 @@ export default function Dashboard() {
       {exploredPct > 0 && (
         <div className="db-explore-bar-wrap">
           <div className="db-explore-label">
-            <span>🌍 Lagos Exploration</span>
+            <span><EarthRegular style={{ verticalAlign: 'middle', marginRight: '0.3rem' }} /> Lagos Exploration</span>
             <span className="db-explore-pct">{exploredPct}%</span>
           </div>
           <div className="db-explore-track">
@@ -333,7 +363,7 @@ export default function Dashboard() {
       {/* ── Recent check-ins ── */}
       {checkIns.length > 0 && (
         <div className="db-checkins">
-          <h4 className="db-section-title">📍 Recent Check-ins</h4>
+          <h4 className="db-section-title"><LocationRegular style={{ color: 'var(--primary)' }} /> Recent Check-ins</h4>
           <div className="db-checkin-list">
             {checkIns.slice(-5).reverse().map((c, i) => (
               <div key={i} className="db-checkin-row">
@@ -348,11 +378,11 @@ export default function Dashboard() {
       {/* ── Action buttons ── */}
       <div className="db-actions">
         <Link to="/play" className="btn btn-primary">Play Now</Link>
-        <Link to="/discovery" className="btn btn-outline">🧭 Discover</Link>
-        <Link to="/deals" className="btn btn-outline">🎁 Deals</Link>
-        <Link to="/story" className="btn btn-outline">📖 Story</Link>
+        <Link to="/discovery" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center' }}><CompassNorthwestRegular /> Discover</Link>
+        <Link to="/deals" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center' }}><GiftRegular /> Deals</Link>
+        <Link to="/story" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center' }}><BookRegular /> Story</Link>
         <Link to="/achievements" className="btn btn-outline">Achievements</Link>
-        <Link to="/leaderboard" className="btn btn-outline">🏆 Leaderboard</Link>
+        <Link to="/leaderboard" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center' }}><TrophyRegular /> Leaderboard</Link>
       </div>
     </section>
   )

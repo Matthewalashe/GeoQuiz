@@ -201,3 +201,123 @@ export async function reportPost(postId) {
     .update({ reported: true })
     .eq('id', postId)
 }
+
+// ---- Auth & Profiles ----
+
+export async function signUp({ email, password, username, fullName, avatar }) {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        username: username || email.split('@')[0],
+        full_name: fullName || '',
+        avatar_url: avatar || '🧭',
+      }
+    }
+  })
+  if (error) throw error
+  return data
+}
+
+export async function signIn({ email, password }) {
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+  if (error) throw error
+  return data
+}
+
+export async function signInWithGoogle() {
+  if (!supabase) throw new Error('Supabase not configured')
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin + '/dashboard' }
+  })
+  if (error) throw error
+  return data
+}
+
+export async function resetPassword(email) {
+  if (!supabase) throw new Error('Supabase not configured')
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + '/auth?mode=reset',
+  })
+  if (error) throw error
+}
+
+export async function updatePassword(newPassword) {
+  if (!supabase) throw new Error('Supabase not configured')
+  const { error } = await supabase.auth.updateUser({ password: newPassword })
+  if (error) throw error
+}
+
+export async function signOut() {
+  if (!supabase) return
+  const { error } = await supabase.auth.signOut()
+  if (error) throw error
+}
+
+export async function getSession() {
+  const { data: { session }, error } = await supabase.auth.getSession()
+  if (error) throw error
+  return session
+}
+
+export function onAuthStateChange(callback) {
+  return supabase.auth.onAuthStateChange(callback)
+}
+
+export async function getProfile(userId) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single()
+  if (error) throw error
+  return data
+}
+
+export function isAdmin(profile) {
+  return profile?.role === 'admin'
+}
+
+export async function updateProfile(userId, updates) {
+  const { error } = await supabase
+    .from('profiles')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', userId)
+  if (error) throw error
+}
+
+/**
+ * Syncs local XP data to Supabase profile.
+ * Only should be called once after login if local data exists.
+ */
+export async function syncLocalProgress(userId) {
+  const localXP = JSON.parse(localStorage.getItem('geoquiz_xp') || '{}')
+  const localPlayer = localStorage.getItem('geoquiz_player')
+  const localAvatar = localStorage.getItem('geoquiz_avatar')
+
+  if (!localXP.totalXP && !localPlayer) return // Nothing to sync
+
+  const updates = {
+    total_xp: localXP.totalXP || 0,
+    streak_days: localXP.streakDays || 0,
+    level: Math.floor((localXP.totalXP || 0) / 500) + 1,
+    username: localPlayer || undefined,
+    avatar_url: localAvatar || undefined,
+    achievements: localXP.badges || [],
+  }
+
+  // Filter out undefined
+  Object.keys(updates).forEach(key => updates[key] === undefined && delete updates[key])
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', userId)
+  
+  if (!error) {
+    // Optionally clear local data or mark as synced
+    localStorage.setItem('geoquiz_synced', 'true')
+  }
+}

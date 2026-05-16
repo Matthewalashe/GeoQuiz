@@ -8,19 +8,31 @@
 
 ---
 
-## 🎨 UI REDESIGN (In Progress)
+## 🎨 UI REDESIGN (Complete)
 > Goal: Transition from Brutalist/Bauhaus design to Material Design & Microsoft Fluent Icons.
 
-### Milestone 0.1 — Design System Update
-- [ ] Migrate CSS variables to Material Design tokens (soft shadows, rounded corners).
-- [ ] Install `@fluentui/react-icons`.
-- [ ] Standardize typography for accessibility.
+### Milestone 0.1 — Design System Update ✅
+- [x] Migrate CSS variables to Material Design tokens (soft shadows, rounded corners).
+- [x] Install `@fluentui/react-icons`.
+- [x] Standardize typography for accessibility.
 
-### Milestone 0.2 — Component Refactor
-- [ ] Update `Landing.jsx` (Hero, Cards, Icons).
-- [ ] Update `Header.jsx` and Mobile Navigation.
-- [ ] Update `GameScreen.jsx` and `Play` Modes to Material cards.
-- [ ] Update Data Tables, Scoreboards, and Profiles.
+### Milestone 0.2 — Component Refactor ✅
+- [x] Update `Landing.jsx` (Hero, Cards, Icons).
+- [x] Update `Header.jsx` and Mobile Navigation.
+- [x] Update `GameScreen.jsx` and `Play` Modes to Material cards.
+- [x] Update Data Tables, Scoreboards, and Profiles.
+
+---
+
+## 🔐 PHASE 0.5: AUTH & CLOUD SYNC (In Progress)
+> Goal: Move from local storage to persistent user accounts.
+
+### Milestone 0.5.1 — Supabase Auth Integration 🟢
+- [x] Implement Sign Up / Log In / Sign Out.
+- [x] Create `profiles` table for user metadata.
+- [x] Sync local progress (XP, Level, Streaks) to cloud on first login.
+- [ ] Implement Password Reset / Magic Links.
+- [ ] Social Login (Google/Apple).
 
 ---
 

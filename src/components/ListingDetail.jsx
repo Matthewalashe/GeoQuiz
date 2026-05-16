@@ -1,5 +1,5 @@
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { LISTINGS } from '../data/listings.js'
+import { LISTINGS } from '../data/listings.jsx'
 import {
   ArrowLeftRegular, StarRegular, CallRegular,
   GlobeRegular, OpenRegular, ShareRegular, HeartRegular

@@ -1,7 +1,11 @@
 // Wanda - Lagos Seed Listings (50 real places)
 
 import { LISTING_IMAGES } from './siteAssets.js'
-
+import {
+  SearchRegular, FoodPizzaRegular, BuildingMultipleRegular,
+  LocationRegular, DrinkMargaritaRegular, TreeDeciduousRegular,
+  TicketDiagonalRegular, StarRegular, ShoppingBagRegular
+} from '@fluentui/react-icons'
 const L = (id,name,cat,sub,area,price,rating,phone,wa,web,ig,hours,lat,lng,desc,tags) =>
   ({id,name,category:cat,subcategory:sub,area,priceRange:price,rating,phone,whatsapp:wa,website:web,instagram:ig,hours,lat,lng,description:desc,tags,photos: LISTING_IMAGES[id]?.length ? LISTING_IMAGES[id] : [`/images/listings/${id}.jpg`],status:'approved'})
 
@@ -77,15 +81,15 @@ export const LISTINGS = [
 ]
 
 export const CATEGORIES = [
-  { id: 'all', label: 'All', icon: '🔍' },
-  { id: 'restaurant', label: 'Restaurants', icon: '🍽️' },
-  { id: 'hotel', label: 'Hotels', icon: '🏨' },
-  { id: 'attraction', label: 'Attractions', icon: '📍' },
-  { id: 'nightlife', label: 'Nightlife', icon: '🌙' },
-  { id: 'park', label: 'Parks', icon: '🌳' },
-  { id: 'culture', label: 'Culture', icon: '🎭' },
-  { id: 'experience', label: 'Experiences', icon: '\u2B50' },
-  { id: 'shopping', label: 'Shopping', icon: '🛍️' },
+  { id: 'all', label: 'All', icon: <SearchRegular fontSize={24} /> },
+  { id: 'restaurant', label: 'Restaurants', icon: <FoodPizzaRegular fontSize={24} /> },
+  { id: 'hotel', label: 'Hotels', icon: <BuildingMultipleRegular fontSize={24} /> },
+  { id: 'attraction', label: 'Attractions', icon: <LocationRegular fontSize={24} /> },
+  { id: 'nightlife', label: 'Nightlife', icon: <DrinkMargaritaRegular fontSize={24} /> },
+  { id: 'park', label: 'Parks', icon: <TreeDeciduousRegular fontSize={24} /> },
+  { id: 'culture', label: 'Culture', icon: <TicketDiagonalRegular fontSize={24} /> },
+  { id: 'experience', label: 'Experiences', icon: <StarRegular fontSize={24} /> },
+  { id: 'shopping', label: 'Shopping', icon: <ShoppingBagRegular fontSize={24} /> },
 ]
 
 export const PRICE_LABELS = { [N1]: 'Budget', [N2]: 'Mid-range', [N3]: 'Premium', [N4]: 'Luxury' }

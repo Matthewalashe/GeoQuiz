@@ -1,4 +1,4 @@
-const CACHE = 'wanda-v1'
+const CACHE = 'wanda-v2'
 const ASSETS = ['/', '/index.html']
 
 self.addEventListener('install', e => {

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet'
-import { LISTINGS, CATEGORIES, PRICE_LABELS } from '../data/listings.js'
+import { LISTINGS, CATEGORIES, PRICE_LABELS } from '../data/listings.jsx'
 import { SearchRegular, MapRegular, ListRegular, StarRegular, VehicleBusRegular, VehicleSubwayRegular } from '@fluentui/react-icons'
 import TransitLayers from './TransitLayers.jsx'
 
@@ -82,13 +82,13 @@ export default function Explore() {
               className={`ex-transit-chip${showBRT ? ' active' : ''}`}
               onClick={() => setShowBRT(v => !v)}
             >
-              🚌 BRT
+              <VehicleBusRegular fontSize={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> BRT
             </button>
             <button
               className={`ex-transit-chip${showRail ? ' active' : ''}`}
               onClick={() => setShowRail(v => !v)}
             >
-              🚆 Rail
+              <VehicleSubwayRegular fontSize={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> Rail
             </button>
           </div>
           <MapContainer center={LAGOS_CENTER} zoom={11} style={{ width: '100%', height: '100%' }} zoomControl={true} attributionControl={false}>
@@ -106,7 +106,7 @@ export default function Explore() {
                 pathOptions={{ color: '#C8963E', weight: 2, fillColor: '#C8963E', fillOpacity: 0.8 }}
               >
                 <Tooltip direction="top" offset={[0, -6]}>
-                  <strong>{l.name}</strong><br />{l.subcategory} · ⭐ {l.rating}
+                  <strong>{l.name}</strong><br />{l.subcategory} · <StarRegular fontSize={12} /> {l.rating}
                 </Tooltip>
               </CircleMarker>
             ))}
@@ -145,7 +145,7 @@ export default function Explore() {
 
       {filtered.length === 0 && (
         <div className="ex-empty">
-          <span>🔍</span>
+          <span style={{ color: '#aaa' }}><SearchRegular fontSize={40} /></span>
           <p>No places found. Try a different search or category.</p>
         </div>
       )}

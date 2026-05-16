@@ -96,7 +96,7 @@ export const SITE_LOGOS = {
   w1: '/images/logos/w1_logo.png',
 }
 
-// Listing images (keyed by listings.js slug `id`)
+// Listing images (keyed by listings.jsx slug `id`)
 export const LISTING_IMAGES = {
   'nok-vi': [],
   'terra-kulture': ['/images/sites/terra-kulture_image_1.png'],
