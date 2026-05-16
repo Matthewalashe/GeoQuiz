@@ -97,7 +97,7 @@ export default function Dashboard({ session, profile }) {
     delay: `${Math.random() * 0.5}s`,
   })))
 
-  const currentStopIdx = JOURNEY_STOPS.reduce((acc, stop, i) => (level >= stop.level ? i : acc), 0)
+  const currentStopIdx = JOURNEY_STOPS.reduce((acc, stop, i) => (displayLevel >= stop.level ? i : acc), 0)
   const nextStop = JOURNEY_STOPS[currentStopIdx + 1] || null
 
   function saveName() {
@@ -340,7 +340,7 @@ export default function Dashboard({ session, profile }) {
             }
 
             const { stop, idx } = node
-            const reached = level >= stop.level
+            const reached = displayLevel >= stop.level
             const isCurrent = idx === currentStopIdx
 
             return (
