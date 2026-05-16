@@ -34,7 +34,9 @@ CREATE TABLE IF NOT EXISTS cms_listings (
   updated_at timestamptz DEFAULT now()
 );
 ALTER TABLE cms_listings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon_read_listings" ON cms_listings;
 CREATE POLICY "anon_read_listings" ON cms_listings FOR SELECT USING (status = 'published');
+DROP POLICY IF EXISTS "admin_all_listings" ON cms_listings;
 CREATE POLICY "admin_all_listings" ON cms_listings FOR ALL TO authenticated
   USING (EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin'))
   WITH CHECK (EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin'));
@@ -65,7 +67,9 @@ CREATE TABLE IF NOT EXISTS cms_deals (
   updated_at timestamptz DEFAULT now()
 );
 ALTER TABLE cms_deals ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon_read_deals" ON cms_deals;
 CREATE POLICY "anon_read_deals" ON cms_deals FOR SELECT USING (status = 'published');
+DROP POLICY IF EXISTS "admin_all_deals" ON cms_deals;
 CREATE POLICY "admin_all_deals" ON cms_deals FOR ALL TO authenticated
   USING (EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin'))
   WITH CHECK (EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin'));
@@ -88,7 +92,9 @@ CREATE TABLE IF NOT EXISTS cms_sponsors (
   updated_at timestamptz DEFAULT now()
 );
 ALTER TABLE cms_sponsors ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon_read_sponsors" ON cms_sponsors;
 CREATE POLICY "anon_read_sponsors" ON cms_sponsors FOR SELECT USING (active = true AND status = 'published');
+DROP POLICY IF EXISTS "admin_all_sponsors" ON cms_sponsors;
 CREATE POLICY "admin_all_sponsors" ON cms_sponsors FOR ALL TO authenticated
   USING (EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin'))
   WITH CHECK (EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin'));
@@ -115,7 +121,9 @@ CREATE TABLE IF NOT EXISTS cms_discovery (
   updated_at timestamptz DEFAULT now()
 );
 ALTER TABLE cms_discovery ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon_read_discovery" ON cms_discovery;
 CREATE POLICY "anon_read_discovery" ON cms_discovery FOR SELECT USING (status = 'published');
+DROP POLICY IF EXISTS "admin_all_discovery" ON cms_discovery;
 CREATE POLICY "admin_all_discovery" ON cms_discovery FOR ALL TO authenticated
   USING (EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin'))
   WITH CHECK (EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin'));
@@ -140,7 +148,9 @@ CREATE TABLE IF NOT EXISTS cms_questions (
   updated_at timestamptz DEFAULT now()
 );
 ALTER TABLE cms_questions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon_read_questions" ON cms_questions;
 CREATE POLICY "anon_read_questions" ON cms_questions FOR SELECT USING (status = 'published');
+DROP POLICY IF EXISTS "admin_all_questions" ON cms_questions;
 CREATE POLICY "admin_all_questions" ON cms_questions FOR ALL TO authenticated
   USING (EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin'))
   WITH CHECK (EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin'));
@@ -155,7 +165,9 @@ CREATE TABLE IF NOT EXISTS cms_config (
   updated_at timestamptz DEFAULT now()
 );
 ALTER TABLE cms_config ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon_read_config" ON cms_config;
 CREATE POLICY "anon_read_config" ON cms_config FOR SELECT USING (true);
+DROP POLICY IF EXISTS "admin_all_config" ON cms_config;
 CREATE POLICY "admin_all_config" ON cms_config FOR ALL TO authenticated
   USING (EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin'))
   WITH CHECK (EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin'));
@@ -172,8 +184,11 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('cms-uploads', 'cms-uploads', true)
 ON CONFLICT (id) DO NOTHING;
 
+DROP POLICY IF EXISTS "public_view_cms" ON storage.objects;
 CREATE POLICY "public_view_cms" ON storage.objects FOR SELECT USING (bucket_id = 'cms-uploads');
+DROP POLICY IF EXISTS "admin_upload_cms" ON storage.objects;
 CREATE POLICY "admin_upload_cms" ON storage.objects FOR INSERT TO authenticated
   WITH CHECK (bucket_id = 'cms-uploads' AND EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin'));
+DROP POLICY IF EXISTS "admin_delete_cms" ON storage.objects;
 CREATE POLICY "admin_delete_cms" ON storage.objects FOR DELETE TO authenticated
   USING (bucket_id = 'cms-uploads' AND EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin'));
