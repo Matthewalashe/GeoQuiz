@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import '../../admin.css'
 import { adminFetch, adminUpsert, adminDelete, uploadFile } from '../../lib/cms.js'
+import { supabase, signOut } from '../../lib/supabase.js'
 import AdminGuard from './AdminGuard.jsx'
 import {
   DataBarVerticalRegular, LocationRegular, GiftRegular, DiamondRegular,
   MapRegular, QuestionRegular, SettingsRegular, CheckmarkCircleRegular,
-  DismissCircleRegular, MailInboxRegular, WrenchRegular
+  DismissCircleRegular, MailInboxRegular, WrenchRegular, PeopleRegular,
+  PersonRegular, ShieldCheckmarkRegular
 } from '@fluentui/react-icons'
 
 // Section configs
@@ -16,6 +18,7 @@ const SECTIONS = [
   { id: 'sponsors', label: 'Sponsors', icon: <DiamondRegular />, table: 'cms_sponsors' },
   { id: 'discovery', label: 'Discovery', icon: <MapRegular />, table: 'cms_discovery' },
   { id: 'questions', label: 'Questions', icon: <QuestionRegular />, table: 'cms_questions' },
+  { id: 'users', label: 'Users', icon: <PeopleRegular /> },
   { id: 'settings', label: 'Settings', icon: <SettingsRegular /> },
 ]
 
@@ -450,6 +453,130 @@ function SettingsSection({ session }) {
   )
 }
 
+function UsersSection({ session }) {
+  const [users, setUsers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [toast, setToast] = useState(null)
+  const [search, setSearch] = useState('')
+
+  useEffect(() => {
+    loadUsers()
+  }, [])
+
+  async function loadUsers() {
+    setLoading(true)
+    try {
+      const { data, error } = await supabase.from('profiles').select('*').order('created_at', { ascending: false })
+      if (error) throw error
+      setUsers(data || [])
+    } catch (e) {
+      setToast({ msg: 'Could not load users: ' + e.message, type: 'error' })
+    }
+    setLoading(false)
+  }
+
+  async function toggleRole(user) {
+    const newRole = user.role === 'admin' ? 'user' : 'admin'
+    try {
+      const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', user.id)
+      if (error) throw error
+      setToast({ msg: `${user.username || user.id} is now ${newRole}`, type: 'success' })
+      loadUsers()
+    } catch (e) {
+      setToast({ msg: e.message, type: 'error' })
+    }
+  }
+
+  const filtered = users.filter(u => {
+    if (!search) return true
+    const s = search.toLowerCase()
+    return (u.username || '').toLowerCase().includes(s)
+      || (u.full_name || '').toLowerCase().includes(s)
+      || (u.id || '').toLowerCase().includes(s)
+  })
+
+  return (
+    <>
+      <div className="admin-toolbar">
+        <input
+          type="text"
+          placeholder="Search users..."
+          className="admin-search"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+        <span style={{ color: '#64748b', fontSize: '0.85rem' }}>{users.length} total users</span>
+      </div>
+
+      <div className="admin-table-wrap">
+        {loading ? (
+          <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>Loading users...</div>
+        ) : (
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Avatar</th>
+                <th>Username</th>
+                <th>Role</th>
+                <th>XP</th>
+                <th>Level</th>
+                <th>Streak</th>
+                <th>Joined</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr><td colSpan={8} style={{ textAlign: 'center', color: '#64748b' }}>No users found</td></tr>
+              ) : filtered.map(u => (
+                <tr key={u.id}>
+                  <td><span style={{ fontSize: '1.3rem' }}>{u.avatar_url || '🧭'}</span></td>
+                  <td>
+                    <strong>{u.username || 'Unnamed'}</strong>
+                    {u.full_name && <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{u.full_name}</div>}
+                  </td>
+                  <td>
+                    <span style={{
+                      padding: '0.2rem 0.5rem',
+                      borderRadius: '0.5rem',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      background: u.role === 'admin' ? 'rgba(168,139,250,0.15)' : 'rgba(255,255,255,0.05)',
+                      color: u.role === 'admin' ? '#a78bfa' : '#64748b',
+                      border: `1px solid ${u.role === 'admin' ? '#a78bfa44' : 'transparent'}`,
+                    }}>
+                      {u.role === 'admin' ? <><ShieldCheckmarkRegular fontSize={12} /> Admin</> : <><PersonRegular fontSize={12} /> User</>}
+                    </span>
+                  </td>
+                  <td>{u.total_xp || 0}</td>
+                  <td>{u.level || 1}</td>
+                  <td>{u.streak_days || 0}</td>
+                  <td style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                    {u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}
+                  </td>
+                  <td>
+                    <button
+                      className={`admin-btn ${u.role === 'admin' ? 'admin-btn-danger' : 'admin-btn-primary'}`}
+                      style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem' }}
+                      onClick={() => toggleRole(u)}
+                      disabled={u.id === session?.user?.id}
+                      title={u.id === session?.user?.id ? "Can't change your own role" : ''}
+                    >
+                      {u.role === 'admin' ? 'Revoke Admin' : 'Make Admin'}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
+    </>
+  )
+}
+
 export default function AdminDashboard({ session, profile }) {
   const [active, setActive] = useState('overview')
   const section = SECTIONS.find(s => s.id === active)
@@ -485,6 +612,7 @@ export default function AdminDashboard({ session, profile }) {
             </div>
           </div>
           {active === 'overview' && <Overview />}
+          {active === 'users' && <UsersSection session={session} />}
           {active === 'settings' && <SettingsSection session={session} />}
           {section?.table && <CrudSection table={section.table} session={session} />}
         </main>

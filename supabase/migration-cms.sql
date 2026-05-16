@@ -22,6 +22,10 @@ DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
 CREATE POLICY "Users can view own profile" ON profiles FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
 CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
+DROP POLICY IF EXISTS "Admins can update any profile" ON profiles;
+CREATE POLICY "Admins can update any profile" ON profiles FOR UPDATE
+  USING (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'admin'))
+  WITH CHECK (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'admin'));
 DROP POLICY IF EXISTS "Users can insert own profile" ON profiles;
 CREATE POLICY "Users can insert own profile" ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
 
@@ -49,6 +53,16 @@ CREATE TRIGGER on_auth_user_created
 
 -- Add role column if missing (idempotent)
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS role text DEFAULT 'user';
+
+-- Create profile rows for ALL existing auth users who don't have one yet
+-- (handles users who signed up before the trigger existed)
+INSERT INTO public.profiles (id, username, avatar_url, role)
+SELECT id, COALESCE(raw_user_meta_data->>'username', split_part(email, '@', 1)), '🧭', 'user'
+FROM auth.users
+WHERE id NOT IN (SELECT id FROM public.profiles)
+ON CONFLICT (id) DO NOTHING;
+
+-- Set admin role
 UPDATE profiles SET role = 'admin'
 WHERE id = (SELECT id FROM auth.users WHERE email = 'donghinny91@gmail.com' LIMIT 1);
 
