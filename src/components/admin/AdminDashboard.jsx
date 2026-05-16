@@ -29,7 +29,9 @@ const FIELD_DEFS = {
     { key: 'category', label: 'Category', type: 'select', options: ['restaurant','hotel','attraction','nightlife','park','culture','experience','shopping'] },
     { key: 'subcategory', label: 'Subcategory', type: 'text' },
     { key: 'area', label: 'Area', type: 'text', placeholder: 'e.g. Victoria Island' },
-    { key: 'price_range', label: 'Price Range', type: 'select', options: ['₦','₦₦','₦₦₦','₦₦₦₦'] },
+    { key: 'price_range', label: 'Price Tier', type: 'select', options: ['₦ Budget','₦₦ Mid-range','₦₦₦ Premium','₦₦₦₦ Luxury'] },
+    { key: 'price_min', label: 'Price From (₦)', type: 'number', placeholder: 'e.g. 3000' },
+    { key: 'price_max', label: 'Price To (₦)', type: 'number', placeholder: 'e.g. 15000' },
     { key: 'rating', label: 'Rating', type: 'number', step: '0.1', min: 0, max: 5 },
     { key: 'phone', label: 'Phone', type: 'text' },
     { key: 'whatsapp', label: 'WhatsApp', type: 'text' },
@@ -39,6 +41,7 @@ const FIELD_DEFS = {
     { key: 'lat', label: 'Latitude', type: 'number', step: '0.000001' },
     { key: 'lng', label: 'Longitude', type: 'number', step: '0.000001' },
     { key: 'description', label: 'Description', type: 'textarea', full: true },
+    { key: 'tags', label: 'Tags (comma-separated)', type: 'text', full: true, placeholder: 'fine dining, african, date night' },
     { key: 'status', label: 'Status', type: 'select', options: ['draft','published','archived'] },
   ],
   cms_deals: [
@@ -153,7 +156,12 @@ function CrudSection({ table, session }) {
   }
 
   function openEdit(row) {
-    setForm({ ...row })
+    const formData = { ...row }
+    // Convert tags array to comma-separated string for editing
+    if (Array.isArray(formData.tags)) {
+      formData.tags = formData.tags.join(', ')
+    }
+    setForm(formData)
     setModal(row)
   }
 
@@ -166,6 +174,19 @@ function CrudSection({ table, session }) {
       }
       record.updated_by = session.user.id
       record.updated_at = new Date().toISOString()
+      
+      // Convert tags from comma-separated string to array
+      if (typeof record.tags === 'string') {
+        record.tags = record.tags.split(',').map(t => t.trim()).filter(Boolean)
+      }
+      // Ensure photos is always an array
+      if (record.photos && !Array.isArray(record.photos)) {
+        record.photos = [record.photos]
+      }
+      // Convert price fields to numbers
+      if (record.price_min) record.price_min = parseInt(record.price_min, 10) || null
+      if (record.price_max) record.price_max = parseInt(record.price_max, 10) || null
+
       await adminUpsert(table, record)
       setToast({ msg: 'Saved successfully', type: 'success' })
       setModal(null)
@@ -195,18 +216,32 @@ function CrudSection({ table, session }) {
     }
   }
 
-  async function handleImageUpload(e, fieldKey) {
+  async function handleImageUpload(e) {
     const file = e.target.files?.[0]
     if (!file) return
     setUploading(true)
     try {
       const url = await uploadFile(file)
-      setForm(f => ({ ...f, [fieldKey]: url }))
+      // Add to photos array
+      const existing = Array.isArray(form.photos) ? form.photos : []
+      setForm(f => ({ ...f, photos: [...existing, url] }))
       setToast({ msg: 'Image uploaded', type: 'success' })
     } catch (err) {
       setToast({ msg: 'Upload failed: ' + err.message, type: 'error' })
     }
     setUploading(false)
+  }
+
+  function removePhoto(idx) {
+    const photos = Array.isArray(form.photos) ? [...form.photos] : []
+    photos.splice(idx, 1)
+    setForm(f => ({ ...f, photos }))
+  }
+
+  function addPhotoUrl(url) {
+    if (!url.trim()) return
+    const existing = Array.isArray(form.photos) ? form.photos : []
+    setForm(f => ({ ...f, photos: [...existing, url.trim()] }))
   }
 
   const filtered = rows.filter(r =>
@@ -310,19 +345,46 @@ function CrudSection({ table, session }) {
                     )}
                   </div>
                 ))}
-                {/* Image upload for tables that support it */}
+                {/* Multi-image gallery for listings */}
                 {(table === 'cms_listings' || table === 'cms_deals' || table === 'cms_discovery') && (
                   <div className="admin-field full-width">
-                    <label>Image Upload</label>
-                    <div className="admin-upload-area">
-                      <input type="file" accept="image/*" onChange={e => handleImageUpload(e, table === 'cms_deals' ? 'image' : 'image')} />
-                      {uploading && <p>Uploading...</p>}
-                    </div>
-                    {form.image && (
-                      <div className="admin-upload-preview">
-                        <img src={form.image} alt="Preview" />
+                    <label>Photos ({(Array.isArray(form.photos) ? form.photos : []).length} / 8)</label>
+                    
+                    {/* Existing photos grid */}
+                    {Array.isArray(form.photos) && form.photos.length > 0 && (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                        {form.photos.map((url, i) => (
+                          <div key={i} style={{ position: 'relative', borderRadius: '0.5rem', overflow: 'hidden', aspectRatio: '4/3', background: '#1e293b' }}>
+                            <img src={url} alt={`Photo ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              onError={e => { e.target.style.display = 'none' }} />
+                            <button
+                              type="button"
+                              onClick={() => removePhoto(i)}
+                              style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(239,68,68,0.9)', color: '#fff', border: 'none', borderRadius: '50%', width: '22px', height: '22px', cursor: 'pointer', fontSize: '12px', lineHeight: 1, display: 'grid', placeItems: 'center' }}
+                            >✕</button>
+                            {i === 0 && <span style={{ position: 'absolute', bottom: '4px', left: '4px', background: 'rgba(0,0,0,0.7)', color: '#fff', fontSize: '0.6rem', padding: '0.1rem 0.4rem', borderRadius: '0.25rem' }}>Cover</span>}
+                          </div>
+                        ))}
                       </div>
                     )}
+
+                    {/* Upload button */}
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <label style={{ padding: '0.5rem 1rem', background: 'rgba(14,165,233,0.15)', color: '#0ea5e9', border: '1px dashed #0ea5e9', borderRadius: '0.5rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+                        📷 Upload Image
+                        <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
+                      </label>
+                      {uploading && <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>Uploading...</span>}
+                      
+                      {/* Manual URL input */}
+                      <input
+                        type="text"
+                        placeholder="Or paste image URL..."
+                        style={{ flex: 1, minWidth: '200px' }}
+                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addPhotoUrl(e.target.value); e.target.value = '' } }}
+                      />
+                    </div>
+                    <p style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.4rem' }}>First image is the cover photo. Upload up to 8 images. Press Enter to add a URL.</p>
                   </div>
                 )}
               </div>

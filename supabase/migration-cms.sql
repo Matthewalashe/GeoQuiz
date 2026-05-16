@@ -74,6 +74,8 @@ CREATE TABLE IF NOT EXISTS cms_listings (
   subcategory text,
   area text,
   price_range text,
+  price_min integer,
+  price_max integer,
   rating numeric(3,1) DEFAULT 0,
   phone text,
   whatsapp text,
@@ -91,6 +93,11 @@ CREATE TABLE IF NOT EXISTS cms_listings (
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );
+-- Add columns if table already exists (idempotent)
+ALTER TABLE cms_listings ADD COLUMN IF NOT EXISTS price_min integer;
+ALTER TABLE cms_listings ADD COLUMN IF NOT EXISTS price_max integer;
+ALTER TABLE cms_listings ADD COLUMN IF NOT EXISTS photos text[] DEFAULT '{}';
+ALTER TABLE cms_listings ADD COLUMN IF NOT EXISTS tags text[] DEFAULT '{}';
 ALTER TABLE cms_listings ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "anon_read_listings" ON cms_listings;
 CREATE POLICY "anon_read_listings" ON cms_listings FOR SELECT USING (status = 'published');
@@ -119,11 +126,13 @@ CREATE TABLE IF NOT EXISTS cms_deals (
   sponsor boolean DEFAULT false,
   featured boolean DEFAULT false,
   image text,
+  photos text[] DEFAULT '{}',
   status text DEFAULT 'published' CHECK (status IN ('draft','published','archived')),
   created_by uuid REFERENCES auth.users(id),
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );
+ALTER TABLE cms_deals ADD COLUMN IF NOT EXISTS photos text[] DEFAULT '{}';
 ALTER TABLE cms_deals ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "anon_read_deals" ON cms_deals;
 CREATE POLICY "anon_read_deals" ON cms_deals FOR SELECT USING (status = 'published');
