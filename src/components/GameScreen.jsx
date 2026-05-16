@@ -2,7 +2,8 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getFilteredQuestions, getQuestionsByRegion, pickRandomQuestions, REGIONS } from '../data/questions.js'
 import { haversineDistance, calculateScore, getScoreClass, formatDistance } from '../engine/scoring.js'
-import { playCorrect, playWrong, playPinDrop, playTick, playTimeUp, playStreak, vibrate } from '../engine/audio.js'
+import { playCorrect, playWrong, playPinDrop, playTick, playTimeUp, playStreak, playComboBreaker, vibrate, vibrateSuccess, vibrateError, vibrateStreak } from '../engine/audio.js'
+import { MapRegular, TrophyRegular } from '@fluentui/react-icons'
 import { SponsoredBanner } from './SponsoredBanner.jsx'
 import { trackAchievement } from './Achievements.jsx'
 import MapView from './MapView.jsx'
@@ -198,12 +199,16 @@ export default function GameScreen() {
     const score = calculateScore(dist, tolerance)
     setTotalScore(prev => prev + score)
     if (score >= 60) {
-      playCorrect(); vibrate([50])
+      playCorrect(); vibrateSuccess()
       // Mark location as explored for Fog of War
       markExplored(currentQ.answer.lat, currentQ.answer.lng, currentQ.answer.name)
       setExploredSpots(getExplored())
-      setStreak(prev => { const n = prev + 1; if (n > bestStreak) setBestStreak(n); if (n >= 3) playStreak(); return n })
-    } else { playWrong(); vibrate([30, 50, 30]); setStreak(0) }
+      setStreak(prev => { const n = prev + 1; if (n > bestStreak) setBestStreak(n); if (n >= 3) { playStreak(); vibrateStreak() } return n })
+    } else {
+      playWrong(); vibrateError()
+      if (streak >= 3) playComboBreaker()
+      setStreak(0)
+    }
     setResults(prev => [...prev, { question: currentQ, userPin: { ...userPin }, distance: dist, score }])
     setPhase('feedback')
   }
@@ -255,7 +260,7 @@ export default function GameScreen() {
       {(phase === 'loading' || phase === 'finishing') && (
         <div className="game-loading-overlay">
           <div className="game-loading-content">
-            <div className="loading-icon">{phase === 'loading' ? '🗺️' : '🏆'}</div>
+            <div className="loading-icon">{phase === 'loading' ? <MapRegular fontSize={48} /> : <TrophyRegular fontSize={48} />}</div>
             <h2 className="loading-title">{phase === 'loading' ? 'Preparing Your Quiz' : 'Calculating Results'}</h2>
             <p className="loading-subtitle">
               {phase === 'finishing' ? `${results.length} questions · Score: ${totalScore}`
