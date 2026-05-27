@@ -35,6 +35,8 @@ const GAMES = [
     color: '#00c853',
     icon: <MapRegular />,
     image: '/images/postcards/third-mainland-bridge.png',
+    status: 'live',
+    difficulty: 'medium',
     steps: [
       { emoji: <LocationRegular />, title: 'Read the clue', desc: 'Each question describes a real Nigerian location.' },
       { emoji: <MapRegular />, title: 'Drop your pin', desc: 'Tap the map where you think it is.' },
@@ -49,6 +51,8 @@ const GAMES = [
     color: '#8b5cf6',
     icon: <CameraRegular />,
     image: '/images/postcards/national-theatre.png',
+    status: 'live',
+    difficulty: 'easy',
     steps: [
       { emoji: <ImageRegular />, title: 'See the postcard', desc: 'A photo of a Nigerian landmark appears.' },
       { emoji: <TextFontRegular />, title: 'Pick your answer', desc: 'Choose from 4 options — A, B, C or D.' },
@@ -62,6 +66,8 @@ const GAMES = [
     color: '#06b6d4',
     icon: <PuzzlePieceRegular />,
     image: '/images/postcards/zuma-rock.png',
+    status: 'live',
+    difficulty: 'easy',
     steps: [
       { emoji: <EyeRegular />, title: 'Memorize', desc: 'See the full image for 2.5 seconds.' },
       { emoji: <ArrowSwapRegular />, title: 'Swap tiles', desc: 'Tap two tiles to swap. Rearrange the 3×3 grid.' },
@@ -75,6 +81,8 @@ const GAMES = [
     color: '#f59e0b',
     icon: <TextFontRegular />,
     image: '/images/postcards/badagry.png',
+    status: 'live',
+    difficulty: 'medium',
     steps: [
       { emoji: <TextFontRegular />, title: 'Read the clue', desc: 'A hint about a Nigerian place, person or event.' },
       { emoji: <TextFirstLineRegular />, title: 'Tap letters', desc: 'Place scrambled letters in the right order.' },
@@ -87,7 +95,9 @@ const GAMES = [
     tagline: 'Solve Nigerian trivia clues',
     color: '#3b82f6',
     icon: <DocumentEditRegular />,
-    image: 'https://images.unsplash.com/photo-1594680874312-3ee32c933a35?auto=format&fit=crop&q=80&w=800',
+    image: '/images/postcards/lekki-ikoyi-bridge.png',
+    status: 'live',
+    difficulty: 'hard',
     steps: [
       { emoji: <LightbulbRegular />, title: 'Read the clue', desc: 'Tap a row or column to read the clue.' },
       { emoji: <KeyboardRegular />, title: 'Type the word', desc: 'Fill in the blanks with Nigerian landmarks and culture.' },
@@ -100,7 +110,9 @@ const GAMES = [
     tagline: 'Paint Nigerian landmarks',
     color: '#ec4899',
     icon: <ColorRegular />,
-    image: 'https://images.unsplash.com/photo-1605721911519-3dfeb3be25e7?auto=format&fit=crop&q=80&w=800',
+    image: '/images/postcards/nike-art-gallery.png',
+    status: 'live',
+    difficulty: 'easy',
     steps: [
       { emoji: <ColorRegular />, title: 'Pick a color', desc: 'Select a vibrant color from your palette.' },
       { emoji: <PaintBrushRegular />, title: 'Tap to paint', desc: 'Tap any section of the drawing to fill it in.' },
@@ -113,7 +125,9 @@ const GAMES = [
     tagline: 'Test your Nigerian knowledge',
     color: '#0ea5e9',
     icon: <BrainCircuitRegular />,
-    image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=800',
+    image: '/images/postcards/egungun-festival.png',
+    status: 'live',
+    difficulty: 'medium',
     steps: [
       { emoji: <TimerRegular />, title: 'Beat the clock', desc: 'Answer questions before the timer runs out.' },
       { emoji: <QuestionCircleRegular />, title: 'Multiple choice', desc: 'Select the correct answer from 4 options.' },
@@ -126,7 +140,9 @@ const GAMES = [
     tagline: 'Survive a day in Lagos',
     color: '#eab308',
     icon: <CompassNorthwestRegular />,
-    image: 'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?auto=format&fit=crop&q=80&w=800',
+    image: '/images/postcards/makoko.png',
+    status: 'live',
+    difficulty: 'medium',
     steps: [
       { emoji: <BookOpenRegular />, title: 'Read the story', desc: 'Navigate a text-based narrative set in Nigeria.' },
       { emoji: <ArrowSwapRegular />, title: 'Make choices', desc: 'Your decisions affect the outcome.' },
@@ -323,25 +339,44 @@ export default function CategorySelector() {
       </div>
 
       <div className="gh-grid">
-        {GAMES.map(game => (
-          <button key={game.id} className="gh-card" onClick={() => handleCardClick(game.id)}>
-            <div className="gh-card-img-wrap">
-              <img src={game.image} alt={game.name} className="gh-card-img" loading="lazy" />
-              <div className="gh-card-img-overlay" />
-              <span className="gh-card-icon">{game.icon}</span>
-            </div>
-            <div className="gh-card-body">
-              <h3 className="gh-card-name">{game.name}</h3>
-              <p className="gh-card-tag">{game.tagline}</p>
-              <div className="gh-card-steps">
-                {game.steps.map((s, i) => (
-                  <span key={i} className="gh-card-step">{s.emoji}</span>
-                ))}
+        {GAMES.map(game => {
+          const isComingSoon = game.status === 'coming_soon'
+          return (
+            <button
+              key={game.id}
+              className={`gh-card ${isComingSoon ? 'game-card-coming-soon' : ''}`}
+              onClick={() => !isComingSoon && handleCardClick(game.id)}
+              style={isComingSoon ? { cursor: 'default' } : {}}
+            >
+              {isComingSoon && (
+                <div className="game-coming-soon-overlay">
+                  <span className="cs-icon">{game.icon}</span>
+                  <span>Coming Soon</span>
+                </div>
+              )}
+              <div className="gh-card-img-wrap">
+                <img src={game.image} alt={game.name} className="gh-card-img" loading="lazy" />
+                <div className="gh-card-img-overlay" />
+                <span className="gh-card-icon">{game.icon}</span>
+                {game.difficulty && (
+                  <span className={`gh-card-badge ${game.difficulty}`}>
+                    {game.difficulty === 'easy' ? 'Beginner' : game.difficulty === 'medium' ? 'Intermediate' : 'Expert'}
+                  </span>
+                )}
               </div>
-            </div>
-            <div className="gh-card-accent" style={{ background: game.color }} />
-          </button>
-        ))}
+              <div className="gh-card-body">
+                <h3 className="gh-card-name">{game.name}</h3>
+                <p className="gh-card-tag">{game.tagline}</p>
+                <div className="gh-card-steps">
+                  {game.steps.map((s, i) => (
+                    <span key={i} className="gh-card-step">{s.emoji}</span>
+                  ))}
+                </div>
+              </div>
+              <div className="gh-card-accent" style={{ background: game.color }} />
+            </button>
+          )
+        })}
       </div>
     </section>
   )

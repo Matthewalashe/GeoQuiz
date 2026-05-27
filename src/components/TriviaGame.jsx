@@ -5,7 +5,7 @@ import { playCorrect, playWrong, playTick, vibrate } from '../engine/audio.js'
 import { addXP } from '../engine/xp.js'
 import { autoSubmitScore } from '../engine/leaderboard.js'
 import { RewardsOverlay, useRewardSystem } from '../engine/rewards.jsx'
-import PostGameLoop from './PostGameLoop.jsx'
+import ResultCard from './ResultCard.jsx'
 
 // ── DATA ─────────────────────────────────────────────────────────────────────
 const PACKS = {
@@ -99,6 +99,7 @@ export default function TriviaGame() {
   const [streak, setStreak] = useState(0)
   const [timer, setTimer] = useState(15)
   const [phase, setPhase] = useState('playing')
+  const [results, setResults] = useState([])
   const [selectedOpt, setSelectedOpt] = useState(null)
   const [pendingXP, setPendingXP] = useState(0)
   const [pendingStars, setPendingStars] = useState(1)
@@ -114,7 +115,7 @@ export default function TriviaGame() {
       ? shuffle([...PACK_LIST.flatMap(p => p.questions)]).slice(0, 10)
       : shuffle([...(PACKS[selectedPack]?.questions || [])]).slice(0, 10)
     setQuestions(pool)
-    setIdx(0); setScore(0); setStreak(0); setPhase('playing')
+    setIdx(0); setScore(0); setStreak(0); setPhase('playing'); setResults([])
     setStarted(true)
   }
 
@@ -123,6 +124,7 @@ export default function TriviaGame() {
     celebrateWrong()
     setStreak(0)
     setPendingXP(0); setPendingStars(0); setXpCollected(true)
+    setResults(prev => [...prev, { correct: false, pts: 0 }])
     setPhase('feedback')
   }
 
@@ -162,6 +164,7 @@ export default function TriviaGame() {
       setPendingXP(pts)
       setPendingStars(stars)
       setXpCollected(false)
+      setResults(prev => [...prev, { correct: true, pts }])
       celebrateCorrect(newStreak)
       if (newStreak > 0 && newStreak % 5 === 0) {
         setTimeout(() => openChest(newStreak * 10), 400)
@@ -173,6 +176,7 @@ export default function TriviaGame() {
       celebrateWrong()
       setStreak(0)
       setPendingXP(0); setPendingStars(0); setXpCollected(true)
+      setResults(prev => [...prev, { correct: false, pts: 0 }])
     }
     setPhase('feedback')
   }
@@ -288,22 +292,17 @@ export default function TriviaGame() {
       {/* BODY */}
       <div className="trivia-body">
         {phase === 'done' ? (
-          <>
-          <div className="game-end-card">
-            <div className="game-end-trophy">{score > 800 ? '🏆' : score > 400 ? '🥈' : '🎖️'}</div>
-            <h2>Quiz Complete!</h2>
-            <div className="game-end-score">{score}</div>
-            <p className="game-end-label">out of {questions.length * 150} pts  •  {questions.length}Q answered</p>
-            <div className="game-end-stars">
-              {score > 900 ? '⭐⭐⭐' : score > 500 ? '⭐⭐' : '⭐'}
-            </div>
-            <div className="game-end-actions">
-              <button className="btn btn-primary" onClick={startGame}>Play Again</button>
-              <button className="btn btn-outline" onClick={() => navigate('/play')}>Hub</button>
-            </div>
-          </div>
-          <PostGameLoop gameType="trivia" onPlayAgain={startGame} />
-          </>
+          <ResultCard
+            score={score}
+            maxScore={questions.length * 150}
+            correctCount={results.filter(r => r.correct).length}
+            totalQuestions={questions.length}
+            pointsEarned={score}
+            gameTitle="Trivia"
+            gameEmoji="🧠"
+            gameType="trivia"
+            onPlayAgain={() => { setStarted(false); setSelectedPack(null) }}
+          />
         ) : (
           <>
             <div className="trivia-timer-bar">

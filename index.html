@@ -37,13 +37,90 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // ═══ DOM SAFETY PATCH ═══
+      // Prevents React crash: "Failed to execute 'removeChild' on 'Node'"
+      // Caused by Google Identity Services (or any third-party script) injecting
+      // iframes/elements into React-managed DOM nodes. When React re-renders,
+      // it tries to remove nodes that GIS already moved — this patch handles that.
+      // This is a standard production fix used by Next.js, Gatsby, etc.
+      (function() {
+        if (typeof Node === 'undefined') return;
+        var _removeChild = Node.prototype.removeChild;
+        Node.prototype.removeChild = function(child) {
+          if (child.parentNode !== this) {
+            return child; // Node was already moved by third-party script
+          }
+          return _removeChild.apply(this, arguments);
+        };
+        var _insertBefore = Node.prototype.insertBefore;
+        Node.prototype.insertBefore = function(newNode, refNode) {
+          if (refNode && refNode.parentNode !== this) {
+            return newNode; // Reference node was moved by third-party script
+          }
+          return _insertBefore.apply(this, arguments);
+        };
+      })();
+
+      // Global error handler
+      window.onerror = function(msg, url, line) {
+        console.warn('[Global Error]', msg, url, line);
+        return true;
+      };
+      window.addEventListener('unhandledrejection', function(e) {
+        console.warn('[Unhandled Promise]', e.reason);
+        e.preventDefault();
+      });
+    </script>
     <script type="module" src="/src/main.jsx"></script>
     <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch(() => {})
-        })
-      }
+      // ═══ SEAMLESS AUTO-UPDATE ═══
+      // On every page load: fetch version.json from server (bypasses ALL caches).
+      // If version changed → unregister SWs → clear caches → reload.
+      // Users never need to do anything.
+      (function() {
+        // Step 1: Version check
+        fetch('/version.json?_=' + Date.now(), { cache: 'no-store' })
+          .then(function(r) { return r.json(); })
+          .then(function(server) {
+            var local = localStorage.getItem('wanda_app_ver');
+            if (local && local !== server.version) {
+              console.log('[Update] ' + local + ' → ' + server.version);
+              if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function(regs) {
+                  regs.forEach(function(r) { r.unregister(); });
+                });
+              }
+              if (window.caches) {
+                caches.keys().then(function(keys) {
+                  keys.forEach(function(k) { caches.delete(k); });
+                });
+              }
+              localStorage.setItem('wanda_app_ver', server.version);
+              setTimeout(function() { window.location.reload(); }, 300);
+            } else {
+              localStorage.setItem('wanda_app_ver', server.version);
+            }
+          })
+          .catch(function() {});
+
+        // Step 2: Register/update service worker
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/sw.js').then(function(reg) {
+              if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+              reg.addEventListener('updatefound', function() {
+                var sw = reg.installing;
+                if (sw) sw.addEventListener('statechange', function() {
+                  if (sw.state === 'installed' && navigator.serviceWorker.controller) {
+                    sw.postMessage({ type: 'SKIP_WAITING' });
+                  }
+                });
+              });
+            }).catch(function() {});
+          });
+        }
+      })();
     </script>
   </body>
 </html>

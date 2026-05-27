@@ -1,9 +1,13 @@
-const CACHE = 'wanda-v2'
-const ASSETS = ['/', '/index.html']
+const CACHE = 'wanda-v12'
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)))
   self.skipWaiting()
+  // Pre-cache index.html so SPA routing never fails
+  e.waitUntil(
+    caches.open(CACHE).then(cache =>
+      cache.add('/index.html').catch(() => {})
+    )
+  )
 })
 
 self.addEventListener('activate', e => {
@@ -11,41 +15,84 @@ self.addEventListener('activate', e => {
     caches.keys().then(keys => Promise.all(
       keys.filter(k => k !== CACHE).map(k => caches.delete(k))
     ))
+    .then(() => self.clients.claim())
   )
-  self.clients.claim()
+})
+
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting()
+  }
 })
 
 self.addEventListener('fetch', e => {
-  // Skip non-GET, API calls, and dev server HMR
   if (e.request.method !== 'GET') return
-  if (e.request.url.includes('supabase')) return
-  if (e.request.url.includes('/@vite')) return
-  if (e.request.url.includes('node_modules')) return
 
+  const url = e.request.url
+  if (url.includes('supabase')) return
+  if (url.includes('accounts.google.com')) return
+  if (url.includes('googleapis.com')) return
+  if (url.includes('gstatic.com')) return
+  if (url.includes('/@vite')) return
+  if (url.includes('node_modules')) return
+  if (url.includes('version.json')) return
+
+  // HTML navigation (SPA): network-first, fallback to cached index.html, then offline page
+  if (e.request.mode === 'navigate' || e.request.destination === 'document') {
+    e.respondWith(
+      fetch(e.request, { cache: 'no-store' })
+        .then(res => {
+          // Cache a fresh copy of index.html for offline fallback
+          if (res.ok) {
+            const clone = res.clone()
+            caches.open(CACHE).then(c => c.put('/index.html', clone)).catch(() => {})
+          }
+          return res
+        })
+        .catch(() =>
+          caches.match('/index.html').then(cached =>
+            cached || new Response(
+              '<html><body style="background:#1a1a2e;color:#fff;font-family:sans-serif;text-align:center;padding:4rem"><h2 style="color:#C8963E">You are offline</h2><p>Please check your connection and try again.</p><button onclick="location.reload()" style="padding:12px 32px;border-radius:25px;background:#C8963E;color:#fff;border:none;font-size:16px;cursor:pointer;margin-top:1rem">Retry</button></body></html>',
+              { status: 503, headers: { 'Content-Type': 'text/html' } }
+            )
+          )
+        )
+    )
+    return
+  }
+
+  // Other assets: network-first with cache fallback
   e.respondWith(
     fetch(e.request)
       .then(res => {
-        const clone = res.clone()
-        caches.open(CACHE).then(c => c.put(e.request, clone))
+        if (res.ok) {
+          const clone = res.clone()
+          caches.open(CACHE).then(c => c.put(e.request, clone)).catch(() => {})
+        }
         return res
       })
-      .catch(() => caches.match(e.request))
+      .catch(() =>
+        caches.match(e.request).then(cached =>
+          cached || new Response('', { status: 404 })
+        )
+      )
   )
 })
 
-// Push Notification Handlers
+// Push Notifications
 self.addEventListener('push', e => {
   const data = e.data ? e.data.json() : {}
-  const title = data.title || 'Wanda'
-  const options = {
-    body: data.body || 'Something new on Wanda!',
-    icon: data.icon || '/icon-192.png',
-    badge: '/icon-192.png',
-    tag: data.tag || 'wanda',
-    vibrate: [100, 50, 100],
-    data: { url: data.url || '/' },
-  }
-  e.waitUntil(self.registration.showNotification(title, options))
+  e.waitUntil(self.registration.showNotification(
+    data.title || 'Wanda',
+    {
+      body: data.body || 'Something new on Wanda!',
+      icon: data.icon || '/icon-192.png',
+      badge: '/icon-192.png',
+      tag: data.tag || 'wanda',
+      vibrate: [100, 50, 100],
+      data: { url: data.url || '/' },
+    }
+  ))
 })
 
 self.addEventListener('notificationclick', e => {

@@ -6,8 +6,8 @@ import {
   LocationRegular, DrinkMargaritaRegular, TreeDeciduousRegular,
   TicketDiagonalRegular, StarRegular, ShoppingBagRegular
 } from '@fluentui/react-icons'
-const L = (id,name,cat,sub,area,price,rating,phone,wa,web,ig,hours,lat,lng,desc,tags) =>
-  ({id,name,category:cat,subcategory:sub,area,priceRange:price,rating,phone,whatsapp:wa,website:web,instagram:ig,hours,lat,lng,description:desc,tags,photos: LISTING_IMAGES[id]?.length ? LISTING_IMAGES[id] : [`/images/listings/${id}.jpg`],status:'approved'})
+const L = (id,name,cat,sub,area,price,rating,phone,wa,web,ig,hours,lat,lng,desc,tags,extra={}) =>
+  ({id,name,category:cat,subcategory:sub,area,priceRange:price,rating,phone,whatsapp:wa,website:web,instagram:ig,hours,lat,lng,description:desc,tags,photos: LISTING_IMAGES[id]?.length ? LISTING_IMAGES[id] : [`/images/listings/${id}.jpg`],status:'approved',...extra})
 
 const N1 = '\u20A6'
 const N2 = '\u20A6\u20A6'
@@ -16,7 +16,7 @@ const N4 = '\u20A6\u20A6\u20A6\u20A6'
 
 export const LISTINGS = [
   // RESTAURANTS
-  L('nok-vi','Nok by Alara','restaurant','Fine Dining','Victoria Island',N4,4.7,'08012345678','08012345678','https://alaralagos.com','@alaralagos','Mon-Sun 12PM-11PM',6.4308,3.4235,'Upscale pan-African fine dining in a stunning architectural space on Victoria Island. Known for jollof risotto and cocktails.',['fine dining','african','date night']),
+  L('nok-vi','Nok by Alara','restaurant','Fine Dining','Victoria Island',N4,4.7,'08012345678','08012345678','https://alaralagos.com','@alaralagos','Mon-Sun 12PM-11PM',6.4308,3.4235,'Upscale pan-African fine dining in a stunning architectural space on Victoria Island. Known for jollof risotto and cocktails.',['fine dining','african','date night'],{is_wanda_pick:true}),
   L('terra-kulture','Terra Kulture','restaurant','Nigerian','Victoria Island',N3,4.5,'08023456789','08023456789','https://terrakulture.com','@terrakulture','Mon-Sun 10AM-10PM',6.4281,3.4218,'Art gallery meets restaurant. Nigerian cuisine with live performances on weekends. The pepper soup is legendary.',['nigerian','art','live music']),
   L('bungalow-ikoyi','The Bungalow','restaurant','International','Ikoyi',N4,4.6,'08034567890','08034567890','https://thebungalow.ng','@thebungalowlagos','Tue-Sun 5PM-2AM',6.4486,3.4388,'Waterfront dining on the Lagos Lagoon. Sushi, grills, and cocktails under the stars.',['waterfront','sushi','cocktails']),
   L('mama-cass','Mama Cass','restaurant','Nigerian','Adeniran Ogunsanya',N2,4.3,'08045678901','08045678901','','@mamacassng','Mon-Sun 8AM-10PM',6.4522,3.3617,'The queen of Nigerian comfort food. Amala, pounded yam, egusi - all served fast and fresh since 1985.',['amala','local','affordable']),
@@ -28,20 +28,20 @@ export const LISTINGS = [
   // HOTELS
   L('eko-hotel','Eko Hotels and Suites','hotel','5-Star','Victoria Island',N4,4.5,'08090123456','08090123456','https://ekohotels.com','@ekohotels','24/7',6.4285,3.4190,'Lagos flagship luxury hotel since 1977. Convention center, multiple restaurants, private beach. 824 rooms.',['luxury','beach','convention']),
   L('radisson-blu','Radisson Blu Anchorage','hotel','5-Star','Victoria Island',N4,4.6,'08001234567','08001234567','https://radissonhotels.com','@radissonblu_lagos','24/7',6.4341,3.4283,'Modern waterfront hotel on the Ozumba Mbadiwe strip. Rooftop pool, spa, and business center.',['waterfront','pool','business']),
-  L('wheatbaker','The Wheatbaker','hotel','Boutique','Ikoyi',N4,4.7,'08012345670','08012345670','https://thewheatbakerhotel.com','@thewheatbaker','24/7',6.4508,3.4327,'Award-winning boutique hotel in Ikoyi. Art-filled rooms, artisan restaurant, and curated Nigerian art collection.',['boutique','art','upscale']),
+  L('wheatbaker','The Wheatbaker','hotel','Boutique','Ikoyi',N4,4.7,'08012345670','08012345670','https://thewheatbakerhotel.com','@thewheatbaker','24/7',6.4508,3.4327,'Award-winning boutique hotel in Ikoyi. Art-filled rooms, artisan restaurant, and curated Nigerian art collection.',['boutique','art','upscale'],{is_wanda_pick:true}),
   L('oriental-hotel','Lagos Oriental Hotel','hotel','5-Star','Lekki',N4,4.4,'08023456780','08023456780','https://lagosoriental.com','@lagosorientalhotel','24/7',6.4402,3.4565,'Chinese-inspired luxury hotel on the Lekki-Epe Expressway. Infinity pool with lagoon views.',['luxury','pool','lagoon']),
   L('southern-sun','Southern Sun Ikoyi','hotel','4-Star','Ikoyi',N3,4.3,'08034567800','08034567800','https://southernsun.com','@southernsunikoyi','24/7',6.4499,3.4395,'South African hotel brand bringing reliable comfort to Ikoyi. Great for business travelers.',['business','reliable','central']),
   L('bogobiri','Bogobiri House','hotel','Boutique','Ikoyi',N3,4.5,'08045678900','08045678900','https://bogobiri.com','@bogobirihouse','24/7',6.4540,3.4350,'Artsy boutique guesthouse with jazz nights, poetry slams, and a gallery. Not a typical hotel.',['boutique','jazz','art']),
 
   // ATTRACTIONS
-  L('nike-art','Nike Art Gallery','attraction','Museum','Lekki',N1,4.8,'08056789000','08056789000','https://nikeart.com','@nikeartgallery','Mon-Sun 9AM-7PM',6.4371,3.5372,'Largest art gallery in West Africa. 5 floors, 8000+ artworks. Textiles, paintings, sculptures. Free entry.',['art','museum','free']),
-  L('lekki-conservation','Lekki Conservation Centre','attraction','Nature','Lekki',N2,4.6,'08067890100','08067890100','https://ncf.org.ng','@likiconservation','Mon-Sun 8:30AM-5PM',6.4444,3.5340,'Nature reserve with the longest canopy walkway in Africa (401m). Spot monkeys, crocodiles, and rare birds.',['nature','canopy','wildlife']),
+  L('nike-art','Nike Art Gallery','attraction','Museum','Lekki',N1,4.8,'08056789000','08056789000','https://nikeart.com','@nikeartgallery','Mon-Sun 9AM-7PM',6.4371,3.5372,'Largest art gallery in West Africa. 5 floors, 8000+ artworks. Textiles, paintings, sculptures. Free entry.',['art','museum','free','heritage'],{is_wanda_pick:true}),
+  L('lekki-conservation','Lekki Conservation Centre','attraction','Nature','Lekki',N2,4.6,'08067890100','08067890100','https://ncf.org.ng','@likiconservation','Mon-Sun 8:30AM-5PM',6.4444,3.5340,'Nature reserve with the longest canopy walkway in Africa (401m). Spot monkeys, crocodiles, and rare birds.',['nature','canopy','wildlife'],{is_wanda_pick:true}),
   L('national-theatre','National Theatre','attraction','Landmark','Surulere',N1,4.2,'08078901200','08078901200','','@nationaltheatre_ng','Mon-Sat 9AM-5PM',6.4714,3.3877,'Nigeria\'s iconic performing arts venue shaped like a military cap. Built for FESTAC 77. Cultural landmark.',['landmark','theatre','history']),
   L('freedom-park','Freedom Park','attraction','Historical','Lagos Island',N1,4.4,'08089012300','08089012300','https://freedomparklagos.com','@freedompark_lagos','Mon-Sun 10AM-10PM',6.4531,3.3906,'Former colonial prison converted into a cultural hub. Live music, art exhibitions, and open-air events.',['history','music','events']),
-  L('new-afrika-shrine','New Afrika Shrine','attraction','Music','Ikeja',N1,4.7,'08090123400','08090123400','','@newafrikashrine','Thu-Sun 7PM-4AM',6.6024,3.3467,'Fela Kuti\'s legendary music venue, now run by his sons. Live Afrobeat every weekend. A Lagos institution.',['fela','afrobeat','live music']),
+  L('new-afrika-shrine','New Afrika Shrine','attraction','Music','Ikeja',N1,4.7,'08090123400','08090123400','','@newafrikashrine','Thu-Sun 7PM-4AM',6.6024,3.3467,'Fela Kuti\'s legendary music venue, now run by his sons. Live Afrobeat every weekend. A Lagos institution.',['fela','afrobeat','live music'],{is_wanda_pick:true}),
   L('olumo-rock','Olumo Rock','attraction','Landmark','Abeokuta',N2,4.5,'08001234500','08001234500','','@olumorockresort','Mon-Sun 8AM-6PM',7.1543,3.3448,'Ancient granite rock fortress used during the 19th-century inter-tribal wars. 137m high with panoramic views.',['landmark','history','hiking']),
-  L('badagry-heritage','Badagry Heritage Museum','attraction','Museum','Badagry',N1,4.3,'08012345600','08012345600','','@badagryheritage','Mon-Sat 9AM-5PM',6.4181,2.8836,'Sobering museum documenting the trans-Atlantic slave trade through Badagry\'s role as a major port.',['museum','history','heritage']),
-  L('tarkwa-bay','Tarkwa Bay Beach','attraction','Beach','Lagos Island',N2,4.4,'','','','','Mon-Sun 7AM-6PM',6.4048,3.3902,'Sheltered beach accessible only by boat. Clean water, horse riding, local food vendors. A hidden gem.',['beach','boat','swimming']),
+  L('badagry-heritage','Badagry Heritage Museum','attraction','Museum','Badagry',N1,4.3,'08012345600','08012345600','','@badagryheritage','Mon-Sat 9AM-5PM',6.4181,2.8836,'Sobering museum documenting the trans-Atlantic slave trade through Badagry\'s role as a major port.',['museum','history','heritage'],{is_wanda_pick:true}),
+  L('tarkwa-bay','Tarkwa Bay Beach','attraction','Beach','Lagos Island',N2,4.4,'','','','','Mon-Sun 7AM-6PM',6.4048,3.3902,'Sheltered beach accessible only by boat. Clean water, horse riding, local food vendors. A hidden gem.',['beach','boat','swimming'],{is_wanda_pick:true}),
 
   // NIGHTLIFE
   L('club-quilox','Club Quilox','nightlife','Club','Victoria Island',N4,4.1,'08023456700','08023456700','','@clubquilox','Thu-Sun 10PM-6AM',6.4316,3.4238,'Lagos\' most famous nightclub. Celebrity sightings, champagne showers, and Afrobeats all night.',['nightclub','vip','afrobeats']),
@@ -64,9 +64,9 @@ export const LISTINGS = [
   // EXPERIENCES
   L('inagbe-resort','Inagbe Grand Resort','experience','Island Resort','Inagbe Island',N3,4.3,'08023456700','08023456700','https://inagberesort.com','@inagbe_resort','24/7',6.4050,3.2640,'Private island resort accessible by boat. Beach cabanas, fishing trips, and full-board packages.',['island','resort','getaway']),
   L('lekki-market','Lekki Arts and Crafts Market','experience','Shopping','Lekki',N1,4.5,'','','','@lekkimarket','Mon-Sun 9AM-6PM',6.4384,3.4713,'Open-air market with Nigerian art, textiles, jewelry, and woodcarvings. Bargaining expected!',['market','crafts','souvenirs']),
-  L('kalakuta-museum','Kalakuta Museum','experience','Tour','Ikeja',N2,4.6,'08034567800','08034567800','','@kalakutamuseum','Mon-Sat 10AM-5PM',6.5956,3.3485,'Fela Kuti\'s former home turned museum. Personal artifacts, photos, and history of Afrobeat.',['fela','museum','tour']),
+  L('kalakuta-museum','Kalakuta Museum','experience','Tour','Ikeja',N2,4.6,'08034567800','08034567800','','@kalakutamuseum','Mon-Sat 10AM-5PM',6.5956,3.3485,'Fela Kuti\'s former home turned museum. Personal artifacts, photos, and history of Afrobeat.',['fela','museum','tour'],{is_wanda_pick:true}),
   L('boat-cruise','Lagos Lagoon Boat Cruise','experience','Tour','Victoria Island',N3,4.4,'08045678900','08045678900','','@lagosboatcruise','Sat-Sun 2PM-6PM',6.4285,3.4190,'Weekend boat cruise on the Lagos Lagoon. DJ, drinks, and sunset views of the city skyline.',['boat','cruise','sunset']),
-  L('cooking-class','Iya Oloja Cooking Class','experience','Food','Yaba',N2,4.7,'08056789000','08056789000','','@iyaoloja_cooking','Sat 10AM-2PM',6.5155,3.3791,'Learn to cook authentic Nigerian dishes - jollof rice, suya, puff puff - with a master chef.',['cooking','food','class']),
+  L('cooking-class','Iya Oloja Cooking Class','experience','Food','Yaba',N2,4.7,'08056789000','08056789000','','@iyaoloja_cooking','Sat 10AM-2PM',6.5155,3.3791,'Learn to cook authentic Nigerian dishes - jollof rice, suya, puff puff - with a master chef.',['cooking','food','class'],{is_wanda_pick:true}),
 
   // SHOPPING
   L('palms-lekki','The Palms Shopping Centre','shopping','Mall','Lekki',N3,4.4,'08067890100','08067890100','https://thepalmsng.com','@thepalmsmall','Mon-Sun 9AM-9PM',6.4328,3.4752,'Premier shopping destination with cinema, food court, and international brands.',['mall','cinema','shopping']),

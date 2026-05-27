@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { CheckmarkCircleRegular, ArrowClockwiseRegular } from '@fluentui/react-icons'
 import { addXP } from '../engine/xp.js'
 import { autoSubmitScore } from '../engine/leaderboard.js'
-import PostGameLoop from './PostGameLoop.jsx'
+import ResultCard from './ResultCard.jsx'
 
 // ── PALETTE ──────────────────────────────────────────────────────────────────
 const PALETTE = [
@@ -264,21 +264,19 @@ export default function ColoringGame() {
 
       <div className="color-body">
         {won ? (
-          <>
-          <div className="game-end-card">
-            <CheckmarkCircleRegular fontSize={64} style={{ color: '#ec4899' }} />
-            <h2>Masterpiece! 🎨</h2>
+          <ResultCard
+            score={100}
+            maxScore={100}
+            pointsEarned={100}
+            gameTitle="Coloring"
+            gameEmoji="🎨"
+            gameType="coloring"
+            onPlayAgain={() => { setWon(false); setStarted(false); setSelectedScene(null) }}
+          >
             <div className="color-artwork-preview">
               <SVGComponent fills={fills} onFill={null} />
             </div>
-            <p className="game-end-label">+100 XP earned</p>
-            <div className="game-end-actions">
-              <button className="btn btn-primary" onClick={() => { setStarted(false); setSelectedScene(null) }}>Color Another</button>
-              <button className="btn btn-outline" onClick={() => navigate('/play')}>Back to Hub</button>
-            </div>
-          </div>
-          <PostGameLoop gameType="coloring" onPlayAgain={() => { setStarted(false); setSelectedScene(null) }} />
-          </>
+          </ResultCard>
         ) : (
           <>
             {/* Guide + Canvas row */}

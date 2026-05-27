@@ -4,7 +4,16 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
 
 export const supabase = supabaseUrl && supabaseAnonKey
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,     // Parse OAuth tokens from URL hash after redirect
+        // NOTE: Do NOT use flowType:'pkce' — it breaks PWA OAuth because
+        // the code_verifier lives in PWA localStorage but the redirect
+        // happens in the browser (different context). Implicit flow works.
+      }
+    })
   : null
 
 // ---- Waitlist ----
@@ -65,18 +74,51 @@ export async function submitScore({ playerName, score, maxScore, questionCount, 
   return { success: true }
 }
 
-export async function fetchLeaderboard(limit = 20) {
+export async function fetchLeaderboard(limit = 30) {
   if (!supabase) {
     const data = JSON.parse(localStorage.getItem('geoquiz_leaderboard') || '[]')
     return data.slice(0, limit)
   }
+  // Query real users from profiles, ordered by total XP
   const { data, error } = await supabase
-    .from('leaderboard')
-    .select('*')
-    .order('score', { ascending: false })
+    .from('profiles')
+    .select('id, username, full_name, avatar_url, total_xp, level, streak_days, created_at')
+    .order('total_xp', { ascending: false })
     .limit(limit)
   if (error) throw error
-  return data
+  // Map to leaderboard-compatible format
+  return (data || []).map(u => ({
+    id: u.id,
+    player_name: u.username || u.full_name || 'Explorer',
+    avatar: u.avatar_url || '🧭',
+    score: u.total_xp || 0,
+    level: u.level || 1,
+    streak: u.streak_days || 0,
+    created_at: u.created_at,
+    max_score: Math.max(u.total_xp || 0, 1),
+    question_count: u.level || 1,
+  }))
+}
+
+// Fetch real users in the same league/XP tier for the league table
+export async function fetchLeaguePeers(minXP = 0, maxXP = 999999, limit = 20) {
+  if (!supabase) return []
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, username, full_name, avatar_url, total_xp, level, streak_days')
+    .gte('total_xp', minXP)
+    .lte('total_xp', maxXP)
+    .order('total_xp', { ascending: false })
+    .limit(limit)
+  if (error) { console.warn('League peers fetch error:', error.message); return [] }
+  return (data || []).map(u => ({
+    id: u.id,
+    name: u.username || u.full_name || 'Explorer',
+    avatar: u.avatar_url || '🧭',
+    xp: u.total_xp || 0,
+    level: u.level || 1,
+    streak: u.streak_days || 0,
+  }))
 }
 
 export async function getWaitlistCount() {
@@ -276,8 +318,58 @@ export async function getProfile(userId) {
   return data
 }
 
+/**
+ * CRITICAL: Ensures a profile row exists for the given user.
+ * Call this after EVERY successful auth (signup, login, OAuth).
+ * If the DB trigger (handle_new_user) failed or hasn't fired yet,
+ * this creates the profile from the frontend side.
+ */
+export async function ensureProfile(user) {
+  if (!supabase || !user) return null
+
+  // First, try to get the existing profile
+  const { data: existing, error: fetchErr } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .maybeSingle()  // won't throw if no row found
+
+  if (existing) return existing  // Profile exists, we're good
+
+  // Profile doesn't exist — create it now
+  const profileData = {
+    id: user.id,
+    email: user.email || '',
+    username: user.user_metadata?.username || user.user_metadata?.name || user.email?.split('@')[0] || 'Explorer',
+    full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
+    avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || localStorage.getItem('geoquiz_avatar') || '🧭',
+    role: 'user',
+    total_xp: 0,
+    streak_days: 0,
+    level: 1,
+    achievements: [],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }
+
+  const { data: created, error: insertErr } = await supabase
+    .from('profiles')
+    .upsert(profileData, { onConflict: 'id' })
+    .select()
+    .single()
+
+  if (insertErr) {
+    console.warn('ensureProfile upsert failed:', insertErr.message)
+    // Return a client-side fallback so the UI still works
+    return profileData
+  }
+
+  return created
+}
+
+
 export function isAdmin(profile) {
-  return profile?.role === 'admin'
+  return ['admin', 'moderator', 'editor'].includes(profile?.role)
 }
 
 export async function updateProfile(userId, updates) {
@@ -320,4 +412,102 @@ export async function syncLocalProgress(userId) {
     // Optionally clear local data or mark as synced
     localStorage.setItem('geoquiz_synced', 'true')
   }
+}
+
+// ---- Profile Image Upload ----
+export async function uploadProfileImage(userId, file) {
+  if (!supabase) throw new Error('Supabase not configured')
+  const ext = file.name.split('.').pop()
+  const path = `avatars/${userId}_${Date.now()}.${ext}`
+  const { error: uploadErr } = await supabase.storage.from('media').upload(path, file, { upsert: true })
+  if (uploadErr) throw uploadErr
+  const { data: { publicUrl } } = supabase.storage.from('media').getPublicUrl(path)
+  // Update profile with the new image URL
+  await updateProfile(userId, { avatar_url: publicUrl })
+  return publicUrl
+}
+
+// ---- Business Listing Image Upload ----
+export async function uploadBusinessFile(file, prefix = 'photo') {
+  if (!supabase) throw new Error('Supabase not configured')
+  const ext = file.name.split('.').pop()
+  const path = `business/${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`
+  const { error: uploadErr } = await supabase.storage.from('media').upload(path, file, { upsert: true })
+  if (uploadErr) throw uploadErr
+  const { data: { publicUrl } } = supabase.storage.from('media').getPublicUrl(path)
+  return publicUrl
+}
+
+// ---- Favorites / Saved Places ----
+export async function getFavorites(userId) {
+  if (!supabase) {
+    return JSON.parse(localStorage.getItem('wanda_favorites') || '[]')
+  }
+  const { data, error } = await supabase
+    .from('saved_listings')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+  if (error) {
+    // Table might not exist yet
+    if (error.code === '42P01') return []
+    throw error
+  }
+  return data || []
+}
+
+export async function toggleFavorite(userId, listingId, listingData = {}) {
+  if (!supabase) {
+    const favs = JSON.parse(localStorage.getItem('wanda_favorites') || '[]')
+    const idx = favs.findIndex(f => f.listing_id === listingId)
+    if (idx >= 0) {
+      favs.splice(idx, 1)
+    } else {
+      favs.push({ listing_id: listingId, ...listingData, created_at: new Date().toISOString() })
+    }
+    localStorage.setItem('wanda_favorites', JSON.stringify(favs))
+    return { saved: idx < 0 }
+  }
+  // Check if already saved
+  const { data: existing } = await supabase
+    .from('saved_listings')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('listing_id', listingId)
+    .maybeSingle()
+  
+  if (existing) {
+    await supabase.from('saved_listings').delete().eq('id', existing.id)
+    return { saved: false }
+  } else {
+    const { error } = await supabase.from('saved_listings').insert({
+      user_id: userId,
+      listing_id: listingId,
+      listing_name: listingData.name || '',
+      listing_category: listingData.category || '',
+      listing_area: listingData.area || '',
+      listing_photo: listingData.photo || '',
+    })
+    if (error) throw error
+    return { saved: true }
+  }
+}
+
+export async function isFavorited(userId, listingId) {
+  if (!supabase) {
+    const favs = JSON.parse(localStorage.getItem('wanda_favorites') || '[]')
+    return favs.some(f => f.listing_id === listingId)
+  }
+  const { data } = await supabase
+    .from('saved_listings')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('listing_id', listingId)
+    .maybeSingle()
+  return !!data
+}
+
+// ---- User Preferences ----
+export async function updatePreferences(userId, preferences) {
+  return updateProfile(userId, { preferences })
 }

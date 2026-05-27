@@ -1,10 +1,19 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PUZZLE_IMAGES } from '../data/postcards.js'
+
+function shuffleArr(arr) {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
 import { playCorrect, playPinDrop, vibrate } from '../engine/audio.js'
 import { addXP } from '../engine/xp.js'
 import { autoSubmitScore } from '../engine/leaderboard.js'
-import PostGameLoop from './PostGameLoop.jsx'
+import ResultCard from './ResultCard.jsx'
 
 const GRID = 3
 
@@ -29,6 +38,7 @@ function isSolved(tiles) {
 
 export default function PuzzleGame() {
   const navigate = useNavigate()
+  const [puzzles] = useState(() => shuffleArr(PUZZLE_IMAGES))
   const [puzzleIdx, setPuzzleIdx] = useState(0)
   const [tiles, setTiles] = useState(createTiles)
   const [selected, setSelected] = useState(null)
@@ -43,7 +53,8 @@ export default function PuzzleGame() {
   const [imgLoaded, setImgLoaded] = useState(false)
   const intervalRef = useRef(null)
 
-  const puzzle = PUZZLE_IMAGES[puzzleIdx]
+  const puzzle = puzzles[puzzleIdx]
+  const [showReveal, setShowReveal] = useState(false)
 
   // Timer
   useEffect(() => {
@@ -83,17 +94,19 @@ export default function PuzzleGame() {
         clearInterval(intervalRef.current)
         playCorrect(); vibrate([100])
         const stars = moves < 10 ? 3 : moves < 20 ? 2 : 1
-        const pts = stars * 100
+        const timeBonus = timer < 30 ? 50 : timer < 60 ? 25 : 0
+        const pts = stars * 100 + timeBonus
         setScore(prev => prev + pts)
         addXP('PUZZLE_COMPLETE')
-        setResults(prev => [...prev, { puzzle, moves: moves + 1, time: timer, stars }])
+        setResults(prev => [...prev, { puzzle, moves: moves + 1, time: timer, stars, timeBonus }])
         setPhase('solved')
+        setShowReveal(false)
       }
     }
   }
 
   function nextPuzzle() {
-    if (puzzleIdx + 1 >= PUZZLE_IMAGES.length) {
+    if (puzzleIdx + 1 >= puzzles.length) {
       setPhase('allDone')
       // Submit final score to leaderboard
       autoSubmitScore({ gameType: 'puzzle', score: score, maxScore: PUZZLE_IMAGES.length * 300, questionCount: PUZZLE_IMAGES.length })
@@ -118,9 +131,20 @@ export default function PuzzleGame() {
     const totalStars = results.reduce((s, r) => s + r.stars, 0)
     return (
       <section className="pz-results">
-        <div className="pz-results-card">
-          <h2>🧩 Puzzle Complete!</h2>
-          <div className="pz-results-stars">{'⭐'.repeat(totalStars)} <span className="pz-dim">/ {results.length * 3} stars</span></div>
+        <ResultCard
+          score={totalStars * 100}
+          maxScore={PUZZLE_IMAGES.length * 300}
+          correctCount={totalStars}
+          totalQuestions={PUZZLE_IMAGES.length * 3}
+          pointsEarned={totalStars * 100}
+          gameTitle="Puzzle"
+          gameEmoji="🧩"
+          gameType="puzzle"
+          onPlayAgain={() => {
+            setPuzzleIdx(0); setResults([]); setScore(0); setMoves(0); setTimer(0)
+            setTiles(createTiles()); setSelected(null); setImgLoaded(false); setPhase('preview')
+          }}
+        >
           <div className="pz-results-list">
             {results.map((r, i) => (
               <div key={i} className="pz-result-row">
@@ -131,12 +155,7 @@ export default function PuzzleGame() {
               </div>
             ))}
           </div>
-          <div className="pz-results-actions">
-            <button className="btn btn-primary" onClick={restart}>Play Again</button>
-            <button className="btn btn-outline" onClick={() => navigate('/')}>Home</button>
-          </div>
-        </div>
-        <PostGameLoop gameType="puzzle" score={score} onPlayAgain={restart} />
+        </ResultCard>
       </section>
     )
   }
@@ -229,10 +248,18 @@ export default function PuzzleGame() {
           <div className="pz-solved-card">
             <div className="pz-solved-icon">✨</div>
             <h3>Puzzle Solved!</h3>
-            <p>{moves} moves · {formatTime(timer)}</p>
+            <p>{moves} moves · {formatTime(timer)}{results[results.length-1]?.timeBonus > 0 ? ` · +${results[results.length-1].timeBonus} speed bonus!` : ''}</p>
+            {showReveal ? (
+              <div className="pz-reveal">
+                <img src={puzzle.image} alt={puzzle.title} className="pz-reveal-img" />
+                <p className="pz-reveal-title">{puzzle.title}</p>
+              </div>
+            ) : (
+              <button className="pz-reveal-btn" onClick={() => setShowReveal(true)}>🖼️ Reveal Full Image</button>
+            )}
             <p className="pz-solved-fact">{puzzle.fact}</p>
             <button className="pz-next-btn" onClick={nextPuzzle}>
-              {puzzleIdx + 1 >= PUZZLE_IMAGES.length ? 'See Results' : 'Next Puzzle'} →
+              {puzzleIdx + 1 >= puzzles.length ? 'See Results' : 'Next Puzzle'} →
             </button>
           </div>
         </div>

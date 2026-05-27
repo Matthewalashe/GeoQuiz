@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { getFilteredQuestions, getQuestionsByRegion, pickRandomQuestions, REGIONS } from '../data/questions.js'
+import { pickRandomQuestions, REGIONS } from '../data/questions.js'
+import { getQuestions } from '../lib/cms.js'
 import { haversineDistance, calculateScore, getScoreClass, formatDistance } from '../engine/scoring.js'
 import { playCorrect, playWrong, playPinDrop, playTick, playTimeUp, playStreak, playComboBreaker, vibrate, vibrateSuccess, vibrateError, vibrateStreak } from '../engine/audio.js'
 import { MapRegular, TrophyRegular } from '@fluentui/react-icons'
@@ -118,11 +119,26 @@ export default function GameScreen() {
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!config) return
-    const pool = config.region
-      ? getQuestionsByRegion(config.region, config.categories, config.difficulty)
-      : getFilteredQuestions(config.categories, config.difficulty)
-    const picked = pickRandomQuestions(pool, config.count, config.seed)
-    setQuestions(picked)
+    let active = true
+    getQuestions()
+      .then(allQuestions => {
+        if (!active) return
+        let pool = config.region === 'all'
+          ? allQuestions
+          : allQuestions.filter(q => q.region === config.region)
+
+        if (config.categories && config.categories.length > 0) {
+          pool = pool.filter(q => config.categories.includes(q.category))
+        }
+        if (config.difficulty && config.difficulty !== 'all') {
+          pool = pool.filter(q => q.difficulty === config.difficulty)
+        }
+
+        const picked = pickRandomQuestions(pool, config.count, config.seed)
+        setQuestions(picked)
+      })
+      .catch(console.error)
+
     let progress = 0
     const loadInterval = setInterval(() => {
       progress += Math.random() * 5 + 3
@@ -132,7 +148,10 @@ export default function GameScreen() {
       }
       setLoadProgress(Math.min(progress, 100))
     }, 180)
-    return () => clearInterval(loadInterval)
+    return () => {
+      active = false
+      clearInterval(loadInterval)
+    }
   }, [config])
   /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -382,6 +401,17 @@ export default function GameScreen() {
             <div className="gqf-fb-top">
               <span className={`gqf-fb-score ${getScoreClass(lastResult.score)}`}>+{lastResult.score}</span>
               <span className="gqf-fb-dist">{formatDistance(lastResult.distance)}</span>
+            </div>
+            <div className="gqf-fb-feedback" style={{
+              fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.3rem',
+              color: lastResult.score >= 80 ? 'var(--green)' : lastResult.score >= 40 ? 'var(--primary)' : 'var(--secondary)'
+            }}>
+              {lastResult.score >= 100 ? 'Perfect! Right on target! 🎯'
+                : lastResult.score >= 80 ? `Only ${formatDistance(lastResult.distance)} away — almost perfect! ⭐`
+                : lastResult.score >= 60 ? `${formatDistance(lastResult.distance)} away — close! 🧭`
+                : lastResult.score >= 40 ? `${formatDistance(lastResult.distance)} away — getting there! 💪`
+                : lastResult.score >= 20 ? `${formatDistance(lastResult.distance)} away — keep exploring! 🗺️`
+                : `${formatDistance(lastResult.distance)} away — try again next time! 📍`}
             </div>
             <div className="gqf-fb-name">{currentQ.answer.name}</div>
             <div className="gqf-fb-desc">{currentQ.answer.description}</div>

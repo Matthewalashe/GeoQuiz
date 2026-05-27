@@ -1,11 +1,11 @@
 import { Link, useLocation } from 'react-router-dom'
-import { getXPData, getLevel, getLevelProgress, getLevelTitle, canClaimToday } from '../engine/xp.js'
+import { getXPData, getLevel, getLevelProgress, getLevelTitle } from '../engine/xp.js'
 
 import {
   HomeRegular,
   CompassNorthwestRegular,
   PlayCircleRegular,
-  TicketDiagonalRegular,
+  TrophyRegular,
   PersonRegular,
   WeatherSunnyRegular,
   WeatherMoonRegular,
@@ -25,6 +25,10 @@ export default function Header({ theme, toggleTheme, session, profile }) {
   const title = getLevelTitle(level)
   const admin = isAdmin(profile)
 
+  // Check if avatar is an image URL or emoji
+  const avatarUrl = profile?.avatar_url || title.emoji
+  const isImageAvatar = avatarUrl?.startsWith('http')
+
   return (
     <>
       {/* Desktop top header */}
@@ -37,9 +41,8 @@ export default function Header({ theme, toggleTheme, session, profile }) {
           <Link to="/" className={pathname === '/' ? 'active' : ''}>Home</Link>
           <Link to="/explore" className={pathname.startsWith('/explore') ? 'active' : ''}>Explore</Link>
           <Link to="/play" className={pathname === '/play' ? 'active' : ''}>Games</Link>
+          <Link to="/leaderboard" className={pathname === '/leaderboard' ? 'active' : ''}>Leaderboard</Link>
           <Link to="/pass" className={pathname === '/pass' ? 'active' : ''}>Pass</Link>
-          <Link to="/leaderboard" className={pathname === '/leaderboard' ? 'active' : ''}>Scores</Link>
-          <Link to="/community" className={pathname === '/community' ? 'active' : ''}>Feed</Link>
           <Link to="/list-your-business" className={pathname === '/list-your-business' ? 'active' : ''}>List Business</Link>
           {admin && <Link to="/admin" className={pathname === '/admin' ? 'active' : ''} style={{ color: '#a78bfa', display: 'flex', alignItems: 'center', gap: '0.2rem' }}><SettingsRegular fontSize={16} /> CMS</Link>}
         </nav>
@@ -50,7 +53,10 @@ export default function Header({ theme, toggleTheme, session, profile }) {
           </button>
           {session ? (
             <Link to="/dashboard" className="xp-badge" title={`${title.title} — ${displayXP} XP`}>
-              <span className="xp-level">{profile?.avatar_url || title.emoji} Lv.{level}</span>
+              {isImageAvatar
+                ? <img src={avatarUrl} alt="Avatar" className="xp-badge-avatar" />
+                : <span className="xp-level">{avatarUrl} Lv.{level}</span>
+              }
               <div className="xp-bar-mini">
                 <div className="xp-bar-fill" style={{ width: `${progress * 100}%` }} />
               </div>
@@ -63,7 +69,7 @@ export default function Header({ theme, toggleTheme, session, profile }) {
         </div>
       </header>
 
-      {/* Mobile bottom tab bar — 5 tabs */}
+      {/* Mobile bottom tab bar — 5 tabs: Home, Explore, Play, Leaderboard, Profile */}
       <nav className="mobile-tab-bar">
         <Link to="/" className={`tab-item ${pathname === '/' ? 'active' : ''}`}>
           <span className="tab-icon"><HomeRegular fontSize={22} /></span>
@@ -80,13 +86,18 @@ export default function Header({ theme, toggleTheme, session, profile }) {
           </span>
         </Link>
 
-        <Link to="/pass" className={`tab-item ${pathname === '/pass' ? 'active' : ''}`}>
-          <span className="tab-icon"><TicketDiagonalRegular fontSize={22} /></span>
-          <span className="tab-label">Pass</span>
+        <Link to="/leaderboard" className={`tab-item ${pathname === '/leaderboard' ? 'active' : ''}`}>
+          <span className="tab-icon"><TrophyRegular fontSize={22} /></span>
+          <span className="tab-label">Ranks</span>
         </Link>
         <Link to={session ? "/dashboard" : "/auth"} className={`tab-item ${pathname === '/dashboard' || pathname === '/auth' ? 'active' : ''}`}>
-          <span className="tab-icon"><PersonRegular fontSize={22} /></span>
-          <span className="tab-label">{session ? `Lv.${level}` : 'Login'}</span>
+          <span className="tab-icon">
+            {session && isImageAvatar
+              ? <img src={avatarUrl} alt="" className="tab-avatar-img" />
+              : <PersonRegular fontSize={22} />
+            }
+          </span>
+          <span className="tab-label">{session ? 'Profile' : 'Login'}</span>
         </Link>
       </nav>
     </>

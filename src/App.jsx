@@ -1,6 +1,43 @@
 import './auth.css'
+import './resultcard.css'
+// eslint-disable-next-line
 import { Routes, Route, useLocation } from 'react-router-dom'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Component } from 'react'
+
+// ─── ERROR BOUNDARY ───────────────────────────────────────
+// Catches ANY React rendering crash and shows a recovery UI
+// instead of a blank white page.
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props)
+    this.state = { hasError: false, error: null }
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error }
+  }
+  componentDidCatch(error, info) {
+    console.error('[ErrorBoundary]', error, info?.componentStack)
+  }
+  render() {
+    if (this.state.hasError) {
+      const errMsg = this.state.error?.message || 'Unknown error'
+      return (
+        <div style={{ padding: '2rem', textAlign: 'center', fontFamily: 'Inter, sans-serif', color: '#fff', background: '#1a1a2e', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <h2 style={{ color: '#C8963E', marginBottom: '1rem' }}>Something went wrong</h2>
+          <p style={{ color: '#aaa', marginBottom: '0.5rem' }}>We hit a bump. Tap reload to continue.</p>
+          <p style={{ color: '#666', fontSize: '12px', marginBottom: '1.5rem', maxWidth: '300px', wordBreak: 'break-word' }}>{errMsg}</p>
+          <button onClick={() => {
+            try { localStorage.clear(); sessionStorage.clear(); } catch(e) {}
+            if (window.caches) { caches.keys().then(k => k.forEach(n => caches.delete(n))); }
+            if (navigator.serviceWorker) { navigator.serviceWorker.getRegistrations().then(r => r.forEach(sw => sw.unregister())); }
+            setTimeout(() => window.location.reload(), 300);
+          }} style={{ padding: '12px 32px', borderRadius: '25px', background: '#C8963E', color: '#fff', border: 'none', fontSize: '16px', cursor: 'pointer' }}>Clear &amp; Reload</button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
 import Header from './components/Header.jsx'
 import Landing from './components/Landing.jsx'
 import CategorySelector from './components/CategorySelector.jsx'
@@ -27,13 +64,14 @@ import Explore from './components/Explore.jsx'
 import ListingDetail from './components/ListingDetail.jsx'
 import PassLanding from './components/PassLanding.jsx'
 import ListBusiness from './components/ListBusiness.jsx'
+import ListBusinessLanding from './components/ListBusinessLanding.jsx'
 import InstallPrompt from './components/InstallPrompt.jsx'
 import PageTransition from './components/PageTransition.jsx'
 import Auth from './components/Auth.jsx'
 import AdminDashboard from './components/admin/AdminDashboard.jsx'
 import { processDailyLogin } from './engine/xp.js'
 import { scheduleNotifChecks, getNotifPermission } from './engine/notifications.js'
-import { supabase, getProfile, syncLocalProgress } from './lib/supabase.js'
+import { supabase, getProfile, ensureProfile, syncLocalProgress } from './lib/supabase.js'
 
 // Dark mode hook
 function useTheme() {
@@ -87,6 +125,8 @@ export default function App() {
   const GAME_ROUTES = ['/game', '/crossword', '/coloring', '/puzzle', '/wordgame', '/trivia', '/adventure']
   const isGamePage = GAME_ROUTES.includes(location.pathname)
   const isAdminPage = location.pathname === '/admin'
+  const isDashboardPage = location.pathname === '/dashboard'
+  const isStandalonePage = isAdminPage || isDashboardPage
   const { theme, toggle: toggleTheme } = useTheme()
   const [showSplash, setShowSplash] = useState(() => {
     // Only show splash on fresh app loads, not on navigations
@@ -110,14 +150,15 @@ export default function App() {
     // Check initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
-      if (session?.user) fetchAndSyncProfile(session.user.id)
-    })
+      if (session?.user) handleAuthUser(session.user)
+    }).catch(err => console.warn('[Auth] getSession failed:', err))
 
-    // Listen for changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // Listen for ALL auth changes (login, signup, OAuth callback, token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('[Auth]', event, session?.user?.email || 'no user')
       setSession(session)
       if (session?.user) {
-        fetchAndSyncProfile(session.user.id)
+        handleAuthUser(session.user)
       } else {
         setProfile(null)
       }
@@ -126,40 +167,40 @@ export default function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  async function fetchAndSyncProfile(userId) {
+  /**
+   * Called after ANY successful auth. Guarantees a profile exists.
+   * This is the safety net — if the DB trigger failed, this creates the profile.
+   */
+  async function handleAuthUser(user) {
     try {
-      const p = await getProfile(userId)
+      // ensureProfile: checks if profile exists, creates it if not
+      const p = await ensureProfile(user)
       setProfile(p)
-      
-      // Sync local progress if not already done
+
+      // Sync local XP progress (once per device)
       const alreadySynced = localStorage.getItem('geoquiz_synced')
-      if (!alreadySynced) {
-        await syncLocalProgress(userId)
-        const updated = await getProfile(userId)
-        setProfile(updated)
+      if (!alreadySynced && p) {
+        await syncLocalProgress(user.id)
+        // Re-fetch to get updated XP
+        try {
+          const updated = await getProfile(user.id)
+          setProfile(updated)
+        } catch { /* use what we have */ }
       }
     } catch (err) {
-      console.warn('Profile fetch failed, creating fallback profile:', err.message)
-      // Profile doesn't exist yet — build a client-side fallback
-      // This happens if the trigger hasn't fired or the profiles table is missing
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user) {
-          const fallback = {
-            id: user.id,
-            username: user.user_metadata?.username || user.email?.split('@')[0] || 'Explorer',
-            full_name: user.user_metadata?.full_name || '',
-            avatar_url: user.user_metadata?.avatar_url || localStorage.getItem('geoquiz_avatar') || '🧭',
-            role: 'user',
-            total_xp: 0,
-            streak_days: 0,
-            level: 1,
-          }
-          setProfile(fallback)
-          // Try inserting the profile row
-          await supabase.from('profiles').upsert(fallback, { onConflict: 'id' }).select()
-        }
-      } catch { /* If even this fails, the user still sees a working dashboard with fallback data */ }
+      console.warn('handleAuthUser error:', err.message)
+      // Last resort fallback — at least show something
+      setProfile({
+        id: user.id,
+        email: user.email || '',
+        username: user.user_metadata?.username || user.email?.split('@')[0] || 'Explorer',
+        full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
+        avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || '🧭',
+        role: 'user',
+        total_xp: 0,
+        streak_days: 0,
+        level: 1,
+      })
     }
   }
 
@@ -177,6 +218,7 @@ export default function App() {
   /* eslint-enable react-hooks/set-state-in-effect */  
 
   return (
+    <ErrorBoundary>
     <div className={`app ${isGamePage ? 'fullscreen-game' : ''}`}>
       {showSplash && <SplashScreen onDone={handleSplashDone} />}
 
@@ -192,12 +234,12 @@ export default function App() {
         </div>
       )}
 
-      {!isGamePage && !isAdminPage && <Header theme={theme} toggleTheme={toggleTheme} session={session} profile={profile} />}
-      {!isAdminPage && <InstallPrompt />}
-      <main className={isGamePage ? 'app-main-full' : isAdminPage ? '' : 'app-main'}>
+      {!isGamePage && !isStandalonePage && <Header theme={theme} toggleTheme={toggleTheme} session={session} profile={profile} />}
+      {!isStandalonePage && <InstallPrompt />}
+      <main className={isGamePage ? 'app-main-full' : isStandalonePage ? '' : 'app-main'}>
         <PageTransition>
           <Routes>
-            <Route path="/" element={<Landing />} />
+            <Route path="/" element={<Landing session={session} profile={profile} />} />
             <Route path="/explore" element={<Explore />} />
             <Route path="/explore/:id" element={<ListingDetail />} />
             <Route path="/play" element={<CategorySelector />} />
@@ -221,13 +263,14 @@ export default function App() {
             <Route path="/discovery" element={<Discovery />} />
             <Route path="/deals" element={<DealsPage />} />
             <Route path="/pass" element={<PassLanding />} />
-            <Route path="/list-your-business" element={<ListBusiness />} />
+            <Route path="/list-your-business" element={<ListBusinessLanding />} />
+            <Route path="/list-your-business/form" element={<ListBusiness />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/admin" element={<AdminDashboard session={session} profile={profile} />} />
           </Routes>
         </PageTransition>
       </main>
-      {!isGamePage && !isAdminPage && (
+      {!isGamePage && !isStandalonePage && (
         <footer className="app-footer">
           <p>
             Wanda — Experience Nigeria &nbsp;|&nbsp;
@@ -237,5 +280,6 @@ export default function App() {
         </footer>
       )}
     </div>
+    </ErrorBoundary>
   )
 }

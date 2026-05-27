@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { getSponsorForQuestion, getJourneySponsors } from '../data/sponsors.js'
+import { useState, useEffect } from 'react'
+import { getSponsors } from '../lib/cms.js'
 
 // Sponsor logo with fallback to emoji
 function SponsorLogo({ sponsor, size = 36 }) {
@@ -23,8 +23,25 @@ function SponsorLogo({ sponsor, size = 36 }) {
 
 // In-game sponsored banner — shows below funFact during feedback
 export function SponsoredBanner({ questionId }) {
-  const sponsor = getSponsorForQuestion(questionId)
-  if (!sponsor) return null
+  const [sponsor, setSponsor] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    getSponsors()
+      .then(sponsors => {
+        const found = sponsors.find(s => s.active && s.questionIds?.includes(questionId))
+        if (found) {
+          // 30% chance to show (respect user experience)
+          if (Math.random() <= 0.3) {
+            setSponsor(found)
+          }
+        }
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [questionId])
+
+  if (loading || !sponsor) return null
 
   return (
     <div className="sponsored-banner">
@@ -43,11 +60,34 @@ export function SponsoredBanner({ questionId }) {
 
 // Results page Journey Card — shows nearby sponsors based on quiz areas
 export function JourneyCard({ results }) {
-  if (!results || results.length === 0) return null
+  const [sponsorsList, setSponsorsList] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    getSponsors()
+      .then(sponsors => {
+        setSponsorsList(sponsors)
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [])
+
+  if (!results || results.length === 0 || loading) return null
 
   const questionIds = results.map(r => r.question.id)
-  const sponsors = getJourneySponsors(questionIds)
-  if (sponsors.length === 0) return null
+  
+  const seen = new Set()
+  const journeySponsors = sponsorsList.filter(s => {
+    if (!s.active || seen.has(s.id)) return false
+    const match = s.questionIds?.some(qid => questionIds.includes(qid))
+    if (match) {
+      seen.add(s.id)
+      return true
+    }
+    return false
+  }).slice(0, 3) // Max 3 sponsors on results
+
+  if (journeySponsors.length === 0) return null
 
   // Build route from answer names
   const route = results
@@ -63,7 +103,7 @@ export function JourneyCard({ results }) {
         <div className="journey-route">{route}</div>
       </div>
       <div className="journey-sponsors">
-        {sponsors.map(s => (
+        {journeySponsors.map(s => (
           <div key={s.id} className="journey-sponsor-item">
             <div className="journey-sponsor-icon">
               <SponsorLogo sponsor={s} size={40} />

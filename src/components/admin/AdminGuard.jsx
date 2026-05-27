@@ -24,7 +24,7 @@ export default function AdminGuard({ session, profile, children }) {
       <div className="admin-denied">
         <div className="admin-denied-icon"><ProhibitedRegular fontSize={48} color="var(--red)" /></div>
         <h1>Access Denied</h1>
-        <p>Your account ({session?.user?.email}) does not have admin privileges.</p>
+        <p>Your account ({session?.user?.email}) does not have admin, moderator, or editor privileges.</p>
         <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(255,255,255,0.04)', borderRadius: '0.75rem', fontSize: '0.85rem', color: 'var(--text-secondary)', textAlign: 'left', maxWidth: '400px' }}>
           <strong style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text)' }}>How to get admin access:</strong>
           <ol style={{ paddingLeft: '1.2rem', margin: 0, lineHeight: 1.8 }}>

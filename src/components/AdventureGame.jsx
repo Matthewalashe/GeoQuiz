@@ -5,7 +5,7 @@ import { playCorrect, playWrong, vibrate } from '../engine/audio.js'
 import { addXP } from '../engine/xp.js'
 import { autoSubmitScore } from '../engine/leaderboard.js'
 import { RewardsOverlay, useRewardSystem } from '../engine/rewards.jsx'
-import PostGameLoop from './PostGameLoop.jsx'
+import ResultCard from './ResultCard.jsx'
 
 import { ADVENTURE_STORIES as STORIES } from '../data/adventures.js'
 
@@ -155,32 +155,29 @@ export default function AdventureGame() {
 
       <div className="adv-body">
         {phase === 'won' ? (
-          <>
-          <div className="game-end-card">
-            <CheckmarkCircleRegular fontSize={64} style={{ color: '#eab308' }} />
-            <h2>Mission Complete! 🎉</h2>
-            <div className="game-end-score">+{xp + 100} XP</div>
+          <ResultCard
+            score={xp + 100}
+            maxScore={500}
+            pointsEarned={xp + 100}
+            gameTitle="Adventure"
+            gameEmoji="🗺️"
+            gameType="adventure"
+            onPlayAgain={() => { setPhase('pick'); setStarted(false); setSelectedStory(null) }}
+          >
             <p className="game-end-label">{story?.title} — conquered!</p>
-            <div className="game-end-actions">
-              <button className="btn btn-primary" onClick={() => { setStarted(false); setSelectedStory(null) }}>Play Another</button>
-              <button className="btn btn-outline" onClick={() => navigate('/play')}>Back to Hub</button>
-            </div>
-          </div>
-          <PostGameLoop gameType="adventure" onPlayAgain={() => { setStarted(false); setSelectedStory(null) }} />
-          </>
+          </ResultCard>
         ) : phase === 'lost' ? (
-          <>
-          <div className="game-end-card">
-            <DismissCircleRegular fontSize={64} style={{ color: '#ef4444' }} />
-            <h2>Lagos Won This Round 😅</h2>
+          <ResultCard
+            score={0}
+            maxScore={500}
+            pointsEarned={0}
+            gameTitle="Adventure"
+            gameEmoji="🗺️"
+            gameType="adventure"
+            onPlayAgain={() => { setPhase('playing'); startStory() }}
+          >
             <p className="game-end-label">You earned {xp} XP. Better luck next time!</p>
-            <div className="game-end-actions">
-              <button className="btn btn-primary" onClick={() => startStory()}>Try Again</button>
-              <button className="btn btn-outline" onClick={() => { setStarted(false); setSelectedStory(null) }}>Change Story</button>
-            </div>
-          </div>
-          <PostGameLoop gameType="adventure" onPlayAgain={() => startStory()} />
-          </>
+          </ResultCard>
         ) : node ? (
           <div className="adv-scroll">
             <div className="adv-story-card">

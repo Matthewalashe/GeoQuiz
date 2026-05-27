@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
-import { DISCOVERY_POIS } from '../data/discovery.js'
+import { getDiscoveryPOIs } from '../lib/cms.js'
 
 // Build weighted wheel slices: sponsored POIs get 2× weight
-function buildSlices(categoryId) {
+function buildSlices(categoryId, poisList) {
   let pool = categoryId === 'all'
-    ? DISCOVERY_POIS
-    : DISCOVERY_POIS.filter(p => p.category === categoryId)
+    ? poisList
+    : poisList.filter(p => p.category === categoryId)
 
-  if (pool.length === 0) pool = DISCOVERY_POIS
+  if (pool.length === 0) pool = poisList
 
   // Expand sponsored entries (2× weight)
   const weighted = []
@@ -88,21 +88,33 @@ export default function SpinWheel({ onClose }) {
     try { return JSON.parse(localStorage.getItem('geoquiz_spin_history') || '[]') }
     catch { return [] }
   })
+  const [poisList, setPoisList] = useState([])
+  const [loading, setLoading] = useState(true)
   const animRef = useRef(null)
   const rotRef = useRef(0)
 
-  const { weighted, display } = buildSlices(category)
+  useEffect(() => {
+    getDiscoveryPOIs()
+      .then(data => {
+        setPoisList(data)
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [])
+
+  const { weighted, display } = buildSlices(category, poisList)
   const slices = display
 
   // Draw on every rotation change
   useEffect(() => {
+    if (loading) return
     const canvas = canvasRef.current
     if (!canvas) return
     drawWheel(canvas, slices, rotRef.current)
-  }, [category, result, slices])
+  }, [category, result, slices, loading])
 
   function spin() {
-    if (spinning) return
+    if (spinning || loading || slices.length === 0) return
     setResult(null)
     setSpinning(true)
 
@@ -175,20 +187,29 @@ export default function SpinWheel({ onClose }) {
 
         {/* Pointer */}
         <div className="spin-pointer-wrap">
-          <div className="spin-pointer">▼</div>
-          <canvas
-            ref={canvasRef}
-            width={320}
-            height={320}
-            className="spin-canvas"
-            onClick={!spinning ? spin : undefined}
-          />
+          {loading ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '320px', width: '320px' }}>
+              <div className="loading-icon" style={{ animation: 'float 2s ease-in-out infinite', fontSize: '3rem' }}>🎡</div>
+              <p style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>Loading spots...</p>
+            </div>
+          ) : (
+            <>
+              <div className="spin-pointer">▼</div>
+              <canvas
+                ref={canvasRef}
+                width={320}
+                height={320}
+                className="spin-canvas"
+                onClick={!spinning ? spin : undefined}
+              />
+            </>
+          )}
         </div>
 
         <button
           className={`spin-btn ${spinning ? 'spinning' : ''}`}
           onClick={spin}
-          disabled={spinning}
+          disabled={spinning || loading}
         >
           {spinning ? 'Spinning…' : '🎡 SPIN!'}
         </button>

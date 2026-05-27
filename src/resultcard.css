@@ -1,0 +1,526 @@
+/* ═══════════════════════════════════════════════
+   ResultCard — Duolingo-Style Multi-Step Flow
+   Yoruba Design System · Full-Screen Steps · Motion
+   ═══════════════════════════════════════════════ */
+
+/* ── Flow Container ── */
+.rc-flow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 1.5rem;
+  background: var(--bg);
+  animation: rcStepIn 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes rcStepIn {
+  from { opacity: 0; transform: translateY(30px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Confetti Particles ── */
+.rc-confetti-container {
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 100;
+  overflow: hidden;
+}
+.rc-confetti-particle {
+  position: absolute; top: -10px;
+  border-radius: 2px;
+  animation: rcConfettiFall linear forwards;
+}
+@keyframes rcConfettiFall {
+  0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+  70% { opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+/* ── Step Wrapper ── */
+.rc-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1.25rem;
+  max-width: 400px;
+  width: 100%;
+}
+
+.rc-step-heading {
+  font-family: var(--font-head);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+/* ── Continue Button ── */
+.rc-continue-btn {
+  width: 100%;
+  max-width: 320px;
+  padding: 0.85rem;
+  background: var(--primary);
+  color: var(--on-primary);
+  border: none;
+  border-radius: var(--radius-full);
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all var(--transition);
+  box-shadow: 0 4px 16px rgba(200, 150, 62, 0.3);
+  margin-top: 0.5rem;
+}
+.rc-continue-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(200, 150, 62, 0.4); }
+.rc-continue-btn:active { transform: scale(0.97); }
+
+/* ══════════════════════════════
+   STEP 0: Score Reveal
+   ══════════════════════════════ */
+.rc-emoji-ring-lg {
+  width: 72px; height: 72px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--primary-light);
+  border-radius: var(--radius-full);
+  font-size: 2rem;
+  animation: rcBounceIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes rcBounceIn {
+  from { transform: scale(0); }
+  50% { transform: scale(1.15); }
+  to { transform: scale(1); }
+}
+.rc-grade-text {
+  font-family: var(--font-head);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+  animation: rcBounceIn 0.6s 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Score Ring — Large */
+.rc-score-circle-lg {
+  position: relative;
+  width: 180px; height: 180px;
+  animation: rcBounceIn 0.6s 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.rc-ring-svg-lg {
+  width: 100%; height: 100%;
+  transform: rotate(-90deg);
+}
+.rc-ring-bg {
+  fill: none;
+  stroke: var(--surface-container);
+  stroke-width: 10;
+}
+.rc-ring-fill-animated {
+  fill: none;
+  stroke-width: 10;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 8px currentColor);
+  animation: rcRingDraw 1.5s 0.8s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+@keyframes rcRingDraw {
+  from { stroke-dashoffset: 377 !important; }
+}
+.rc-score-inner-lg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.rc-pct-lg {
+  font-family: var(--font-head);
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+.rc-score-detail-lg {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-top: 0.2rem;
+}
+.rc-game-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin: 0;
+}
+
+/* ══════════════════════════════
+   STEP 1: Stats
+   ══════════════════════════════ */
+.rc-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  width: 100%;
+}
+.rc-stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 1.25rem 0.75rem;
+  background: var(--surface-elevated);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  animation: rcCardPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.rc-stat-card:nth-child(1) { animation-delay: 0.1s; }
+.rc-stat-card:nth-child(2) { animation-delay: 0.2s; }
+.rc-stat-card:nth-child(3) { animation-delay: 0.3s; }
+.rc-stat-card:nth-child(4) { animation-delay: 0.4s; }
+@keyframes rcCardPop {
+  from { opacity: 0; transform: scale(0.8) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.rc-stat-icon { font-size: 1.5rem; }
+.rc-stat-big {
+  font-family: var(--font-head);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.rc-stat-sub {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+.rc-stat-gold { border-color: var(--primary); }
+.rc-stat-gold .rc-stat-big { color: var(--primary); }
+.rc-stat-fire { border-color: var(--secondary); }
+.rc-stat-fire .rc-stat-big { color: var(--secondary); }
+
+.rc-breakdown-section {
+  width: 100%;
+  max-height: 180px;
+  overflow-y: auto;
+  margin-top: 0.25rem;
+  border-radius: var(--radius-md);
+  background: var(--surface-dim);
+  padding: 0.5rem;
+}
+
+/* ══════════════════════════════
+   STEP 2: Tier Progress
+   ══════════════════════════════ */
+.rc-tier-card {
+  width: 100%;
+  padding: 1.5rem;
+  background: var(--surface-elevated);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  animation: rcCardPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.rc-tier-emoji {
+  font-size: 2.5rem;
+  margin-bottom: 0.3rem;
+  animation: rcBounceIn 0.6s 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.rc-tier-title {
+  font-family: var(--font-head);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 0.75rem;
+}
+.rc-tier-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.rc-tier-bar-track {
+  flex: 1;
+  height: 12px;
+  background: var(--surface-container);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+.rc-tier-bar-fill-animated {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--gold-light, #E8C97A));
+  border-radius: var(--radius-full);
+  animation: rcBarGrow 1.2s 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+@keyframes rcBarGrow {
+  from { width: 0 !important; }
+}
+.rc-tier-pct {
+  font-family: var(--font-head);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--primary);
+  min-width: 35px;
+}
+.rc-tier-next-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+.rc-tier-next-badge {
+  background: var(--primary-light);
+  color: var(--primary);
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+.rc-tier-milestone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: var(--surface-elevated);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+}
+.rc-milestone-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.rc-milestone-value {
+  font-family: var(--font-head);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* ══════════════════════════════
+   STEP 3: Sign Up CTA
+   ══════════════════════════════ */
+.rc-step-signup { gap: 1rem; }
+.rc-signup-icon {
+  font-size: 3rem;
+  animation: rcBounceIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.rc-signup-text {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  max-width: 320px;
+  margin: 0;
+}
+.rc-signup-perks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  width: 100%;
+}
+.rc-perk {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--surface-elevated);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text);
+  animation: rcCardPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.rc-perk:nth-child(1) { animation-delay: 0.1s; }
+.rc-perk:nth-child(2) { animation-delay: 0.15s; }
+.rc-perk:nth-child(3) { animation-delay: 0.2s; }
+.rc-perk:nth-child(4) { animation-delay: 0.25s; }
+.rc-signup-btn {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  padding: 0.85rem;
+  background: var(--green);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-full);
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 1rem;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 135, 81, 0.3);
+  transition: all var(--transition);
+}
+.rc-signup-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(0, 135, 81, 0.4); }
+.rc-skip-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.rc-skip-btn:hover { color: var(--text); }
+
+/* ══════════════════════════════
+   STEP 4: Share
+   ══════════════════════════════ */
+.rc-share-card {
+  width: 100%;
+  padding: 1.5rem;
+  background: var(--surface-elevated);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  animation: rcCardPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.rc-share-preview {
+  font-family: var(--font-head);
+  font-size: 1rem;
+  color: var(--text);
+  font-weight: 600;
+  line-height: 1.4;
+  margin: 0 0 1rem;
+}
+.rc-share-buttons-lg {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.rc-share-btn-lg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  border-radius: var(--radius-lg);
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border: none;
+  transition: all var(--transition);
+}
+.rc-share-btn-lg:active { transform: scale(0.97); }
+
+.rc-share-wa {
+  background: #25D366;
+  color: #fff;
+}
+.rc-share-wa:hover { background: #1DA851; }
+
+.rc-share-x {
+  background: var(--surface-container);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.rc-share-x:hover { background: var(--surface-dim); }
+
+.rc-share-copy {
+  background: var(--primary-light);
+  color: var(--primary);
+  border: 1px solid var(--primary);
+}
+.rc-share-copy:hover { background: var(--primary); color: var(--on-primary); }
+
+/* ══════════════════════════════
+   STEP 5: Next Action
+   ══════════════════════════════ */
+.rc-next-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  width: 100%;
+}
+.rc-next-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--surface-elevated);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  text-decoration: none;
+  color: var(--text);
+  cursor: pointer;
+  transition: all var(--transition);
+  font-family: var(--font-body);
+  animation: rcCardPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.rc-next-card:nth-child(1) { animation-delay: 0.1s; }
+.rc-next-card:nth-child(2) { animation-delay: 0.2s; }
+.rc-next-card:nth-child(3) { animation-delay: 0.3s; }
+.rc-next-card:nth-child(4) { animation-delay: 0.4s; }
+.rc-next-card:hover { transform: translateX(4px); border-color: var(--primary); box-shadow: var(--shadow-sm); }
+.rc-next-card:active { transform: scale(0.98); }
+.rc-next-emoji { font-size: 1.5rem; flex-shrink: 0; }
+.rc-next-card div { text-align: left; }
+.rc-next-card strong {
+  display: block;
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+.rc-next-card span {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+.rc-next-replay { border-color: var(--primary); background: var(--primary-light); }
+.rc-next-replay strong { color: var(--primary); }
+
+.rc-home-link {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  text-decoration: none;
+  margin-top: 0.5rem;
+  transition: color var(--transition);
+}
+.rc-home-link:hover { color: var(--text); }
+
+/* ── Dark mode adjustments ── */
+[data-theme="dark"] .rc-stat-card,
+[data-theme="dark"] .rc-tier-card,
+[data-theme="dark"] .rc-share-card,
+[data-theme="dark"] .rc-next-card,
+[data-theme="dark"] .rc-perk { background: var(--surface-elevated); }
+
+/* ── Coming Soon Overlay (kept from before) ── */
+.game-card-coming-soon {
+  position: relative;
+  pointer-events: none;
+  opacity: 0.6;
+}
+.game-coming-soon-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  background: rgba(26, 26, 26, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border-radius: inherit;
+  z-index: 2;
+}
+.game-coming-soon-overlay span {
+  font-family: var(--font-head);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.game-coming-soon-overlay .cs-icon {
+  font-size: 1.5rem;
+}

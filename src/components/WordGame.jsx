@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { WORD_DATA } from '../data/wordgame.js'
 import { playCorrect, playWrong, playPinDrop, vibrate } from '../engine/audio.js'
 import { autoSubmitScore } from '../engine/leaderboard.js'
-import PostGameLoop from './PostGameLoop.jsx'
+import ResultCard from './ResultCard.jsx'
 
 function shuffle(arr) {
   const a = [...arr]
@@ -24,7 +24,12 @@ function scrambleWord(word) {
 
 export default function WordGame() {
   const navigate = useNavigate()
-  const [words] = useState(() => shuffle(WORD_DATA).slice(0, 8))
+  const [words] = useState(() => {
+    const solved = JSON.parse(localStorage.getItem('wanda_solved_words') || '[]')
+    const unsolved = WORD_DATA.filter(w => !solved.includes(w.word))
+    const pool = unsolved.length >= 8 ? unsolved : WORD_DATA
+    return shuffle(pool).slice(0, 8)
+  })
   const [idx, setIdx] = useState(0)
   const [scrambled, setScrambled] = useState([])
   const [placed, setPlaced] = useState([])
@@ -142,6 +147,11 @@ export default function WordGame() {
       setPhase('done')
       const maxPts = words.length * 100
       autoSubmitScore({ gameType: 'word', score, maxScore: maxPts, questionCount: words.length })
+      // Track solved words
+      const solved = JSON.parse(localStorage.getItem('wanda_solved_words') || '[]')
+      const newSolved = [...new Set([...solved, ...results.filter(r => r.pts > 0).map(r => r.word.word)])]
+      if (newSolved.length >= WORD_DATA.length) localStorage.setItem('wanda_solved_words', '[]')
+      else localStorage.setItem('wanda_solved_words', JSON.stringify(newSolved))
       return
     }
     setIdx(prev => prev + 1)
@@ -149,15 +159,22 @@ export default function WordGame() {
 
   // Final results
   if (phase === 'done') {
-    const maxPts = words.length * 100
-    const pct = Math.round((score / maxPts) * 100)
     return (
       <section className="wg-results">
-        <div className="wg-results-card">
-          <div className="wg-results-icon">{pct >= 80 ? '🏆' : pct >= 50 ? '📖' : '🔤'}</div>
-          <h2>Word Game Results</h2>
-          <div className="wg-results-score">{score}<span>/{maxPts}</span></div>
-          <div className="wg-results-pct">{pct}% · {results.length} words solved</div>
+        <ResultCard
+          score={score}
+          maxScore={words.length * 100}
+          correctCount={results.filter(r => r.pts > 0).length}
+          totalQuestions={words.length}
+          pointsEarned={score}
+          gameTitle="Guess the Word"
+          gameEmoji="🔤"
+          gameType="word"
+          onPlayAgain={() => {
+            setIdx(0); setScore(0); setResults([]); setHints(3)
+            setPhase('playing')
+          }}
+        >
           <div className="wg-results-list">
             {results.map((r, i) => (
               <div key={i} className="wg-rl-row">
@@ -167,12 +184,7 @@ export default function WordGame() {
               </div>
             ))}
           </div>
-          <div className="wg-results-actions">
-            <button className="btn btn-primary" onClick={() => window.location.reload()}>Play Again</button>
-            <button className="btn btn-outline" onClick={() => navigate('/')}>Home</button>
-          </div>
-        </div>
-        <PostGameLoop gameType="word" score={score} onPlayAgain={() => window.location.reload()} />
+        </ResultCard>
       </section>
     )
   }

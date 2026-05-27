@@ -1,5 +1,7 @@
-import { useState, useMemo } from 'react'
-import { DEALS, DEAL_CATEGORIES } from '../data/deals.js'
+import { useState, useMemo, useEffect } from 'react'
+import { DEAL_CATEGORIES } from '../data/deals.js'
+import { getDeals } from '../lib/cms.js'
+import { Link } from 'react-router-dom'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function daysUntil(dateStr) {
@@ -141,9 +143,20 @@ export default function DealsPage() {
   const [claimingDeal, setClaimingDeal] = useState(null)
   const [flashOnly, setFlashOnly] = useState(false)
   const [questOnly, setQuestOnly] = useState(false)
+  const [dealsList, setDealsList] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    getDeals()
+      .then(data => {
+        setDealsList(data)
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [])
 
   const filtered = useMemo(() => {
-    return DEALS.filter(d => {
+    return dealsList.filter(d => {
       const catMatch = activeCategory === 'all' || d.category === activeCategory
       const flashMatch = !flashOnly || d.mechanic === 'flash'
       const questMatch = !questOnly || d.mechanic === 'quest_complete'
@@ -153,7 +166,7 @@ export default function DealsPage() {
         d.location.toLowerCase().includes(searchQuery.toLowerCase())
       return catMatch && flashMatch && questMatch && searchMatch
     })
-  }, [activeCategory, searchQuery, flashOnly, questOnly])
+  }, [dealsList, activeCategory, searchQuery, flashOnly, questOnly])
 
   const featuredDeals = filtered.filter(d => d.featured)
   const regularDeals = filtered.filter(d => !d.featured)
@@ -170,17 +183,17 @@ export default function DealsPage() {
           <p className="deals-hero-sub">Real discounts at Lagos businesses — just for GeoQuiz players</p>
           <div className="deals-stats">
             <div className="deal-stat">
-              <span className="deal-stat-num">{DEALS.length}</span>
+              <span className="deal-stat-num">{dealsList.length}</span>
               <span className="deal-stat-label">Active Deals</span>
             </div>
             <div className="deal-stat-div" />
             <div className="deal-stat">
-              <span className="deal-stat-num">{DEALS.filter(d => d.featured).length}</span>
+              <span className="deal-stat-num">{dealsList.filter(d => d.featured).length}</span>
               <span className="deal-stat-label">Featured</span>
             </div>
             <div className="deal-stat-div" />
             <div className="deal-stat">
-              <span className="deal-stat-num">{DEALS.filter(d => d.mechanic === 'flash').length}</span>
+              <span className="deal-stat-num">{dealsList.filter(d => d.mechanic === 'flash').length}</span>
               <span className="deal-stat-label">Flash Today</span>
             </div>
           </div>
@@ -230,7 +243,7 @@ export default function DealsPage() {
       </div>
 
       {/* Flash deals banner if any today */}
-      {DEALS.filter(d => d.mechanic === 'flash').length > 0 && !flashOnly && !questOnly && activeCategory === 'all' && (
+      {dealsList.filter(d => d.mechanic === 'flash').length > 0 && !flashOnly && !questOnly && activeCategory === 'all' && (
         <div className="deals-flash-banner">
           <span className="flash-pulse">⚡</span>
           <strong> Flash deals available today!</strong>
@@ -238,59 +251,65 @@ export default function DealsPage() {
         </div>
       )}
 
-      <div className="deals-content">
-        {/* Featured grid */}
-        {featuredDeals.length > 0 && (
-          <section className="deals-section">
-            <h2 className="deals-section-title">⭐ Featured Deals</h2>
-            <div className="deals-grid deals-grid-featured">
-              {featuredDeals.map(deal => (
-                <DealCard key={deal.id} deal={deal} onClaim={setClaimingDeal} />
-              ))}
-            </div>
-          </section>
-        )}
+      {loading ? (
+        <div className="ex-empty" style={{ minHeight: '40vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="loading-icon" style={{ animation: 'float 2s ease-in-out infinite', fontSize: '3rem' }}>🧭</div>
+          <p style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>Loading deals...</p>
+        </div>
+      ) : (
+        <div className="deals-content">
+          {/* Featured grid */}
+          {featuredDeals.length > 0 && (
+            <section className="deals-section">
+              <h2 className="deals-section-title">⭐ Featured Deals</h2>
+              <div className="deals-grid deals-grid-featured">
+                {featuredDeals.map(deal => (
+                  <DealCard key={deal.id} deal={deal} onClaim={setClaimingDeal} />
+                ))}
+              </div>
+            </section>
+          )}
 
-        {/* Regular deals */}
-        {regularDeals.length > 0 && (
-          <section className="deals-section">
-            <h2 className="deals-section-title">All Deals</h2>
-            <div className="deals-grid">
-              {regularDeals.map(deal => (
-                <DealCard key={deal.id} deal={deal} onClaim={setClaimingDeal} />
-              ))}
-            </div>
-          </section>
-        )}
+          {/* Regular deals */}
+          {regularDeals.length > 0 && (
+            <section className="deals-section">
+              <h2 className="deals-section-title">All Deals</h2>
+              <div className="deals-grid">
+                {regularDeals.map(deal => (
+                  <DealCard key={deal.id} deal={deal} onClaim={setClaimingDeal} />
+                ))}
+              </div>
+            </section>
+          )}
 
-        {filtered.length === 0 && (
-          <div className="deals-empty">
-            <span className="deals-empty-icon">🔍</span>
-            <p>No deals found for that search.</p>
-            <button className="btn btn-outline" onClick={() => { setSearchQuery(''); setActiveCategory('all'); setFlashOnly(false); setQuestOnly(false) }}>
-              Clear filters
-            </button>
-          </div>
-        )}
-
-        {/* List your business CTA */}
-        <div className="deals-list-cta">
-          <div className="deals-list-cta-inner">
-            <span className="deals-list-icon">🏪</span>
-            <div>
-              <strong>Own a business?</strong>
-              <p>Reach GeoQuiz players near your location. From ₦5,000/month.</p>
+          {filtered.length === 0 && (
+            <div className="deals-empty">
+              <span className="deals-empty-icon">🔍</span>
+              <p>No deals found for that search.</p>
+              <button className="btn btn-outline" onClick={() => { setSearchQuery(''); setActiveCategory('all'); setFlashOnly(false); setQuestOnly(false) }}>
+                Clear filters
+              </button>
             </div>
-            <a
-              href="https://wa.me/2348184495633?text=I%20want%20to%20list%20my%20business%20on%20GeoQuiz%20Deals"
-              target="_blank" rel="noopener noreferrer"
-              className="btn btn-primary deals-list-btn"
-            >
-              List My Business
-            </a>
+          )}
+
+          {/* List your business CTA */}
+          <div className="deals-list-cta">
+            <div className="deals-list-cta-inner">
+              <span className="deals-list-icon">🏪</span>
+              <div>
+                <strong>Own a business?</strong>
+                <p>Reach GeoQuiz players near your location. From ₦5,000/month.</p>
+              </div>
+              <Link
+                to="/list-your-business"
+                className="btn btn-primary deals-list-btn"
+              >
+                List My Business
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

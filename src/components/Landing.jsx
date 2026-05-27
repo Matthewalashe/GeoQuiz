@@ -1,63 +1,106 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { useState, useEffect, useCallback } from 'react'
-import { getXPData, getLevel, getLevelTitle, canClaimToday } from '../engine/xp.js'
-import { LISTINGS, CATEGORIES } from '../data/listings.jsx'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { getXPData, getLevel, getLevelTitle, canClaimToday, getCurrentLeague } from '../engine/xp.js'
+import { CATEGORIES } from '../data/listings.jsx'
+import { getListings } from '../lib/cms.js'
 import {
   ChevronRightRegular, ChevronLeftRegular, FireRegular, GiftRegular,
   TicketDiagonalRegular, LocationRegular, StarRegular, PlayRegular,
-  MapRegular, NavigationRegular, EditRegular, PersonRegular,
-  ArrowRightRegular,
+  MapRegular, NavigationRegular, PersonRegular,
+  ArrowRightRegular, TrophyRegular,
 } from '@fluentui/react-icons'
-
-// Hero slides — handpicked visually rich items
-const HERO_SLIDES = [
-  { id: 'nike-art', title: 'Nike Art Gallery', sub: 'Lekki · Art & Culture', cta: 'Explore', img: '/images/postcards/national-theatre.png' },
-  { id: 'lekki-conservation', title: 'Lekki Conservation Centre', sub: 'Lekki · Nature & Wildlife', cta: 'Discover', img: '/images/postcards/lekki-conservation.png' },
-  { id: 'new-afrika-shrine', title: 'New Afrika Shrine', sub: 'Ikeja · Music & Culture', cta: 'Experience', img: '/images/postcards/freedom-park.png' },
-  { id: 'bungalow-ikoyi', title: 'The Bungalow Ikoyi', sub: 'Ikoyi · Dining & Nightlife', cta: 'Visit', img: '/images/postcards/national-theatre.png' },
-].map(slide => {
-  const listing = LISTINGS.find(l => l.id === slide.id)
-  return {
-    ...slide,
-    title: listing?.name || slide.title,
-    sub: listing ? `${listing.area} · ${listing.category}` : slide.sub,
-    img: listing?.photos?.[0] || slide.img,
-  }
-})
 
 const FEATURED_IDS = ['nike-art', 'bungalow-ikoyi', 'lekki-conservation', 'new-afrika-shrine']
 
-export default function Landing() {
+const DEFAULT_SLIDES = [
+  { id: 'nike-art', title: 'Nike Art Gallery', sub: 'Lekki · Art & Culture', cta: 'Explore', img: '/images/postcards/nike-art-gallery.png' },
+  { id: 'lekki-conservation', title: 'Lekki Conservation Centre', sub: 'Lekki · Nature & Wildlife', cta: 'Discover', img: '/images/postcards/osun-grove.png' },
+  { id: 'new-afrika-shrine', title: 'New Afrika Shrine', sub: 'Ikeja · Music & Culture', cta: 'Experience', img: '/images/postcards/egungun-festival.png' },
+  { id: 'bungalow-ikoyi', title: 'The Bungalow Ikoyi', sub: 'Ikoyi · Dining & Nightlife', cta: 'Visit', img: '/images/postcards/lekki-ikoyi-bridge.png' },
+]
+
+const PLAY_ROW = [
+  { id: 'quiz', path: '/play?mode=daily', label: 'Map Quiz', emoji: '📍', color: '#00c853', desc: 'Pin locations on the map' },
+  { id: 'postcards', path: '/postcards', label: 'PostCards', emoji: '📷', color: '#8b5cf6', desc: 'Guess landmarks from photos' },
+  { id: 'trivia', path: '/trivia', label: 'Trivia', emoji: '🧠', color: '#0ea5e9', desc: 'Test your knowledge' },
+  { id: 'puzzle', path: '/puzzle', label: 'Puzzle', emoji: '🧩', color: '#06b6d4', desc: 'Rearrange the image' },
+  { id: 'word', path: '/word', label: 'Word Game', emoji: '🔤', color: '#f59e0b', desc: 'Unscramble & learn' },
+]
+
+export default function Landing({ session, profile }) {
   const navigate = useNavigate()
   const xp = getXPData()
   const level = getLevel(xp.totalXP)
   const title = getLevelTitle(level)
+  const league = getCurrentLeague(xp.totalXP)
   const streak = xp.streakDays || 0
-  const playerName = localStorage.getItem('geoquiz_player') || 'Explorer'
+  const playerName = profile?.display_name || localStorage.getItem('geoquiz_player') || 'Explorer'
+  const totalPoints = profile?.total_xp || xp.totalXP
 
-  const featured = LISTINGS.filter(l => FEATURED_IDS.includes(l.id))
-  const topRated = [...LISTINGS].sort((a, b) => b.rating - a.rating).slice(0, 8)
+  const [listings, setListings] = useState([])
+
+  useEffect(() => {
+    getListings().then(setListings).catch(console.error)
+  }, [])
+
+  // Get featured listings — prefer CMS `is_featured`, fallback to hardcoded
+  const heroSlides = useMemo(() => {
+    const cmsFeatures = listings.filter(l => l.is_featured).sort((a, b) => (a.featured_order || 99) - (b.featured_order || 99))
+    if (cmsFeatures.length >= 2) {
+      return cmsFeatures.slice(0, 4).map(l => ({
+        id: l.id,
+        title: l.name,
+        sub: `${l.area} · ${l.category}`,
+        cta: 'Explore',
+        img: l.photos?.[0] || '/images/postcards/national-theatre.png',
+      }))
+    }
+    return DEFAULT_SLIDES.map(slide => {
+      const listing = listings.find(l => l.id === slide.id)
+      return {
+        ...slide,
+        title: listing?.name || slide.title,
+        sub: listing ? `${listing.area} · ${listing.category}` : slide.sub,
+        img: listing?.photos?.[0] || slide.img,
+      }
+    })
+  }, [listings])
+
+  const featured = useMemo(() => {
+    return listings.filter(l => FEATURED_IDS.includes(l.id))
+  }, [listings])
+
+  const topRated = useMemo(() => {
+    return [...listings].sort((a, b) => b.rating - a.rating).slice(0, 8)
+  }, [listings])
+
+  // Last played game
+  const lastGame = useMemo(() => {
+    const sessions = JSON.parse(localStorage.getItem('geoquiz_sessions') || '[]')
+    if (sessions.length === 0) return null
+    const last = sessions[sessions.length - 1]
+    return last
+  }, [])
 
   // ── Carousel state ──
   const [currentSlide, setCurrentSlide] = useState(0)
   const [paused, setPaused] = useState(false)
 
   const nextSlide = useCallback(() => {
-    setCurrentSlide(p => (p + 1) % HERO_SLIDES.length)
-  }, [])
+    setCurrentSlide(p => (p + 1) % heroSlides.length)
+  }, [heroSlides.length])
 
   const prevSlide = useCallback(() => {
-    setCurrentSlide(p => (p - 1 + HERO_SLIDES.length) % HERO_SLIDES.length)
-  }, [])
+    setCurrentSlide(p => (p - 1 + heroSlides.length) % heroSlides.length)
+  }, [heroSlides.length])
 
-  // Auto-advance every 5s
   useEffect(() => {
     if (paused) return
     const timer = setInterval(nextSlide, 5000)
     return () => clearInterval(timer)
   }, [paused, nextSlide])
 
-  const slide = HERO_SLIDES[currentSlide] || HERO_SLIDES[0]
+  const slide = heroSlides[currentSlide] || heroSlides[0]
 
   return (
     <section className="home-page">
@@ -68,8 +111,7 @@ export default function Landing() {
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
-        {/* Background images — all preloaded, crossfade */}
-        {HERO_SLIDES.map((s, i) => (
+        {heroSlides.map((s, i) => (
           <div
             key={s.id}
             className={`hero-carousel-bg ${i === currentSlide ? 'active' : ''}`}
@@ -79,24 +121,25 @@ export default function Landing() {
 
         <div className="hero-carousel-overlay" />
 
-        {/* Greeting badge */}
+        {/* Greeting — personalized for logged-in users */}
         <div className="hero-greeting-badge">
           <span className="hero-greeting-avatar"><PersonRegular fontSize={16} /></span>
           <span>Hey, {playerName}</span>
-          {streak > 0 && <span className="hero-streak-pill"><FireRegular fontSize={14} /> {streak}</span>}
+          {streak > 0 && <span className="hero-streak-pill"><FireRegular fontSize={16} /> {streak} day{streak > 1 ? 's' : ''}</span>}
         </div>
 
         {/* Content */}
-        <div className="hero-carousel-content" key={currentSlide}>
-          <span className="hero-carousel-label">FEATURED</span>
-          <h1 className="hero-carousel-title">{slide.title}</h1>
-          <p className="hero-carousel-sub">{slide.sub}</p>
-          <Link to={`/explore/${slide.id}`} className="hero-carousel-cta">
-            {slide.cta} <ArrowRightRegular fontSize={18} />
-          </Link>
-        </div>
+        {slide && (
+          <div className="hero-carousel-content" key={currentSlide}>
+            <span className="hero-carousel-label">FEATURED</span>
+            <h1 className="hero-carousel-title">{slide.title}</h1>
+            <p className="hero-carousel-sub">{slide.sub}</p>
+            <Link to={`/explore/${slide.id}`} className="hero-carousel-cta">
+              {slide.cta} <ArrowRightRegular fontSize={18} />
+            </Link>
+          </div>
+        )}
 
-        {/* Navigation arrows */}
         <button className="hero-nav hero-nav-prev" onClick={prevSlide} aria-label="Previous">
           <ChevronLeftRegular fontSize={24} />
         </button>
@@ -104,9 +147,8 @@ export default function Landing() {
           <ChevronRightRegular fontSize={24} />
         </button>
 
-        {/* Dots */}
         <div className="hero-dots">
-          {HERO_SLIDES.map((_, i) => (
+          {heroSlides.map((_, i) => (
             <button
               key={i}
               className={`hero-dot ${i === currentSlide ? 'active' : ''}`}
@@ -116,6 +158,80 @@ export default function Landing() {
           ))}
         </div>
       </div>
+
+      {/* ── PERSONALIZED STATS BAR (logged in) ── */}
+      {session && (
+        <div className="home-stats-bar">
+          <div className="home-stat-chip">
+            <span className="home-stat-icon">{title.emoji}</span>
+            <div>
+              <strong>Lv.{level}</strong>
+              <span>{title.title}</span>
+            </div>
+          </div>
+          <div className="home-stat-chip">
+            <span className="home-stat-icon">⚡</span>
+            <div>
+              <strong>{totalPoints.toLocaleString()}</strong>
+              <span>Total XP</span>
+            </div>
+          </div>
+          <div className="home-stat-chip">
+            <span className="home-stat-icon">{league.emoji}</span>
+            <div>
+              <strong>{league.name}</strong>
+              <span>League</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── SIGN UP CTA (not logged in) ── */}
+      {!session && (
+        <div className="home-section-container">
+          <Link to="/auth" className="home-signup-cta">
+            <div className="home-signup-content">
+              <h3>Join Wanda — It's Free!</h3>
+              <p>Save scores, track streaks, compete on the leaderboard</p>
+            </div>
+            <span className="home-signup-arrow"><ArrowRightRegular fontSize={20} /></span>
+          </Link>
+        </div>
+      )}
+
+      {/* ── PLAY & EARN POINTS (#33) ── */}
+      <div className="home-section-container">
+        <div className="home-section-header">
+          <h2>Play & Earn <span className="section-subtitle">Points</span></h2>
+          {session && <span className="home-points-badge">⚡ {totalPoints.toLocaleString()} XP</span>}
+          {!session && <Link to="/play" className="see-all-btn">All Games <ChevronRightRegular fontSize={16} /></Link>}
+        </div>
+        <div className="home-play-scroller">
+          {PLAY_ROW.map(game => (
+            <Link key={game.id} to={game.path} className="home-play-card">
+              <div className="home-play-card-icon" style={{ background: game.color }}>{game.emoji}</div>
+              <strong>{game.label}</strong>
+              <span>{game.desc}</span>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* ── CONTINUE WHERE YOU LEFT OFF (#31) ── */}
+      {session && lastGame && (
+        <div className="home-section-container">
+          <button className="home-continue-card" onClick={() => navigate('/play?mode=daily')}>
+            <div className="home-continue-left">
+              <span className="home-continue-icon">🔄</span>
+              <div>
+                <strong>Continue Playing</strong>
+                <span>Last score: {lastGame.score}/{lastGame.max} pts</span>
+              </div>
+            </div>
+            <ChevronRightRegular fontSize={20} />
+          </button>
+        </div>
+      )}
 
       {/* ── CATEGORY CHIPS ── */}
       <div className="home-categories-scroll">
@@ -127,13 +243,13 @@ export default function Landing() {
         ))}
       </div>
 
-      {/* ── DAILY GAME CTA ── */}
+      {/* ── TODAY'S CHALLENGE ── */}
       <div className="home-section-container">
         <button className="home-daily-immersive" onClick={() => navigate('/play?mode=daily')}>
           <div className="home-daily-content">
-            <span className="home-daily-badge">DAILY GAME</span>
+            <span className="home-daily-badge">TODAY'S CHALLENGE</span>
             <h2>Test your Lagos knowledge</h2>
-            <p>Play, earn XP, unlock rewards</p>
+            <p>Play daily, earn XP, climb the ranks</p>
           </div>
           <div className="home-daily-icon">
             <PlayRegular fontSize={64} />
@@ -201,38 +317,52 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* ── WANDA PASS ── */}
+      {/* ── WANDA PASS CTA (#36) ── */}
       <div className="home-section-container">
-        <Link to="/pass" className="home-pass-banner">
-          <div className="home-pass-content">
-            <span className="home-pass-badge">COMING SOON</span>
-            <h2>Wanda Pass</h2>
-            <p>One pass, multiple attractions.</p>
+        <div className="home-pass-card">
+          <div className="home-pass-gradient" />
+          <div className="home-pass-inner">
+            <TicketDiagonalRegular fontSize={36} style={{ color: '#fff', opacity: 0.9 }} />
+            <div className="home-pass-text">
+              <span className="home-pass-chip">COMING SOON</span>
+              <h3>Wanda Pass</h3>
+              <p>One pass, multiple attractions. Join the waitlist.</p>
+            </div>
+            <Link to="/pass" className="home-pass-cta-btn">Learn More →</Link>
           </div>
-          <TicketDiagonalRegular fontSize={80} className="pass-icon-bg" />
-        </Link>
+        </div>
       </div>
 
-      {/* ── GAMES ── */}
+      {/* ── WHAT'S HAPPENING (replaces Feed #34) ── */}
       <div className="home-section-container">
-        <h2 className="home-section-title">Games</h2>
-        <div className="home-games-grid">
-          <Link to="/play" className="game-card">
-            <MapRegular fontSize={28} />
-            <span>Map Quiz</span>
-          </Link>
-          <Link to="/trivia" className="game-card">
-            <NavigationRegular fontSize={28} />
-            <span>Trivia</span>
-          </Link>
-          <Link to="/crossword" className="game-card">
-            <EditRegular fontSize={28} />
-            <span>Crossword</span>
-          </Link>
-          <Link to="/adventure" className="game-card">
-            <PersonRegular fontSize={28} />
-            <span>Adventure</span>
-          </Link>
+        <div className="home-section-header">
+          <h2>What's Happening</h2>
+        </div>
+        <div className="home-whats-happening">
+          <div className="home-wh-item">
+            <span className="home-wh-icon">🏆</span>
+            <div>
+              <strong>Leaderboard updated</strong>
+              <span>New scores posted today</span>
+            </div>
+            <Link to="/leaderboard" className="home-wh-link">View →</Link>
+          </div>
+          <div className="home-wh-item">
+            <span className="home-wh-icon">🗺️</span>
+            <div>
+              <strong>New places added</strong>
+              <span>Explore fresh listings</span>
+            </div>
+            <Link to="/explore" className="home-wh-link">Explore →</Link>
+          </div>
+          <div className="home-wh-item">
+            <span className="home-wh-icon">🎮</span>
+            <div>
+              <strong>Daily challenge is live</strong>
+              <span>Can you beat yesterday's score?</span>
+            </div>
+            <Link to="/play?mode=daily" className="home-wh-link">Play →</Link>
+          </div>
         </div>
       </div>
 

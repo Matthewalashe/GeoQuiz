@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import '../../admin.css'
-import { adminFetch, adminUpsert, adminDelete, uploadFile } from '../../lib/cms.js'
+import { adminFetch, adminUpsert, adminDelete, uploadFile, clearCache } from '../../lib/cms.js'
 import { supabase, signOut } from '../../lib/supabase.js'
 import AdminGuard from './AdminGuard.jsx'
 import {
   DataBarVerticalRegular, LocationRegular, GiftRegular, DiamondRegular,
   MapRegular, QuestionRegular, SettingsRegular, CheckmarkCircleRegular,
   DismissCircleRegular, MailInboxRegular, WrenchRegular, PeopleRegular,
-  PersonRegular, ShieldCheckmarkRegular
+  PersonRegular, ShieldCheckmarkRegular, EditRegular
 } from '@fluentui/react-icons'
 
 // Section configs
@@ -18,6 +18,7 @@ const SECTIONS = [
   { id: 'sponsors', label: 'Sponsors', icon: <DiamondRegular />, table: 'cms_sponsors' },
   { id: 'discovery', label: 'Discovery', icon: <MapRegular />, table: 'cms_discovery' },
   { id: 'questions', label: 'Questions', icon: <QuestionRegular />, table: 'cms_questions' },
+  { id: 'submissions', label: 'Submissions', icon: <MailInboxRegular /> },
   { id: 'users', label: 'Users', icon: <PeopleRegular /> },
   { id: 'settings', label: 'Settings', icon: <SettingsRegular /> },
 ]
@@ -29,7 +30,6 @@ const FIELD_DEFS = {
     { key: 'category', label: 'Category', type: 'select', options: ['restaurant','hotel','attraction','nightlife','park','culture','experience','shopping'] },
     { key: 'subcategory', label: 'Subcategory', type: 'text' },
     { key: 'area', label: 'Area', type: 'text', placeholder: 'e.g. Victoria Island' },
-    { key: 'price_range', label: 'Price Tier', type: 'select', options: ['₦ Budget','₦₦ Mid-range','₦₦₦ Premium','₦₦₦₦ Luxury'] },
     { key: 'price_min', label: 'Price From (₦)', type: 'number', placeholder: 'e.g. 3000' },
     { key: 'price_max', label: 'Price To (₦)', type: 'number', placeholder: 'e.g. 15000' },
     { key: 'rating', label: 'Rating', type: 'number', step: '0.1', min: 0, max: 5 },
@@ -118,7 +118,10 @@ function Toast({ msg, type, onClose }) {
   return <div className={`admin-toast admin-toast-${type}`}>{type === 'success' ? <CheckmarkCircleRegular style={{ verticalAlign: 'middle' }} /> : <DismissCircleRegular style={{ verticalAlign: 'middle' }} />} {msg}</div>
 }
 
-function CrudSection({ table, session }) {
+function CrudSection({ table, session, profile }) {
+  const userRole = profile?.role || 'user'
+  const canCreate = userRole === 'admin' || userRole === 'editor'
+  const canDelete = userRole === 'admin'
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -252,7 +255,7 @@ function CrudSection({ table, session }) {
     <>
       <div className="admin-toolbar">
         <input className="admin-search" placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} />
-        <button className="admin-btn admin-btn-primary" onClick={openCreate}>+ Add New</button>
+        {canCreate && <button className="admin-btn admin-btn-primary" onClick={openCreate}>+ Add New</button>}
       </div>
 
       <div className="admin-table-wrap">
@@ -289,7 +292,7 @@ function CrudSection({ table, session }) {
                   ))}
                   <td>
                     <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => openEdit(row)}>Edit</button>{' '}
-                    <button className="admin-btn admin-btn-danger admin-btn-sm" onClick={() => setConfirm(row.id)}>Delete</button>
+                    {canDelete && <button className="admin-btn admin-btn-danger admin-btn-sm" onClick={() => setConfirm(row.id)}>Delete</button>}
                   </td>
                 </tr>
               ))}
@@ -442,14 +445,9 @@ function Overview() {
       setStats(s)
       // User count
       try {
-        const { data } = await supabase.from('profiles').select('id', { count: 'exact', head: true })
-        setUserCount(data?.length || 0)
-      } catch {
-        try {
-          const { count } = await supabase.from('profiles').select('*', { count: 'exact', head: true })
-          setUserCount(count || 0)
-        } catch { /* no profiles table yet */ }
-      }
+        const { count } = await supabase.from('profiles').select('*', { count: 'exact', head: true })
+        setUserCount(count || 0)
+      } catch { setUserCount(0) }
     }
     load()
   }, [seedResult])
@@ -552,6 +550,20 @@ function Overview() {
   )
 }
 
+const SETTINGS_DEFAULTS = {
+  site_name: 'Wanda',
+  site_tagline: 'Experience Nigeria',
+  contact_email: '',
+  features: '{"deals":true,"discovery":true,"community":true,"explore":true}',
+}
+
+const SETTINGS_DESCRIPTIONS = {
+  site_name: 'The display name of your platform shown in headers and metadata.',
+  site_tagline: 'A short tagline or subtitle shown alongside the site name.',
+  contact_email: 'Primary contact email for admin notifications and support.',
+  features: 'JSON object toggling platform features on/off (deals, discovery, community, explore).',
+}
+
 function SettingsSection({ session }) {
   const [configs, setConfigs] = useState({})
   const [saving, setSaving] = useState(false)
@@ -564,8 +576,15 @@ function SettingsSection({ session }) {
         const rows = await af('cms_config')
         const c = {}
         rows.forEach(r => { c[r.key] = typeof r.value === 'string' ? r.value : JSON.stringify(r.value) })
+        // Apply defaults for any missing keys
+        for (const [key, val] of Object.entries(SETTINGS_DEFAULTS)) {
+          if (!(key in c)) c[key] = val
+        }
         setConfigs(c)
-      } catch { /* empty */ }
+      } catch {
+        // If table doesn't exist yet, use all defaults
+        setConfigs({ ...SETTINGS_DEFAULTS })
+      }
     }
     load()
   }, [])
@@ -589,6 +608,14 @@ function SettingsSection({ session }) {
   return (
     <>
       <div className="admin-table-wrap" style={{ padding: '1.5rem' }}>
+        <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'rgba(14,165,233,0.06)', borderRadius: '0.75rem', border: '1px solid rgba(14,165,233,0.15)' }}>
+          <h3 style={{ color: '#fff', fontSize: '0.95rem', marginBottom: '0.5rem' }}>⚙️ Platform Settings</h3>
+          <p style={{ color: '#94a3b8', fontSize: '0.8rem', margin: 0, lineHeight: 1.6 }}>
+            Configure core platform settings below. Changes are saved directly to the database
+            and take effect immediately. Use the <strong style={{ color: '#fff' }}>features</strong> field
+            to enable or disable major sections of the app.
+          </p>
+        </div>
         <div className="admin-form-grid">
           {Object.entries(configs).map(([key, val]) => (
             <div key={key} className="admin-field">
@@ -598,6 +625,9 @@ function SettingsSection({ session }) {
                 value={val}
                 onChange={e => setConfigs(prev => ({ ...prev, [key]: e.target.value }))}
               />
+              {SETTINGS_DESCRIPTIONS[key] && (
+                <p style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.3rem' }}>{SETTINGS_DESCRIPTIONS[key]}</p>
+              )}
             </div>
           ))}
         </div>
@@ -612,35 +642,108 @@ function SettingsSection({ session }) {
   )
 }
 
-function UsersSection({ session }) {
+const ROLE_CONFIG = {
+  admin:     { color: '#a78bfa', bg: 'rgba(168,139,250,0.15)', border: '#a78bfa44', icon: <ShieldCheckmarkRegular fontSize={12} />, label: 'Admin' },
+  moderator: { color: '#60a5fa', bg: 'rgba(96,165,250,0.15)',  border: '#60a5fa44', icon: <CheckmarkCircleRegular fontSize={12} />, label: 'Moderator' },
+  editor:    { color: '#2dd4bf', bg: 'rgba(45,212,191,0.15)',   border: '#2dd4bf44', icon: <EditRegular fontSize={12} />, label: 'Editor' },
+  user:      { color: '#64748b', bg: 'rgba(255,255,255,0.05)',  border: 'transparent', icon: <PersonRegular fontSize={12} />, label: 'User' },
+}
+
+const ROLE_OPTIONS = ['admin', 'moderator', 'editor', 'user']
+
+function UsersSection({ session, profile }) {
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState(null)
   const [search, setSearch] = useState('')
+  const isReadOnly = profile?.role === 'moderator'
+  const isSuperAdmin = profile?.role === 'admin'
+
+  // Invitations state
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteRole, setInviteRole] = useState('editor')
+  const [inviting, setInviting] = useState(false)
+  const [invitations, setInvitations] = useState([])
 
   useEffect(() => {
     loadUsers()
-  }, [])
+    if (isSuperAdmin) {
+      loadInvitations()
+    }
+  }, [isSuperAdmin])
 
   async function loadUsers() {
     setLoading(true)
     try {
-      const { data, error } = await supabase.from('profiles').select('*').order('created_at', { ascending: false })
-      if (error) throw error
-      setUsers(data || [])
+      // Try ordering by updated_at first; if column is missing, fall back to no ordering
+      let result = await supabase.from('profiles').select('*').order('updated_at', { ascending: false })
+      if (result.error) {
+        // Retry without ordering (handles missing updated_at column)
+        result = await supabase.from('profiles').select('*')
+      }
+      if (result.error) throw result.error
+      setUsers(result.data || [])
     } catch (e) {
-      setToast({ msg: 'Could not load users: ' + e.message, type: 'error' })
+      console.error('Could not load users:', e)
+      setToast({ msg: 'Could not load users. Run apply-all-fixes.sql in Supabase.', type: 'error' })
     }
     setLoading(false)
   }
 
-  async function toggleRole(user) {
-    const newRole = user.role === 'admin' ? 'user' : 'admin'
+  async function loadInvitations() {
+    try {
+      const { data, error } = await supabase.from('staff_invitations').select('*').order('created_at', { ascending: false })
+      if (error) {
+        // Table might not exist yet — silently ignore
+        if (error.code === '42P01') return
+        throw error
+      }
+      setInvitations(data || [])
+    } catch (e) {
+      console.warn('Could not load invitations:', e.message)
+    }
+  }
+
+  async function changeRole(user, newRole) {
+    if (user.id === session?.user?.id) return
+    if (isReadOnly) return
     try {
       const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', user.id)
       if (error) throw error
       setToast({ msg: `${user.username || user.id} is now ${newRole}`, type: 'success' })
       loadUsers()
+    } catch (e) {
+      setToast({ msg: e.message, type: 'error' })
+    }
+  }
+
+  async function handleInvite(e) {
+    e.preventDefault()
+    if (!inviteEmail) return
+    setInviting(true)
+    try {
+      const { error } = await supabase.from('staff_invitations').upsert({
+        email: inviteEmail.trim().toLowerCase(),
+        role: inviteRole,
+        invited_by: session?.user?.id
+      })
+      if (error) throw error
+      setToast({ msg: `Successfully invited ${inviteEmail} as ${inviteRole}!`, type: 'success' })
+      setInviteEmail('')
+      loadInvitations()
+      loadUsers() // Refresh user list in case they already signed up
+    } catch (e) {
+      setToast({ msg: 'Failed to invite: ' + e.message, type: 'error' })
+    }
+    setInviting(false)
+  }
+
+  async function handleRevokeInvite(email) {
+    try {
+      const { error } = await supabase.from('staff_invitations').delete().eq('email', email)
+      if (error) throw error
+      setToast({ msg: `Revoked invitation for ${email}`, type: 'success' })
+      loadInvitations()
     } catch (e) {
       setToast({ msg: e.message, type: 'error' })
     }
@@ -652,10 +755,132 @@ function UsersSection({ session }) {
     return (u.username || '').toLowerCase().includes(s)
       || (u.full_name || '').toLowerCase().includes(s)
       || (u.id || '').toLowerCase().includes(s)
+      || (u.email || '').toLowerCase().includes(s)
   })
+
+  // Pending invites are those whose email is not yet associated with any registered user profile
+  const registeredEmails = new Set(users.map(u => (u.email || '').toLowerCase()))
+  const pendingInvites = invitations.filter(inv => !registeredEmails.has(inv.email.toLowerCase()))
 
   return (
     <>
+      {/* Invite Staff Section — Only for Super Admins */}
+      {isSuperAdmin && (
+        <div className="admin-table-wrap" style={{ padding: '1.25rem', marginBottom: '1.5rem' }}>
+          <h3 style={{ color: '#fff', fontSize: '0.95rem', marginBottom: '0.25rem' }}>Invite Staff / Team Member</h3>
+          <p style={{ color: '#64748b', fontSize: '0.78rem', marginBottom: '1rem' }}>
+            Enter the email address of a team member and select their role. Once they sign up using this email, they will automatically be granted staff access.
+          </p>
+          <form onSubmit={handleInvite} style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            <div className="admin-field" style={{ flex: 2, minWidth: '220px' }}>
+              <label>Email Address</label>
+              <input
+                type="email"
+                placeholder="staff@example.com"
+                required
+                value={inviteEmail}
+                onChange={e => setInviteEmail(e.target.value)}
+              />
+            </div>
+            <div className="admin-field" style={{ flex: 1, minWidth: '150px' }}>
+              <label>Role</label>
+              <select value={inviteRole} onChange={e => setInviteRole(e.target.value)}>
+                <option value="editor">Editor</option>
+                <option value="moderator">Moderator</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <button type="submit" className="admin-btn admin-btn-primary" disabled={inviting} style={{ height: '40px' }}>
+              {inviting ? 'Inviting...' : 'Send Invite'}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* Role descriptions */}
+      <div className="admin-table-wrap" style={{ padding: '1rem 1.25rem', marginBottom: '1.5rem' }}>
+        <h3 style={{ color: '#fff', fontSize: '0.9rem', marginBottom: '0.75rem' }}>Role Permissions</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
+          {ROLE_OPTIONS.map(role => {
+            const rc = ROLE_CONFIG[role]
+            const descriptions = {
+              admin: 'Full access — manage all content, users, invitations, and settings',
+              moderator: 'Can approve/reject submissions, edit existing content',
+              editor: 'Can create and edit content, upload images',
+              user: 'Regular user, no admin access',
+            }
+            return (
+              <div key={role} style={{ padding: '0.6rem 0.75rem', background: rc.bg, borderRadius: '0.5rem', border: `1px solid ${rc.border}` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.3rem' }}>
+                  <span style={{ color: rc.color }}>{rc.icon}</span>
+                  <strong style={{ color: rc.color, fontSize: '0.8rem' }}>{rc.label}</strong>
+                </div>
+                <p style={{ color: '#94a3b8', fontSize: '0.7rem', margin: 0, lineHeight: 1.4 }}>{descriptions[role]}</p>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Pending Invitations List */}
+      {isSuperAdmin && pendingInvites.length > 0 && (
+        <div className="admin-table-wrap" style={{ marginBottom: '1.5rem' }}>
+          <div style={{ padding: '0.8rem 1.25rem', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <h3 style={{ color: '#fff', fontSize: '0.88rem', margin: 0 }}>Pending Invitations ({pendingInvites.length})</h3>
+          </div>
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Email Address</th>
+                <th>Assigned Role</th>
+                <th>Invited On</th>
+                <th style={{ width: '100px' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pendingInvites.map(inv => {
+                const rc = ROLE_CONFIG[inv.role] || ROLE_CONFIG.editor
+                return (
+                  <tr key={inv.email}>
+                    <td>
+                      <strong style={{ color: '#fff' }}>{inv.email}</strong>
+                    </td>
+                    <td>
+                      <span style={{
+                        padding: '0.2rem 0.5rem',
+                        borderRadius: '0.5rem',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        background: rc.bg,
+                        color: rc.color,
+                        border: `1px solid ${rc.border}`,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                      }}>
+                        {rc.icon} {rc.label}
+                      </span>
+                    </td>
+                    <td style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                      {new Date(inv.created_at).toLocaleDateString()}
+                    </td>
+                    <td>
+                      <button
+                        className="admin-btn admin-btn-danger admin-btn-sm"
+                        onClick={() => handleRevokeInvite(inv.email)}
+                        title="Cancel this invitation"
+                      >
+                        Cancel
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       <div className="admin-toolbar">
         <input
           type="text"
@@ -676,53 +901,319 @@ function UsersSection({ session }) {
               <tr>
                 <th>Avatar</th>
                 <th>Username</th>
+                <th>Email</th>
                 <th>Role</th>
                 <th>XP</th>
                 <th>Level</th>
                 <th>Streak</th>
                 <th>Joined</th>
-                <th>Actions</th>
+                {!isReadOnly && <th>Actions</th>}
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td colSpan={8} style={{ textAlign: 'center', color: '#64748b' }}>No users found</td></tr>
-              ) : filtered.map(u => (
-                <tr key={u.id}>
-                  <td><span style={{ fontSize: '1.3rem' }}>{u.avatar_url || '🧭'}</span></td>
+                <tr><td colSpan={isReadOnly ? 8 : 9} style={{ textAlign: 'center', color: '#64748b' }}>No users found</td></tr>
+              ) : filtered.map(u => {
+                const rc = ROLE_CONFIG[u.role] || ROLE_CONFIG.user
+                const isSelf = u.id === session?.user?.id
+                return (
+                  <tr key={u.id}>
+                    <td>{u.avatar_url && u.avatar_url.startsWith('http') ? <img src={u.avatar_url} alt="" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)' }} onError={e => { e.target.style.display = 'none'; e.target.insertAdjacentText('afterend', '🧭') }} /> : <span style={{ fontSize: '1.3rem' }}>{u.avatar_url || '🧭'}</span>}</td>
+                    <td>
+                      <strong>{u.username || 'Unnamed'}</strong>
+                      {u.full_name && <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{u.full_name}</div>}
+                    </td>
+                    <td style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                      {u.email || <span style={{ color: '#475569' }}>{u.id.slice(0, 8)}…</span>}
+                    </td>
+                    <td>
+                      <span style={{
+                        padding: '0.2rem 0.5rem',
+                        borderRadius: '0.5rem',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        background: rc.bg,
+                        color: rc.color,
+                        border: `1px solid ${rc.border}`,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                      }}>
+                        {rc.icon} {rc.label}
+                      </span>
+                    </td>
+                    <td>{u.total_xp || 0}</td>
+                    <td>{u.level || 1}</td>
+                    <td>{u.streak_days || 0}</td>
+                    <td style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                      {u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}
+                    </td>
+                    {!isReadOnly && (
+                      <td>
+                        <select
+                          value={u.role || 'user'}
+                          onChange={e => changeRole(u, e.target.value)}
+                          disabled={isSelf}
+                          title={isSelf ? "Can't change your own role" : 'Change user role'}
+                          style={{
+                            background: 'rgba(255,255,255,0.06)',
+                            color: rc.color,
+                            border: `1px solid ${rc.border}`,
+                            borderRadius: '0.4rem',
+                            padding: '0.3rem 0.5rem',
+                            fontSize: '0.75rem',
+                            cursor: isSelf ? 'not-allowed' : 'pointer',
+                            opacity: isSelf ? 0.5 : 1,
+                          }}
+                        >
+                          {ROLE_OPTIONS.map(r => (
+                            <option key={r} value={r}>{ROLE_CONFIG[r].label}</option>
+                          ))}
+                        </select>
+                      </td>
+                    )}
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
+    </>
+  )
+}
+
+function SubmissionsSection({ session }) {
+  const [submissions, setSubmissions] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [toast, setToast] = useState(null)
+  const [actioning, setActioning] = useState(null)
+
+  const loadSubmissions = useCallback(async () => {
+    setLoading(true)
+    try {
+      if (!supabase) throw new Error('Supabase client not initialized')
+      const { data, error } = await supabase
+        .from('business_listings')
+        .select('*')
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      setSubmissions(data || [])
+    } catch (e) {
+      setToast({ msg: 'Failed to load submissions: ' + e.message, type: 'error' })
+    }
+    setLoading(false)
+  }, [])
+
+  useEffect(() => {
+    loadSubmissions()
+  }, [loadSubmissions])
+
+  async function handleApprove(sub) {
+    setActioning(sub.id)
+    try {
+      if (!supabase) throw new Error('Supabase client not initialized')
+      
+      // Auto-generate unique slug
+      let slug = sub.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+      // Check if slug exists in cms_listings
+      const { data: existing } = await supabase.from('cms_listings').select('id').eq('id', slug)
+      if (existing && existing.length > 0) {
+        slug = `${slug}-${Math.floor(1000 + Math.random() * 9000)}`
+      }
+
+      // Copy to cms_listings
+      const PRICE_MIN_MAP = {
+        '₦': 1000,
+        '₦₦': 5000,
+        '₦₦₦': 15000,
+        '₦₦₦₦': 30000,
+        '₦ Budget': 1000,
+        '₦₦ Mid-range': 5000,
+        '₦₦₦ Premium': 15000,
+        '₦₦₦₦ Luxury': 30000
+      }
+      const pMin = PRICE_MIN_MAP[sub.price_range] || 5000
+
+      const newListing = {
+        id: slug,
+        name: sub.name,
+        category: sub.category,
+        subcategory: sub.subcategory || '',
+        area: sub.area,
+        address: sub.address || '',
+        price_min: pMin,
+        price_max: pMin * 3,
+        phone: sub.phone || '',
+        whatsapp: sub.whatsapp || '',
+        website: sub.website || '',
+        instagram: sub.instagram || '',
+        hours: sub.hours || '',
+        description: sub.description || '',
+        status: 'published',
+        rating: 4.0,
+        lat: 6.45,
+        lng: 3.39,
+        created_at: new Date().toISOString(),
+        created_by: session?.user?.id,
+        photo: sub.logo_url || (sub.photos && sub.photos.length > 0 ? sub.photos[0] : ''),
+        photos: sub.photos || []
+      }
+
+      const { error: insertError } = await supabase.from('cms_listings').insert([newListing])
+      if (insertError) throw insertError
+
+      // Update business_listings status
+      const { error: updateError } = await supabase
+        .from('business_listings')
+        .update({ status: 'approved' })
+        .eq('id', sub.id)
+      if (updateError) throw updateError
+
+      // Clear cache so changes propagate to users instantly
+      clearCache()
+
+      setToast({ msg: 'Listing approved and published successfully!', type: 'success' })
+      loadSubmissions()
+    } catch (e) {
+      setToast({ msg: 'Error: ' + e.message, type: 'error' })
+    }
+    setActioning(null)
+  }
+
+  async function handleReject(subId) {
+    setActioning(subId)
+    try {
+      if (!supabase) throw new Error('Supabase client not initialized')
+      const { error } = await supabase
+        .from('business_listings')
+        .update({ status: 'rejected' })
+        .eq('id', subId)
+      if (error) throw error
+      setToast({ msg: 'Listing rejected.', type: 'success' })
+      loadSubmissions()
+    } catch (e) {
+      setToast({ msg: 'Error: ' + e.message, type: 'error' })
+    }
+    setActioning(null)
+  }
+
+  const filtered = submissions.filter(s => {
+    const query = search.toLowerCase()
+    return !search || 
+      (s.name || '').toLowerCase().includes(query) ||
+      (s.area || '').toLowerCase().includes(query) ||
+      (s.category || '').toLowerCase().includes(query) ||
+      (s.status || '').toLowerCase().includes(query)
+  })
+
+  return (
+    <>
+      <div className="admin-toolbar">
+        <input 
+          className="admin-search" 
+          placeholder="Search submissions by name, category, status..." 
+          value={search} 
+          onChange={e => setSearch(e.target.value)} 
+        />
+        <span style={{ color: '#64748b', fontSize: '0.85rem' }}>{submissions.length} total submissions</span>
+      </div>
+
+      <div className="admin-table-wrap">
+        {loading ? (
+          <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>Loading submissions...</div>
+        ) : filtered.length === 0 ? (
+          <div className="admin-empty">
+            <div className="admin-empty-icon"><MailInboxRegular fontSize={48} /></div>
+            <p>No business submissions found.</p>
+          </div>
+        ) : (
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Business Name</th>
+                <th>Category</th>
+                <th>Area &amp; Address</th>
+                <th>Contact info</th>
+                <th>Status</th>
+                <th>Submitted</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map(sub => (
+                <tr key={sub.id}>
                   <td>
-                    <strong>{u.username || 'Unnamed'}</strong>
-                    {u.full_name && <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{u.full_name}</div>}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      {sub.logo_url && <img src={sub.logo_url} alt="" style={{ width: 32, height: 32, borderRadius: '6px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)' }} />}
+                      <div>
+                        <strong>{sub.name}</strong>
+                        {sub.price_range && <span style={{ marginLeft: '0.4rem', fontSize: '0.7rem', color: '#a78bfa' }}>{sub.price_range}</span>}
+                        {sub.description && (
+                          <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.25rem', maxWidth: '280px', whiteSpace: 'normal' }}>
+                            {sub.description}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </td>
                   <td>
-                    <span style={{
-                      padding: '0.2rem 0.5rem',
-                      borderRadius: '0.5rem',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      background: u.role === 'admin' ? 'rgba(168,139,250,0.15)' : 'rgba(255,255,255,0.05)',
-                      color: u.role === 'admin' ? '#a78bfa' : '#64748b',
-                      border: `1px solid ${u.role === 'admin' ? '#a78bfa44' : 'transparent'}`,
-                    }}>
-                      {u.role === 'admin' ? <><ShieldCheckmarkRegular fontSize={12} /> Admin</> : <><PersonRegular fontSize={12} /> User</>}
+                    <span className="admin-badge admin-badge-info">{sub.category}</span>
+                    {sub.subcategory && <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{sub.subcategory}</div>}
+                  </td>
+                  <td>
+                    <div>📍 <strong>{sub.area}</strong></div>
+                    {sub.address && <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{sub.address}</div>}
+                    {sub.hours && <div style={{ fontSize: '0.75rem', color: '#a78bfa' }}>🕒 {sub.hours}</div>}
+                  </td>
+                  <td>
+                    <div style={{ fontSize: '0.8rem', lineHeight: '1.4' }}>
+                      {sub.phone && <div>📞 {sub.phone}</div>}
+                      {sub.whatsapp && <div>💬 {sub.whatsapp}</div>}
+                      {sub.website && <div>🌐 <a href={sub.website} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>Website</a></div>}
+                      {sub.instagram && <div>📸 <a href={`https://instagram.com/${sub.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>{sub.instagram}</a></div>}
+                    </div>
+                    {sub.photos && sub.photos.length > 0 && (
+                      <div style={{ display: 'flex', gap: '0.3rem', marginTop: '0.4rem', flexWrap: 'wrap' }}>
+                        {sub.photos.slice(0, 4).map((url, i) => (
+                          <img key={i} src={url} alt="" style={{ width: 40, height: 40, borderRadius: '4px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)' }} />
+                        ))}
+                        {sub.photos.length > 4 && <span style={{ fontSize: '0.7rem', color: '#64748b', alignSelf: 'center' }}>+{sub.photos.length - 4}</span>}
+                      </div>
+                    )}
+                  </td>
+                  <td>
+                    <span className={`admin-badge admin-badge-${sub.status}`}>
+                      {sub.status}
                     </span>
                   </td>
-                  <td>{u.total_xp || 0}</td>
-                  <td>{u.level || 1}</td>
-                  <td>{u.streak_days || 0}</td>
                   <td style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                    {u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}
+                    {sub.created_at ? new Date(sub.created_at).toLocaleDateString() : '—'}
                   </td>
                   <td>
-                    <button
-                      className={`admin-btn ${u.role === 'admin' ? 'admin-btn-danger' : 'admin-btn-primary'}`}
-                      style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem' }}
-                      onClick={() => toggleRole(u)}
-                      disabled={u.id === session?.user?.id}
-                      title={u.id === session?.user?.id ? "Can't change your own role" : ''}
-                    >
-                      {u.role === 'admin' ? 'Revoke Admin' : 'Make Admin'}
-                    </button>
+                    {sub.status === 'pending' ? (
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button 
+                          className="admin-btn admin-btn-primary admin-btn-sm"
+                          onClick={() => handleApprove(sub)}
+                          disabled={actioning !== null}
+                        >
+                          Approve
+                        </button>
+                        <button 
+                          className="admin-btn admin-btn-danger admin-btn-sm"
+                          onClick={() => handleReject(sub.id)}
+                          disabled={actioning !== null}
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    ) : (
+                      <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Resolved</span>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -738,7 +1229,17 @@ function UsersSection({ session }) {
 
 export default function AdminDashboard({ session, profile }) {
   const [active, setActive] = useState('overview')
-  const section = SECTIONS.find(s => s.id === active)
+  const userRole = profile?.role || 'user'
+
+  // Filter sidebar tabs by role
+  const visibleSections = SECTIONS.filter(s => {
+    if (userRole === 'admin') return true
+    if (userRole === 'moderator') return s.id !== 'settings'
+    if (userRole === 'editor') return s.id !== 'settings' && s.id !== 'users'
+    return true
+  })
+
+  const section = visibleSections.find(s => s.id === active) || visibleSections[0]
 
   return (
     <AdminGuard session={session} profile={profile}>
@@ -748,10 +1249,10 @@ export default function AdminDashboard({ session, profile }) {
             <h2><WrenchRegular fontSize={24} style={{ verticalAlign: 'text-bottom', marginRight: '4px' }} /> Wanda <span>CMS</span></h2>
           </div>
           <nav className="admin-nav">
-            {SECTIONS.map((s, i) => (
+            {visibleSections.map((s, i) => (
               <div key={s.id}>
                 {i === 1 && <div className="admin-nav-divider" />}
-                {i === SECTIONS.length - 1 && <div className="admin-nav-divider" />}
+                {i === visibleSections.length - 1 && <div className="admin-nav-divider" />}
                 <button
                   className={`admin-nav-item ${active === s.id ? 'active' : ''}`}
                   onClick={() => setActive(s.id)}
@@ -771,9 +1272,10 @@ export default function AdminDashboard({ session, profile }) {
             </div>
           </div>
           {active === 'overview' && <Overview />}
-          {active === 'users' && <UsersSection session={session} />}
+          {active === 'users' && <UsersSection session={session} profile={profile} />}
           {active === 'settings' && <SettingsSection session={session} />}
-          {section?.table && <CrudSection table={section.table} session={session} />}
+          {active === 'submissions' && <SubmissionsSection session={session} />}
+          {section?.table && <CrudSection table={section.table} session={session} profile={profile} />}
         </main>
       </div>
     </AdminGuard>

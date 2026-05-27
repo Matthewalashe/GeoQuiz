@@ -1,7 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { POSTCARD_QUESTIONS, CONTENT_PACKS } from '../data/postcards.js'
 import { playCorrect, playWrong, vibrate } from '../engine/audio.js'
+import { autoSubmitScore } from '../engine/leaderboard.js'
+import { addXP } from '../engine/xp.js'
+import ResultCard from './ResultCard.jsx'
 
 function shuffle(arr) {
   const a = [...arr]
@@ -23,12 +26,33 @@ export default function PostCards() {
   const [score, setScore] = useState(0)
   const [results, setResults] = useState([])
   const [imgLoaded, setImgLoaded] = useState(false)
+  const [imgError, setImgError] = useState(false)
   const [streak, setStreak] = useState(0)
+
+  // Preload next image
+  useEffect(() => {
+    if (questions.length > 0 && idx + 1 < questions.length) {
+      const nextImg = new Image()
+      nextImg.src = questions[idx + 1].image
+    }
+  }, [idx, questions])
 
   function startGame() {
     const pool = pack === 'all' ? POSTCARD_QUESTIONS : POSTCARD_QUESTIONS.filter(q => q.category === pack)
     setQuestions(shuffle(pool).slice(0, Math.min(12, pool.length)))
     setStarted(true)
+  }
+
+  function resetGame() {
+    setStarted(false)
+    setIdx(0)
+    setSelected(null)
+    setPhase('playing')
+    setScore(0)
+    setResults([])
+    setImgLoaded(false)
+    setImgError(false)
+    setStreak(0)
   }
 
   // Pack selector
@@ -70,20 +94,39 @@ export default function PostCards() {
   }
 
   function next() {
-    if (idx + 1 >= questions.length) { setPhase('done'); return }
-    setIdx(p => p + 1); setSelected(null); setPhase('playing'); setImgLoaded(false)
+    if (idx + 1 >= questions.length) {
+      // Game complete — save score
+      const finalScore = score + (selected === q?.correct ? 100 : 0)
+      addXP('POSTCARD_COMPLETE')
+      autoSubmitScore({
+        gameType: 'postcards',
+        score: finalScore,
+        maxScore: questions.length * 100,
+        questionCount: questions.length,
+      })
+      setPhase('done')
+      return
+    }
+    setIdx(p => p + 1); setSelected(null); setPhase('playing'); setImgLoaded(false); setImgError(false)
   }
 
   if (phase === 'done') {
-    const pct = Math.round((score / (questions.length * 100)) * 100)
+    const correctCount = results.filter(r => r.correct).length
     return (
       <section className="pc-results">
-        <div className="pc-results-card">
-          <div className="pc-results-icon">{pct >= 80 ? '🏆' : pct >= 50 ? '⭐' : '📷'}</div>
-          <h2>PostCard Results</h2>
-          <div className="pc-results-score">{score}<span>/{questions.length * 100}</span></div>
-          <div className="pc-results-pct">{pct}% accuracy</div>
-          <div className="pc-results-breakdown">
+        <ResultCard
+          score={score}
+          maxScore={questions.length * 100}
+          correctCount={correctCount}
+          totalQuestions={questions.length}
+          pointsEarned={60}
+          gameTitle="PostCards"
+          gameEmoji="📷"
+          gameType="postcards"
+          onPlayAgain={resetGame}
+        >
+          {/* Per-question breakdown */}
+          <div className="pc-results-breakdown" style={{ marginTop: '0.75rem' }}>
             {results.map((r, i) => (
               <div key={i} className={`pc-rb-row ${r.correct ? 'correct' : 'wrong'}`}>
                 <span className="pc-rb-num">{i + 1}</span>
@@ -92,11 +135,7 @@ export default function PostCards() {
               </div>
             ))}
           </div>
-          <div className="pc-results-actions">
-            <button className="btn btn-primary" onClick={() => window.location.reload()}>Play Again</button>
-            <button className="btn btn-outline" onClick={() => navigate('/play')}>Games</button>
-          </div>
-        </div>
+        </ResultCard>
       </section>
     )
   }
@@ -112,9 +151,18 @@ export default function PostCards() {
       </div>
 
       <div className="pc-image-wrap">
-        {!imgLoaded && <div className="pc-image-skeleton"><div className="pc-skeleton-pulse" /></div>}
-        <img src={q.image} alt="Postcard" className={`pc-image ${imgLoaded ? 'loaded' : ''}`}
-          onLoad={() => setImgLoaded(true)} draggable={false} />
+        {!imgLoaded && !imgError && <div className="pc-image-skeleton"><div className="pc-skeleton-pulse" /></div>}
+        {imgError ? (
+          <div className="pc-image-fallback">
+            <span className="pc-fallback-emoji">🏙️</span>
+            <span className="pc-fallback-text">Image unavailable</span>
+          </div>
+        ) : (
+          <img src={q.image} alt="Postcard" className={`pc-image ${imgLoaded ? 'loaded' : ''}`}
+            onLoad={() => setImgLoaded(true)}
+            onError={() => { setImgError(true); setImgLoaded(true) }}
+            draggable={false} />
+        )}
         <div className="pc-image-badge">{q.category === 'visual' ? 'VISUAL GUESS' : q.category === 'cultural' ? 'CULTURAL' : 'HYPERLOCAL'}</div>
       </div>
 

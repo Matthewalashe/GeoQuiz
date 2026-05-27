@@ -4,7 +4,7 @@ import { CheckmarkCircleRegular } from '@fluentui/react-icons'
 import { addXP } from '../engine/xp.js'
 import { autoSubmitScore } from '../engine/leaderboard.js'
 import { RewardsOverlay, useRewardSystem } from '../engine/rewards.jsx'
-import PostGameLoop from './PostGameLoop.jsx'
+import ResultCard from './ResultCard.jsx'
 
 // ── PUZZLES (20 themed mini-crosswords) ──────────────────────────────────────
 const PUZZLES = [
@@ -401,18 +401,15 @@ export default function CrosswordGame() {
 
       <div className="cw-body">
         {won ? (
-          <>
-          <div className="game-end-card">
-            <CheckmarkCircleRegular fontSize={64} style={{ color: '#22c55e' }} />
-            <h2>Puzzle Solved! 🎉</h2>
-            <div className="game-end-score">+100 XP</div>
-            <div className="game-end-actions">
-              <button className="btn btn-primary" onClick={() => { setStarted(false); setSelectedPuzzle(null) }}>Try Another</button>
-              <button className="btn btn-outline" onClick={() => navigate('/play')}>Back to Hub</button>
-            </div>
-          </div>
-          <PostGameLoop gameType="crossword" onPlayAgain={() => { setStarted(false); setSelectedPuzzle(null) }} />
-          </>
+          <ResultCard
+            score={100}
+            maxScore={100}
+            pointsEarned={100}
+            gameTitle="Crossword"
+            gameEmoji="✏️"
+            gameType="crossword"
+            onPlayAgain={() => { setWon(false); setStarted(false); setSelectedPuzzle(null) }}
+          />
         ) : (
           <>
             <div className="cw-clue-bar">

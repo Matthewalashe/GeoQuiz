@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   getXPData, getLevel, getLevelProgress, getLevelTitle, getXPToNextLevel,
   getCurrentLeague, getNextLeague, getXPToNextLeague, LEAGUE_TIERS,
-  generateLeaguePeers, DAILY_REWARDS, getRewardsData, claimDailyReward, canClaimToday,
+  DAILY_REWARDS, getRewardsData, claimDailyReward, canClaimToday,
 } from '../engine/xp.js'
+import { fetchLeaguePeers } from '../lib/supabase.js'
 
 export default function Rewards() {
   const navigate = useNavigate()
@@ -27,7 +28,28 @@ export default function Rewards() {
   const nextLeague = getNextLeague(xp.totalXP)
   const xpToNext = getXPToNextLeague(xp.totalXP)
   const playerName = localStorage.getItem('geoquiz_player') || 'Explorer'
-  const peers = generateLeaguePeers(xp.weeklyXP || 0, playerName)
+  const [peers, setPeers] = useState([])
+
+  // Fetch real league peers from Supabase
+  useEffect(() => {
+    const nextLg = getNextLeague(xp.totalXP)
+    const minXP = league.minXP
+    const maxXP = nextLg ? nextLg.minXP - 1 : 999999
+    fetchLeaguePeers(Math.max(0, minXP - 500), maxXP + 500, 20).then(data => {
+      // Mark current player and sort
+      const withPlayer = data.map(p => ({
+        ...p,
+        isPlayer: p.name?.toLowerCase() === playerName.toLowerCase(),
+      }))
+      // Ensure player is in list
+      const hasPlayer = withPlayer.some(p => p.isPlayer)
+      if (!hasPlayer) {
+        withPlayer.push({ name: playerName, avatar: localStorage.getItem('geoquiz_avatar') || '🧭', xp: xp.totalXP || 0, level: level, isPlayer: true })
+      }
+      withPlayer.sort((a, b) => (b.xp || 0) - (a.xp || 0))
+      setPeers(withPlayer)
+    }).catch(() => setPeers([{ name: playerName, avatar: '🧭', xp: xp.totalXP || 0, isPlayer: true }]))
+  }, [xp.totalXP])
 
   function handleClaim() {
     const result = claimDailyReward()
@@ -165,7 +187,7 @@ export default function Rewards() {
             {peers.slice(0, 15).map((p, i) => (
               <div key={i} className={`rw-lb-row ${p.isPlayer ? 'is-you' : ''} ${i < 10 ? 'promote' : ''}`}>
                 <span className="rw-lb-rank">{i + 1}</span>
-                <span className="rw-lb-avatar">{p.avatar}</span>
+                <span className="rw-lb-avatar">{p.avatar && p.avatar.startsWith('http') ? <img src={p.avatar} alt="" style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover' }} onError={e => { e.target.outerHTML = '🧭' }} /> : (p.avatar || '🧭')}</span>
                 <span className="rw-lb-pname">{p.name}{p.isPlayer ? ' (You)' : ''}</span>
                 <span className="rw-lb-pxp">{p.xp} XP</span>
                 {i < 10 && <span className="rw-lb-badge">▲</span>}

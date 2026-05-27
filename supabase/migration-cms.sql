@@ -6,6 +6,7 @@
 -- 0. PROFILES TABLE (must exist before anything else)
 CREATE TABLE IF NOT EXISTS profiles (
   id uuid REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+  email text,
   username text,
   full_name text,
   avatar_url text DEFAULT '🧭',
@@ -17,6 +18,8 @@ CREATE TABLE IF NOT EXISTS profiles (
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );
+-- Safety net: add columns that may be missing if table already existed
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS email text;
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
 CREATE POLICY "Users can view own profile" ON profiles FOR SELECT USING (true);
@@ -33,15 +36,18 @@ CREATE POLICY "Users can insert own profile" ON profiles FOR INSERT WITH CHECK (
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO public.profiles (id, username, full_name, avatar_url, role)
+  INSERT INTO public.profiles (id, email, username, full_name, avatar_url, role)
   VALUES (
     NEW.id,
+    NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'username', split_part(NEW.email, '@', 1)),
     COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
     COALESCE(NEW.raw_user_meta_data->>'avatar_url', '🧭'),
     'user'
   )
-  ON CONFLICT (id) DO NOTHING;
+  ON CONFLICT (id) DO UPDATE SET
+    email = EXCLUDED.email,
+    updated_at = NOW();
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -100,7 +106,8 @@ ALTER TABLE cms_listings ADD COLUMN IF NOT EXISTS photos text[] DEFAULT '{}';
 ALTER TABLE cms_listings ADD COLUMN IF NOT EXISTS tags text[] DEFAULT '{}';
 ALTER TABLE cms_listings ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "anon_read_listings" ON cms_listings;
-CREATE POLICY "anon_read_listings" ON cms_listings FOR SELECT USING (status = 'published');
+DROP POLICY IF EXISTS "public_read_listings" ON cms_listings;
+CREATE POLICY "public_read_listings" ON cms_listings FOR SELECT TO anon, authenticated USING (status = 'published');
 DROP POLICY IF EXISTS "admin_all_listings" ON cms_listings;
 CREATE POLICY "admin_all_listings" ON cms_listings FOR ALL TO authenticated
   USING (EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin'))
@@ -135,7 +142,8 @@ CREATE TABLE IF NOT EXISTS cms_deals (
 ALTER TABLE cms_deals ADD COLUMN IF NOT EXISTS photos text[] DEFAULT '{}';
 ALTER TABLE cms_deals ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "anon_read_deals" ON cms_deals;
-CREATE POLICY "anon_read_deals" ON cms_deals FOR SELECT USING (status = 'published');
+DROP POLICY IF EXISTS "public_read_deals" ON cms_deals;
+CREATE POLICY "public_read_deals" ON cms_deals FOR SELECT TO anon, authenticated USING (status = 'published');
 DROP POLICY IF EXISTS "admin_all_deals" ON cms_deals;
 CREATE POLICY "admin_all_deals" ON cms_deals FOR ALL TO authenticated
   USING (EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin'))
@@ -160,7 +168,8 @@ CREATE TABLE IF NOT EXISTS cms_sponsors (
 );
 ALTER TABLE cms_sponsors ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "anon_read_sponsors" ON cms_sponsors;
-CREATE POLICY "anon_read_sponsors" ON cms_sponsors FOR SELECT USING (active = true AND status = 'published');
+DROP POLICY IF EXISTS "public_read_sponsors" ON cms_sponsors;
+CREATE POLICY "public_read_sponsors" ON cms_sponsors FOR SELECT TO anon, authenticated USING (active = true AND status = 'published');
 DROP POLICY IF EXISTS "admin_all_sponsors" ON cms_sponsors;
 CREATE POLICY "admin_all_sponsors" ON cms_sponsors FOR ALL TO authenticated
   USING (EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin'))
@@ -189,7 +198,8 @@ CREATE TABLE IF NOT EXISTS cms_discovery (
 );
 ALTER TABLE cms_discovery ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "anon_read_discovery" ON cms_discovery;
-CREATE POLICY "anon_read_discovery" ON cms_discovery FOR SELECT USING (status = 'published');
+DROP POLICY IF EXISTS "public_read_discovery" ON cms_discovery;
+CREATE POLICY "public_read_discovery" ON cms_discovery FOR SELECT TO anon, authenticated USING (status = 'published');
 DROP POLICY IF EXISTS "admin_all_discovery" ON cms_discovery;
 CREATE POLICY "admin_all_discovery" ON cms_discovery FOR ALL TO authenticated
   USING (EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin'))
@@ -216,7 +226,8 @@ CREATE TABLE IF NOT EXISTS cms_questions (
 );
 ALTER TABLE cms_questions ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "anon_read_questions" ON cms_questions;
-CREATE POLICY "anon_read_questions" ON cms_questions FOR SELECT USING (status = 'published');
+DROP POLICY IF EXISTS "public_read_questions" ON cms_questions;
+CREATE POLICY "public_read_questions" ON cms_questions FOR SELECT TO anon, authenticated USING (status = 'published');
 DROP POLICY IF EXISTS "admin_all_questions" ON cms_questions;
 CREATE POLICY "admin_all_questions" ON cms_questions FOR ALL TO authenticated
   USING (EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin'))
@@ -233,7 +244,8 @@ CREATE TABLE IF NOT EXISTS cms_config (
 );
 ALTER TABLE cms_config ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "anon_read_config" ON cms_config;
-CREATE POLICY "anon_read_config" ON cms_config FOR SELECT USING (true);
+DROP POLICY IF EXISTS "public_read_config" ON cms_config;
+CREATE POLICY "public_read_config" ON cms_config FOR SELECT TO anon, authenticated USING (true);
 DROP POLICY IF EXISTS "admin_all_config" ON cms_config;
 CREATE POLICY "admin_all_config" ON cms_config FOR ALL TO authenticated
   USING (EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin'))

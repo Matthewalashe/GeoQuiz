@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import L from 'leaflet'
-import { DISCOVERY_CATEGORIES, getPOIsByCategory } from '../data/discovery.js'
+import { DISCOVERY_CATEGORIES } from '../data/discovery.js'
+import { getDiscoveryPOIs } from '../lib/cms.js'
 import { distanceTo, saveCheckIn, hasCheckedIn } from '../engine/exploration.js'
 import { addXP } from '../engine/xp.js'
 import SpinWheel from './SpinWheel.jsx'
@@ -125,6 +126,18 @@ export default function Discovery() {
   const [checkInToast, setCheckInToast] = useState(null)
   const [sortBy, setSortBy] = useState('default')
   const [showWheel, setShowWheel] = useState(false)
+  const [poisList, setPoisList] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  // Fetch POIs
+  useEffect(() => {
+    getDiscoveryPOIs()
+      .then(data => {
+        setPoisList(data)
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [])
 
   // Request user location
   useEffect(() => {
@@ -154,26 +167,32 @@ export default function Discovery() {
   }
 
   // Filter POIs
-  let pois = getPOIsByCategory(activeCategory)
-  if (search.trim()) {
-    const q = search.toLowerCase()
-    pois = pois.filter(p =>
-      p.name.toLowerCase().includes(q) ||
-      p.area.toLowerCase().includes(q) ||
-      p.description.toLowerCase().includes(q)
-    )
-  }
-  if (sortBy === 'rating') {
-    pois = [...pois].sort((a, b) => b.rating - a.rating)
-  } else if (sortBy === 'distance' && userPos) {
-    pois = [...pois].sort((a, b) =>
-      distanceTo(userPos.lat, userPos.lng, a.lat, a.lng) -
-      distanceTo(userPos.lat, userPos.lng, b.lat, b.lng)
-    )
-  } else {
-    // Sponsored first
-    pois = [...pois].sort((a, b) => (b.sponsored ? 1 : 0) - (a.sponsored ? 1 : 0))
-  }
+  const pois = useMemo(() => {
+    let results = poisList
+    if (activeCategory !== 'all') {
+      results = results.filter(p => p.category === activeCategory)
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      results = results.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        p.area.toLowerCase().includes(q) ||
+        p.description.toLowerCase().includes(q)
+      )
+    }
+    if (sortBy === 'rating') {
+      results = [...results].sort((a, b) => b.rating - a.rating)
+    } else if (sortBy === 'distance' && userPos) {
+      results = [...results].sort((a, b) =>
+        distanceTo(userPos.lat, userPos.lng, a.lat, a.lng) -
+        distanceTo(userPos.lat, userPos.lng, b.lat, b.lng)
+      )
+    } else {
+      // Sponsored first
+      results = [...results].sort((a, b) => (b.sponsored ? 1 : 0) - (a.sponsored ? 1 : 0))
+    }
+    return results
+  }, [poisList, activeCategory, search, sortBy, userPos])
 
   return (
     <section className="discovery">
@@ -226,63 +245,75 @@ export default function Discovery() {
         ))}
       </div>
 
-      {/* Sort bar (list only) */}
-      {view === 'list' && (
-        <div className="disc-sort-bar">
-          <span className="disc-count">{pois.length} places</span>
-          <div className="disc-sort-btns">
-            <button className={`disc-sort-btn ${sortBy === 'default' ? 'active' : ''}`} onClick={() => setSortBy('default')}>Featured</button>
-            <button className={`disc-sort-btn ${sortBy === 'rating' ? 'active' : ''}`} onClick={() => setSortBy('rating')}>★ Rating</button>
-            {userPos && <button className={`disc-sort-btn ${sortBy === 'distance' ? 'active' : ''}`} onClick={() => setSortBy('distance')}>📍 Nearby</button>}
-          </div>
+      {loading ? (
+        <div className="ex-empty" style={{ minHeight: '40vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="loading-icon" style={{ animation: 'float 2s ease-in-out infinite', fontSize: '3rem' }}>🧭</div>
+          <p style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>Loading spots...</p>
         </div>
-      )}
-
-      {/* Location notice */}
-      {!userPos && (
-        <div className="disc-location-notice">
-          📶 Enable location for distance info &amp; check-ins
-        </div>
-      )}
-
-      {/* ── LIST VIEW ── */}
-      {view === 'list' && (
-        <div className="disc-list">
-          {pois.length === 0 ? (
-            <div className="disc-empty">No places found. Try a different search.</div>
-          ) : (
-            pois.map(poi => (
-              <POICard key={poi.id} poi={poi} userPos={userPos} onCheckedIn={handleCheckedIn} />
-            ))
+      ) : (
+        <>
+          {/* Sort bar (list only) */}
+          {view === 'list' && (
+            <div className="disc-sort-bar">
+              <span className="disc-count">{pois.length} places</span>
+              <div className="disc-sort-btns">
+                <button className={`disc-sort-btn ${sortBy === 'default' ? 'active' : ''}`} onClick={() => setSortBy('default')}>Featured</button>
+                <button className={`disc-sort-btn ${sortBy === 'rating' ? 'active' : ''}`} onClick={() => setSortBy('rating')}>★ Rating</button>
+                {userPos && <button className={`disc-sort-btn ${sortBy === 'distance' ? 'active' : ''}`} onClick={() => setSortBy('distance')}>📍 Nearby</button>}
+              </div>
+            </div>
           )}
-        </div>
-      )}
 
-      {/* ── MAP VIEW ── */}
-      {view === 'map' && (
-        <div className="disc-map-wrap">
-          <MapContainer
-            center={[6.52, 3.40]}
-            zoom={11}
-            style={{ width: '100%', height: '100%' }}
-            zoomControl={true}
-            attributionControl={false}
-          >
-            <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png" />
-            {pois.map(poi => (
-              <Marker key={poi.id} position={[poi.lat, poi.lng]} icon={poiIcon(poi.sponsored)}>
-                <Popup className="disc-popup">
-                  <strong>{poi.name}</strong>
-                  <br />{poi.area} · ★ {poi.rating}
-                  <br />
-                  <a href={poi.mapUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>
-                    {poi.cta} →
-                  </a>
-                </Popup>
-              </Marker>
-            ))}
-          </MapContainer>
-        </div>
+          {/* Location notice */}
+          {!userPos && (
+            <div className="disc-location-notice">
+              📶 Enable location for distance info &amp; check-ins
+            </div>
+          )}
+
+          {/* ── LIST VIEW ── */}
+          {view === 'list' && (
+            <div className="disc-list">
+              {pois.length === 0 ? (
+                <div className="disc-empty">No places found. Try a different search.</div>
+              ) : (
+                pois.map(poi => (
+                  <POICard key={poi.id} poi={poi} userPos={userPos} onCheckedIn={handleCheckedIn} />
+                ))
+              )}
+            </div>
+          )}
+
+          {/* ── MAP VIEW ── */}
+          {view === 'map' && (
+            <div className="disc-map-wrap">
+              <MapContainer
+                center={[6.52, 3.40]}
+                zoom={11}
+                style={{ width: '100%', height: '100%' }}
+                zoomControl={true}
+                attributionControl={false}
+              >
+                <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png" />
+                {pois.map(poi => {
+                  if (!poi.lat || !poi.lng || isNaN(poi.lat) || isNaN(poi.lng)) return null
+                  return (
+                    <Marker key={poi.id} position={[poi.lat, poi.lng]} icon={poiIcon(poi.sponsored)}>
+                      <Popup className="disc-popup">
+                        <strong>{poi.name}</strong>
+                        <br />{poi.area} · ★ {poi.rating}
+                        <br />
+                        <a href={poi.mapUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>
+                          {poi.cta} →
+                        </a>
+                      </Popup>
+                    </Marker>
+                  )
+                })}
+              </MapContainer>
+            </div>
+          )}
+        </>
       )}
     </section>
   )
