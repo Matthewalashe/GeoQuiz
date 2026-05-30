@@ -66,7 +66,7 @@ export default function ResultCard({
   const navigate = useNavigate()
   const [step, setStep] = useState(0)
   const [shared, setShared] = useState(false)
-  const [isLoggedIn, setIsLoggedIn] = useState(true)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [animKey, setAnimKey] = useState(0)
   const [showConfetti, setShowConfetti] = useState(true)
   const [countUp, setCountUp] = useState(0)
@@ -87,9 +87,10 @@ export default function ResultCard({
 
   // Check auth
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsLoggedIn(!!session)
-    })
+    if (!supabase) return
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => setIsLoggedIn(!!session))
+      .catch(() => setIsLoggedIn(false))
   }, [])
 
   // Play celebration sound + vibration on mount (score reveal)

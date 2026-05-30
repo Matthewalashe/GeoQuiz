@@ -13,15 +13,23 @@ function AvatarImg({ src, size = 32 }) {
 export default function Leaderboard({ isEmbedded = false }) {
   const [entries, setEntries] = useState([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState(null)
   const [tab, setTab] = useState('all')
   const playerName = localStorage.getItem('geoquiz_player') || ''
 
-  useEffect(() => {
+  function loadLeaderboard() {
+    setLoading(true)
+    setFetchError(null)
     fetchLeaderboard(50)
       .then(data => setEntries(data))
-      .catch(err => console.error('Leaderboard fetch error:', err))
+      .catch(err => {
+        console.error('Leaderboard fetch error:', err)
+        setFetchError(err.message || 'Failed to load leaderboard.')
+      })
       .finally(() => setLoading(false))
-  }, [])
+  }
+
+  useEffect(() => { loadLeaderboard() }, [])
 
   function formatDate(dateStr) {
     if (!dateStr) return ''
@@ -81,6 +89,12 @@ export default function Leaderboard({ isEmbedded = false }) {
 
       {loading ? (
         <div className="lb-empty">Loading scores...</div>
+      ) : fetchError ? (
+        <div className="lb-empty" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ fontSize: '2rem' }}>⚠️</div>
+          <p style={{ color: '#ef4444', fontSize: '0.9rem' }}>{fetchError}</p>
+          <button onClick={loadLeaderboard} style={{ padding: '0.5rem 1.2rem', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '0.5rem', fontWeight: 600, cursor: 'pointer' }}>Try Again</button>
+        </div>
       ) : filtered.length === 0 ? (
         <div className="lb-empty">
           <p>{tab === 'all' ? 'No scores yet. Be the first!' : 'No scores this period.'}</p>

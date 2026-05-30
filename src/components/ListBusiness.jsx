@@ -96,8 +96,8 @@ export default function ListBusiness() {
   // ─── Photo handlers ───
   function handlePhotosSelect(e) {
     const files = Array.from(e.target.files || [])
-    if (photoFiles.length + files.length > 5) {
-      setError('Maximum 5 photos allowed')
+    if (photoFiles.length + files.length > 4) {
+      setError('Maximum 4 photos allowed')
       return
     }
     const validFiles = files.filter(f => {
@@ -331,7 +331,7 @@ export default function ListBusiness() {
           </div>
 
           <label className="lb-label" style={{ marginTop: '0.75rem' }}>
-            Business Photos <span className="lb-label-hint">(up to 5 — show your best!)</span>
+            Business Photos <span className="lb-label-hint">(up to 4 — show your best!)</span>
           </label>
           <div className="lb-photos-grid">
             {photoPreviews.map((preview, i) => (
@@ -340,7 +340,7 @@ export default function ListBusiness() {
                 <button type="button" className="lb-remove-btn" onClick={() => removePhoto(i)}>✕</button>
               </div>
             ))}
-            {photoFiles.length < 5 && (
+            {photoFiles.length < 4 && (
               <div className="lb-photo-add" onClick={() => photoInputRef.current?.click()}>
                 <span className="lb-photo-add-icon">📸</span>
                 <span className="lb-photo-add-label">Add photo</span>
