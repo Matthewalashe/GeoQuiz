@@ -17,11 +17,14 @@ export const supabase = supabaseUrl && supabaseAnonKey
   : null
 
 // ---- Waitlist ----
-export async function submitWaitlist({ name, email, role, message, referral }) {
+export async function submitWaitlist({ name, email, role, message }) {
   if (!supabase) {
     throw new Error('Database connection unavailable. Please check your internet and try again.')
   }
-  const { error } = await supabase.from('waitlist').insert([{ name, email, role, message, referral }])
+  const row = { name, email }
+  if (role) row.role = role
+  if (message) row.message = message
+  const { error } = await supabase.from('waitlist').insert([row])
   if (error) throw error
 
   // Send email notification (fire-and-forget)
