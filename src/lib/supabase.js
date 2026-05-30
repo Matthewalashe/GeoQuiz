@@ -51,17 +51,30 @@ export async function submitScore({ playerName, score, maxScore, questionCount, 
   if (!supabase) {
     throw new Error('Database connection unavailable. Your score could not be saved.')
   }
-  const row = {
+  // Core fields that must exist
+  const coreRow = {
     player_name: playerName,
     score,
     max_score: maxScore,
     question_count: questionCount,
-    game_type: gameType,
   }
-  if (categories) row.categories = categories
-  if (difficulty) row.difficulty = difficulty
-  const { error } = await supabase.from('leaderboard').insert([row])
-  if (error) throw error
+  // Optional fields — may not exist in table yet
+  const fullRow = { ...coreRow }
+  if (gameType) fullRow.game_type = gameType
+  if (categories) fullRow.categories = categories
+  if (difficulty) fullRow.difficulty = difficulty
+
+  // Try with all fields first
+  const { error } = await supabase.from('leaderboard').insert([fullRow])
+  if (error) {
+    // If column doesn't exist, retry with core fields only
+    if (error.message?.includes('schema cache') || error.code === 'PGRST204') {
+      const { error: retryErr } = await supabase.from('leaderboard').insert([coreRow])
+      if (retryErr) throw retryErr
+      return { success: true }
+    }
+    throw error
+  }
   return { success: true }
 }
 
