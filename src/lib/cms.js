@@ -236,6 +236,261 @@ export async function getConfig(key) {
   } catch { return null }
 }
 
+// ══════════════════════════════════════════════════════════════
+// P3 — Game Content Fetchers
+// ══════════════════════════════════════════════════════════════
+
+// ---- Trivia Packs ----
+export async function getTriviaPacks() {
+  const c = cached('trivia_packs')
+  if (c) return c
+  if (!supabase) return { data: {}, error: 'Database connection unavailable.' }
+  try {
+    const { data, error } = await supabase
+      .from('cms_trivia_packs')
+      .select('*')
+      .order('sort_order')
+    if (error) throw error
+    // Group by pack_id into { lagos: {id, label, desc, color, questions: [...]}, ... }
+    const packs = {}
+    for (const row of (data || [])) {
+      if (!packs[row.pack_id]) {
+        packs[row.pack_id] = {
+          id: row.pack_id,
+          label: row.label,
+          desc: row.description,
+          color: row.color,
+          questions: [],
+        }
+      }
+      packs[row.pack_id].questions.push({
+        q: row.question,
+        options: row.options,
+        ans: row.answer_index,
+        fact: row.fact,
+      })
+    }
+    const result = { data: packs, error: null }
+    setCache('trivia_packs', result)
+    return result
+  } catch (e) {
+    console.warn('CMS trivia fetch error:', e.message)
+    return { data: {}, error: e.message || 'Failed to load trivia packs.' }
+  }
+}
+
+// ---- Crossword Puzzles ----
+export async function getCrosswords() {
+  const c = cached('crosswords')
+  if (c) return c
+  if (!supabase) return { data: [], error: 'Database connection unavailable.' }
+  try {
+    const { data, error } = await supabase
+      .from('cms_crosswords')
+      .select('*')
+      .order('sort_order')
+    if (error) throw error
+    const mapped = (data || []).map(p => ({
+      id: p.puzzle_id,
+      label: p.label,
+      desc: p.description,
+      color: p.color,
+      size: p.grid_size,
+      across: p.across,
+      down: p.down,
+    }))
+    const result = { data: mapped, error: null }
+    setCache('crosswords', result)
+    return result
+  } catch (e) {
+    console.warn('CMS crosswords fetch error:', e.message)
+    return { data: [], error: e.message || 'Failed to load crosswords.' }
+  }
+}
+
+// ---- Word Game ----
+export async function getWordGame() {
+  const c = cached('wordgame')
+  if (c) return c
+  if (!supabase) return { data: [], error: 'Database connection unavailable.' }
+  try {
+    const { data, error } = await supabase
+      .from('cms_wordgame')
+      .select('*')
+      .order('sort_order')
+    if (error) throw error
+    const mapped = (data || []).map(w => ({
+      id: w.word_id,
+      word: w.word,
+      clue: w.clue,
+      category: w.category,
+      image: w.image,
+      description: w.description,
+      history: w.history || [],
+      footnotes: w.footnotes || [],
+    }))
+    const result = { data: mapped, error: null }
+    setCache('wordgame', result)
+    return result
+  } catch (e) {
+    console.warn('CMS wordgame fetch error:', e.message)
+    return { data: [], error: e.message || 'Failed to load word game data.' }
+  }
+}
+
+// ---- Postcards ----
+export async function getPostcards() {
+  const c = cached('postcards')
+  if (c) return c
+  if (!supabase) return { data: [], error: 'Database connection unavailable.' }
+  try {
+    const { data, error } = await supabase
+      .from('cms_postcards')
+      .select('*')
+      .order('sort_order')
+    if (error) throw error
+    const mapped = (data || []).map(p => ({
+      id: p.postcard_id,
+      image: p.image,
+      question: p.question,
+      options: p.options,
+      correct: p.correct_index,
+      category: p.category,
+      fact: p.fact,
+      pack: p.pack,
+    }))
+    const result = { data: mapped, error: null }
+    setCache('postcards', result)
+    return result
+  } catch (e) {
+    console.warn('CMS postcards fetch error:', e.message)
+    return { data: [], error: e.message || 'Failed to load postcards.' }
+  }
+}
+
+// ---- Puzzle Images ----
+export async function getPuzzleImages() {
+  const c = cached('puzzles')
+  if (c) return c
+  if (!supabase) return { data: [], error: 'Database connection unavailable.' }
+  try {
+    const { data, error } = await supabase
+      .from('cms_puzzles')
+      .select('*')
+      .order('sort_order')
+    if (error) throw error
+    const mapped = (data || []).map(p => ({
+      id: p.puzzle_id,
+      label: p.label,
+      src: p.image,
+      difficulty: p.difficulty,
+    }))
+    const result = { data: mapped, error: null }
+    setCache('puzzles', result)
+    return result
+  } catch (e) {
+    console.warn('CMS puzzles fetch error:', e.message)
+    return { data: [], error: e.message || 'Failed to load puzzle images.' }
+  }
+}
+
+// ---- Adventures ----
+export async function getAdventures() {
+  const c = cached('adventures')
+  if (c) return c
+  if (!supabase) return { data: {}, error: 'Database connection unavailable.' }
+  try {
+    const { data, error } = await supabase
+      .from('cms_adventures')
+      .select('*')
+      .order('sort_order')
+    if (error) throw error
+    // Build keyed object: { commute: {id, title, desc, color, start, nodes}, ... }
+    const stories = {}
+    for (const s of (data || [])) {
+      stories[s.story_id] = {
+        id: s.story_id,
+        title: s.title,
+        desc: s.description,
+        color: s.color,
+        start: s.start_node,
+        nodes: s.nodes,
+      }
+    }
+    const result = { data: stories, error: null }
+    setCache('adventures', result)
+    return result
+  } catch (e) {
+    console.warn('CMS adventures fetch error:', e.message)
+    return { data: {}, error: e.message || 'Failed to load adventures.' }
+  }
+}
+
+// ---- Campaign (Story Mode) ----
+export async function getCampaign() {
+  const c = cached('campaign')
+  if (c) return c
+  if (!supabase) return { data: [], error: 'Database connection unavailable.' }
+  try {
+    const { data, error } = await supabase
+      .from('cms_campaign')
+      .select('*')
+      .order('sort_order')
+    if (error) throw error
+    const mapped = (data || []).map(ch => ({
+      id: ch.chapter_id,
+      week: ch.week,
+      title: ch.title,
+      subtitle: ch.subtitle,
+      icon: ch.icon,
+      color: ch.color,
+      badge: ch.badge,
+      badgeEmoji: ch.badge_emoji,
+      intro: ch.intro,
+      categoryFilter: ch.category_filter,
+      questionCount: ch.question_count,
+      stages: ch.stages || [],
+      facts: ch.facts || [],
+    }))
+    const result = { data: mapped, error: null }
+    setCache('campaign', result)
+    return result
+  } catch (e) {
+    console.warn('CMS campaign fetch error:', e.message)
+    return { data: [], error: e.message || 'Failed to load campaign data.' }
+  }
+}
+
+// ---- Coloring Scenes ----
+export async function getColoringScenes() {
+  const c = cached('coloring')
+  if (c) return c
+  if (!supabase) return { data: [], error: 'Database connection unavailable.' }
+  try {
+    const { data, error } = await supabase
+      .from('cms_coloring')
+      .select('*')
+      .order('sort_order')
+    if (error) throw error
+    const mapped = (data || []).map(s => ({
+      id: s.scene_id,
+      title: s.title,
+      desc: s.description,
+      color: s.color,
+      minParts: s.min_parts,
+      guide: s.guide || {},
+      parts: s.parts || [],
+      svgKey: s.svg_key,
+    }))
+    const result = { data: mapped, error: null }
+    setCache('coloring', result)
+    return result
+  } catch (e) {
+    console.warn('CMS coloring fetch error:', e.message)
+    return { data: [], error: e.message || 'Failed to load coloring scenes.' }
+  }
+}
+
 // ---- Admin: CRUD operations ----
 export async function adminFetch(table, filters = {}) {
   if (!supabase) {
