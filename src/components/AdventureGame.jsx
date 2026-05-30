@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CheckmarkCircleRegular, DismissCircleRegular, HeartPulseRegular } from '@fluentui/react-icons'
 import { playCorrect, playWrong, vibrate } from '../engine/audio.js'
@@ -7,13 +7,29 @@ import { autoSubmitScore } from '../engine/leaderboard.js'
 import { RewardsOverlay, useRewardSystem } from '../engine/rewards.jsx'
 import ResultCard from './ResultCard.jsx'
 
-import { ADVENTURE_STORIES as STORIES } from '../data/adventures.js'
-
-const STORY_LIST = Object.values(STORIES)
+import { getAdventures } from '../lib/cms.js'
 
 export default function AdventureGame() {
   const navigate = useNavigate()
   const { popXP, celebrateCorrect, celebrateWrong, openChest, showStarBurst, rewardProps } = useRewardSystem()
+
+  // CMS data
+  const [STORIES, setSTORIES] = useState({})
+  const [STORY_LIST, setSTORY_LIST] = useState([])
+  const [cmsLoading, setCmsLoading] = useState(true)
+  const [cmsError, setCmsError] = useState(null)
+
+  function loadStories() {
+    setCmsLoading(true); setCmsError(null)
+    getAdventures().then(({ data, error }) => {
+      if (error) { setCmsError(error); setCmsLoading(false); return }
+      setSTORIES(data)
+      setSTORY_LIST(Object.values(data))
+      setCmsLoading(false)
+    })
+  }
+  useEffect(() => { loadStories() }, [])
+
   const [selectedStory, setSelectedStory] = useState(null)
   const [started, setStarted] = useState(false)
   const [nodeId, setNodeId] = useState(null)
@@ -75,7 +91,20 @@ export default function AdventureGame() {
     else navigate(dest)
   }
 
-  // ── STORY SELECTOR ───────────────────────────────────────────────────────
+  // Loading / Error
+  if (cmsLoading) return <div className="game-lobby"><div className="lb-empty">Loading adventures...</div></div>
+  if (cmsError) return (
+    <div className="game-lobby">
+      <button className="gh-back" onClick={() => navigate('/play')}>← Back</button>
+      <div className="lb-empty" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ fontSize: '2rem' }}>⚠️</div>
+        <p style={{ color: '#ef4444', fontSize: '0.9rem' }}>{cmsError}</p>
+        <button onClick={loadStories} style={{ padding: '0.5rem 1.2rem', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '0.5rem', fontWeight: 600, cursor: 'pointer' }}>Try Again</button>
+      </div>
+    </div>
+  )
+
+  // ── STORY SELECTOR ───────────────────────────────────────────────────────────────────
   if (!started) {
     return (
       <div className="game-lobby">

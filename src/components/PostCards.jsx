@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { POSTCARD_QUESTIONS, CONTENT_PACKS } from '../data/postcards.js'
+import { getPostcards } from '../lib/cms.js'
 import { playCorrect, playWrong, vibrate } from '../engine/audio.js'
 import { autoSubmitScore } from '../engine/leaderboard.js'
 import { addXP } from '../engine/xp.js'
@@ -17,6 +17,29 @@ function shuffle(arr) {
 
 export default function PostCards() {
   const navigate = useNavigate()
+  const [allQuestions, setAllQuestions] = useState([])
+  const [contentPacks, setContentPacks] = useState([])
+  const [cmsLoading, setCmsLoading] = useState(true)
+  const [cmsError, setCmsError] = useState(null)
+
+  function loadData() {
+    setCmsLoading(true); setCmsError(null)
+    getPostcards().then(({ data, error }) => {
+      if (error) { setCmsError(error); setCmsLoading(false); return }
+      setAllQuestions(data)
+      // Build content packs from fetched data
+      const cats = {}
+      data.forEach(q => { cats[q.category] = (cats[q.category] || 0) + 1 })
+      const packs = [{ id: 'all', label: 'All', count: data.length }]
+      if (cats.visual) packs.push({ id: 'visual', label: '📷 Visual Guess', count: cats.visual })
+      if (cats.cultural) packs.push({ id: 'cultural', label: '🎭 Cultural', count: cats.cultural })
+      if (cats.hyperlocal) packs.push({ id: 'hyperlocal', label: '📍 Hyperlocal', count: cats.hyperlocal })
+      setContentPacks(packs)
+      setCmsLoading(false)
+    })
+  }
+  useEffect(() => { loadData() }, [])
+
   const [pack, setPack] = useState('all')
   const [started, setStarted] = useState(false)
   const [questions, setQuestions] = useState([])
@@ -38,7 +61,7 @@ export default function PostCards() {
   }, [idx, questions])
 
   function startGame() {
-    const pool = pack === 'all' ? POSTCARD_QUESTIONS : POSTCARD_QUESTIONS.filter(q => q.category === pack)
+    const pool = pack === 'all' ? allQuestions : allQuestions.filter(q => q.category === pack)
     setQuestions(shuffle(pool).slice(0, Math.min(12, pool.length)))
     setStarted(true)
   }
@@ -55,6 +78,19 @@ export default function PostCards() {
     setStreak(0)
   }
 
+  // Loading / Error
+  if (cmsLoading) return <div className="game-lobby"><div className="lb-empty">Loading postcards...</div></div>
+  if (cmsError) return (
+    <div className="game-lobby">
+      <button className="gh-back" onClick={() => navigate('/play')}>← Back</button>
+      <div className="lb-empty" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ fontSize: '2rem' }}>⚠️</div>
+        <p style={{ color: '#ef4444', fontSize: '0.9rem' }}>{cmsError}</p>
+        <button onClick={loadData} style={{ padding: '0.5rem 1.2rem', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '0.5rem', fontWeight: 600, cursor: 'pointer' }}>Try Again</button>
+      </div>
+    </div>
+  )
+
   // Pack selector
   if (!started) {
     return (
@@ -63,7 +99,7 @@ export default function PostCards() {
         <h2 className="pc-pack-title">📷 PostCards</h2>
         <p className="pc-pack-sub">Choose a content pack</p>
         <div className="pc-packs">
-          {CONTENT_PACKS.map(p => (
+          {contentPacks.map(p => (
             <button
               key={p.id}
               className={`pc-pack-card ${pack === p.id ? 'active' : ''}`}

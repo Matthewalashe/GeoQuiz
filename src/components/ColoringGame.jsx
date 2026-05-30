@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CheckmarkCircleRegular, ArrowClockwiseRegular } from '@fluentui/react-icons'
 import { addXP } from '../engine/xp.js'
 import { autoSubmitScore } from '../engine/leaderboard.js'
 import ResultCard from './ResultCard.jsx'
+import { getColoringScenes } from '../lib/cms.js'
 
 // ── PALETTE ──────────────────────────────────────────────────────────────────
 const PALETTE = [
@@ -21,44 +22,15 @@ const PALETTE = [
   { color: '#a16207', label: 'Brown' },
 ]
 
-// ── SCENES ───────────────────────────────────────────────────────────────────
-const SCENES = {
-  danfo: {
-    id: 'danfo',
-    title: '🚐 Danfo Bus',
-    desc: 'Color the iconic Lagos yellow bus',
-    color: '#fde047',
-    minParts: 4,
-    parts: ['body', 'bumper', 'window1', 'window2', 'window3', 'stripe', 'wheel1', 'wheel2', 'headlight'],
-    guide: { body: '#fde047', bumper: '#1e293b', window1: '#64748b', window2: '#64748b', window3: '#64748b', stripe: '#1e293b', wheel1: '#1e293b', wheel2: '#1e293b', headlight: '#fde047' },
-    SVG: DanfoSVG,
-  },
-  market: {
-    id: 'market',
-    title: '🏪 Lagos Market',
-    desc: 'Bring a market scene to life with color',
-    color: '#f97316',
-    minParts: 3,
-    parts: ['stall1', 'stall2', 'stall3', 'roof1', 'roof2', 'roof3', 'ground', 'goods'],
-    guide: { stall1: '#ef4444', stall2: '#3b82f6', stall3: '#22c55e', roof1: '#a16207', roof2: '#a16207', roof3: '#a16207', ground: '#64748b', goods: '#fde047' },
-    SVG: MarketSVG,
-  },
-  house: {
-    id: 'house',
-    title: '🏠 Lagos Bungalow',
-    desc: 'Paint a classic Nigerian compound house',
-    color: '#22c55e',
-    minParts: 4,
-    parts: ['wall', 'roof', 'door', 'window1', 'window2', 'path', 'sky', 'grass'],
-    guide: { wall: '#fde047', roof: '#ef4444', door: '#a16207', window1: '#64748b', window2: '#64748b', path: '#d4a574', sky: '#3b82f6', grass: '#22c55e' },
-    SVG: HouseSVG,
-  },
-}
-
+// ── SVG REGISTRY — maps svg_key to React SVG components ─────────────────────
 import { EXTRA_SCENES } from '../data/coloringScenes.jsx'
-Object.assign(SCENES, EXTRA_SCENES)
-
-const SCENE_LIST = Object.values(SCENES)
+const SVG_REGISTRY = {
+  danfo: DanfoSVG,
+  market: MarketSVG,
+  house: HouseSVG,
+  // Add SVGs from EXTRA_SCENES
+  ...Object.fromEntries(Object.entries(EXTRA_SCENES).map(([k, v]) => [k, v.SVG])),
+}
 
 // ── SVGs ─────────────────────────────────────────────────────────────────────
 function DanfoSVG({ fills, onFill }) {
@@ -138,6 +110,31 @@ function HouseSVG({ fills, onFill }) {
 // ── COMPONENT ────────────────────────────────────────────────────────────────
 export default function ColoringGame() {
   const navigate = useNavigate()
+
+  // CMS data
+  const [SCENES, setSCENES] = useState({})
+  const [SCENE_LIST, setSCENE_LIST] = useState([])
+  const [cmsLoading, setCmsLoading] = useState(true)
+  const [cmsError, setCmsError] = useState(null)
+
+  function loadScenes() {
+    setCmsLoading(true); setCmsError(null)
+    getColoringScenes().then(({ data, error }) => {
+      if (error) { setCmsError(error); setCmsLoading(false); return }
+      // Merge CMS metadata with code-side SVG registry
+      const merged = {}
+      data.forEach(scene => {
+        const svgKey = scene.svg_key || scene.id
+        const SVG = SVG_REGISTRY[svgKey]
+        if (SVG) merged[scene.id] = { ...scene, SVG }
+      })
+      setSCENES(merged)
+      setSCENE_LIST(Object.values(merged))
+      setCmsLoading(false)
+    })
+  }
+  useEffect(() => { loadScenes() }, [])
+
   const [selectedScene, setSelectedScene] = useState(null)
   const [started, setStarted] = useState(false)
   const [activeColor, setActiveColor] = useState(PALETTE[0].color)
@@ -189,7 +186,20 @@ export default function ColoringGame() {
 
   const scene = selectedScene ? SCENES[selectedScene] : null
 
-  // ── SCENE SELECTOR ───────────────────────────────────────────────────────
+  // Loading / Error
+  if (cmsLoading) return <div className="game-lobby"><div className="lb-empty">Loading coloring scenes...</div></div>
+  if (cmsError) return (
+    <div className="game-lobby">
+      <button className="gh-back" onClick={() => navigate('/play')}>← Back</button>
+      <div className="lb-empty" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ fontSize: '2rem' }}>⚠️</div>
+        <p style={{ color: '#ef4444', fontSize: '0.9rem' }}>{cmsError}</p>
+        <button onClick={loadScenes} style={{ padding: '0.5rem 1.2rem', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '0.5rem', fontWeight: 600, cursor: 'pointer' }}>Try Again</button>
+      </div>
+    </div>
+  )
+
+  // ── SCENE SELECTOR ─────────────────────────────────────────────────────────────────
   if (!started) {
     return (
       <div className="game-lobby">

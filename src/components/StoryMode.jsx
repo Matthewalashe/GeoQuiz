@@ -1,11 +1,26 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CAMPAIGN_CHAPTERS, getCampaignProgress } from '../data/campaign.js'
+import { getCampaignProgress } from '../data/campaign.js'
+import { getCampaign } from '../lib/cms.js'
 import { MAP_SKINS, getActiveSkin, setActiveSkin, isSkinUnlocked } from '../data/map-skins.js'
 import { getXPData } from '../engine/xp.js'
 
 export default function StoryMode() {
   const navigate = useNavigate()
+  const [CAMPAIGN_CHAPTERS, setCampaignChapters] = useState([])
+  const [cmsLoading, setCmsLoading] = useState(true)
+  const [cmsError, setCmsError] = useState(null)
+
+  function loadCampaign() {
+    setCmsLoading(true); setCmsError(null)
+    getCampaign().then(({ data, error }) => {
+      if (error) { setCmsError(error); setCmsLoading(false); return }
+      setCampaignChapters(data)
+      setCmsLoading(false)
+    })
+  }
+  useEffect(() => { loadCampaign() }, [])
+
   const [tab, setTab] = useState('campaign') // campaign | skins
   const [selectedChapter, setSelectedChapter] = useState(null)
   const progress = getCampaignProgress()
@@ -16,6 +31,19 @@ export default function StoryMode() {
     setActiveSkin(id)
     setActiveSkinId(id)
   }
+
+  // Loading / Error
+  if (cmsLoading) return <div className="game-lobby"><div className="lb-empty">Loading campaign...</div></div>
+  if (cmsError) return (
+    <div className="game-lobby">
+      <button className="gh-back" onClick={() => navigate('/play')}>← Back</button>
+      <div className="lb-empty" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ fontSize: '2rem' }}>⚠️</div>
+        <p style={{ color: '#ef4444', fontSize: '0.9rem' }}>{cmsError}</p>
+        <button onClick={loadCampaign} style={{ padding: '0.5rem 1.2rem', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '0.5rem', fontWeight: 600, cursor: 'pointer' }}>Try Again</button>
+      </div>
+    </div>
+  )
 
   // ── Chapter Detail View ──
   if (selectedChapter) {

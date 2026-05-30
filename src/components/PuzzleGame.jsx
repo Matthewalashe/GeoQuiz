@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { PUZZLE_IMAGES } from '../data/postcards.js'
+import { getPuzzleImages } from '../lib/cms.js'
 
 function shuffleArr(arr) {
   const a = [...arr]
@@ -38,7 +38,19 @@ function isSolved(tiles) {
 
 export default function PuzzleGame() {
   const navigate = useNavigate()
-  const [puzzles] = useState(() => shuffleArr(PUZZLE_IMAGES))
+  const [puzzles, setPuzzles] = useState([])
+  const [cmsLoading, setCmsLoading] = useState(true)
+  const [cmsError, setCmsError] = useState(null)
+
+  function loadPuzzles() {
+    setCmsLoading(true); setCmsError(null)
+    getPuzzleImages().then(({ data, error }) => {
+      if (error) { setCmsError(error); setCmsLoading(false); return }
+      setPuzzles(shuffleArr(data))
+      setCmsLoading(false)
+    })
+  }
+  useEffect(() => { loadPuzzles() }, [])
   const [puzzleIdx, setPuzzleIdx] = useState(0)
   const [tiles, setTiles] = useState(createTiles)
   const [selected, setSelected] = useState(null)
@@ -109,7 +121,7 @@ export default function PuzzleGame() {
     if (puzzleIdx + 1 >= puzzles.length) {
       setPhase('allDone')
       // Submit final score to leaderboard
-      autoSubmitScore({ gameType: 'puzzle', score: score, maxScore: PUZZLE_IMAGES.length * 300, questionCount: PUZZLE_IMAGES.length })
+      autoSubmitScore({ gameType: 'puzzle', score: score, maxScore: puzzles.length * 300, questionCount: puzzles.length })
       return
     }
     setPuzzleIdx(prev => prev + 1)
@@ -127,15 +139,29 @@ export default function PuzzleGame() {
 
   const formatTime = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 
+  // Loading / Error
+  if (cmsLoading) return <div className="game-lobby"><div className="lb-empty">Loading puzzles...</div></div>
+  if (cmsError) return (
+    <div className="game-lobby">
+      <button className="gh-back" onClick={() => navigate('/play')}>← Back</button>
+      <div className="lb-empty" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ fontSize: '2rem' }}>⚠️</div>
+        <p style={{ color: '#ef4444', fontSize: '0.9rem' }}>{cmsError}</p>
+        <button onClick={loadPuzzles} style={{ padding: '0.5rem 1.2rem', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '0.5rem', fontWeight: 600, cursor: 'pointer' }}>Try Again</button>
+      </div>
+    </div>
+  )
+  if (puzzles.length === 0) return null
+
   if (phase === 'allDone') {
     const totalStars = results.reduce((s, r) => s + r.stars, 0)
     return (
       <section className="pz-results">
         <ResultCard
           score={totalStars * 100}
-          maxScore={PUZZLE_IMAGES.length * 300}
+          maxScore={puzzles.length * 300}
           correctCount={totalStars}
-          totalQuestions={PUZZLE_IMAGES.length * 3}
+          totalQuestions={puzzles.length * 3}
           pointsEarned={totalStars * 100}
           gameTitle="Puzzle"
           gameEmoji="🧩"
@@ -198,7 +224,7 @@ export default function PuzzleGame() {
       {/* Floating HUD */}
       <div className="game-hud" style={{ borderImage: 'none', borderColor: 'var(--border)' }}>
         <div className="hud-left">
-          <span className="hud-counter">🧩 {puzzleIdx + 1}/{PUZZLE_IMAGES.length}</span>
+          <span className="hud-counter">🧩 {puzzleIdx + 1}/{puzzles.length}</span>
         </div>
         <div className="hud-right">
           <span className="hud-score">{score} pts</span>

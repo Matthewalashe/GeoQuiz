@@ -1,223 +1,31 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CheckmarkCircleRegular } from '@fluentui/react-icons'
 import { addXP } from '../engine/xp.js'
 import { autoSubmitScore } from '../engine/leaderboard.js'
 import { RewardsOverlay, useRewardSystem } from '../engine/rewards.jsx'
 import ResultCard from './ResultCard.jsx'
-
-// ── PUZZLES (20 themed mini-crosswords) ──────────────────────────────────────
-const PUZZLES = [
-  { id: 'lagos', label: '🌊 Lagos Icons', desc: 'Bridges, markets & landmarks', color: '#0ea5e9', size: 5,
-    across: [
-      { num: 1, text: 'Commercial capital of Nigeria', answer: 'LAGOS', row: 0, col: 0 },
-      { num: 4, text: 'Native name for Lagos Island', answer: 'EKO', row: 2, col: 1 },
-    ],
-    down: [
-      { num: 1, text: 'Affluent Lagos peninsula', answer: 'LEKKI', row: 0, col: 0 },
-      { num: 2, text: '___maiko — a Lagos suburb', answer: 'OKOKO', row: 0, col: 3 },
-      { num: 3, text: 'Spicy Nigerian grilled meat snack', answer: 'SUYA', row: 0, col: 4 },
-    ]
-  },
-  { id: 'culture', label: '🎭 Culture & Food', desc: 'Festivals, food & Yoruba words', color: '#f97316', size: 5,
-    across: [
-      { num: 1, text: 'Yoruba masquerade festival unique to Lagos', answer: 'EYO', row: 0, col: 0 },
-      { num: 3, text: 'Popular Lagos street breakfast bread', answer: 'AGEGE', row: 2, col: 0 },
-    ],
-    down: [
-      { num: 1, text: 'Lagos beach where horses gallop', answer: 'EKO', row: 0, col: 0 },
-      { num: 2, text: 'Yoruba word for child / friend (slang)', answer: 'OMO', row: 0, col: 2 },
-      { num: 4, text: 'The "abami ___" — Fela Kuti nickname', answer: 'EDA', row: 2, col: 3 },
-    ]
-  },
-  { id: 'nigeria', label: '🇳🇬 Nigeria Knows', desc: 'History, geography & leaders', color: '#22c55e', size: 6,
-    across: [
-      { num: 1, text: "Nigeria's federal capital territory", answer: 'ABUJA', row: 0, col: 0 },
-      { num: 4, text: 'Tallest rock in Nigeria (725m)', answer: 'ZUMA', row: 3, col: 1 },
-      { num: 5, text: "Nigeria's currency", answer: 'NAIRA', row: 5, col: 0 },
-    ],
-    down: [
-      { num: 1, text: 'The first president of Nigeria', answer: 'AZIKI', row: 0, col: 0 },
-      { num: 2, text: "Nigeria's longest river (shared name)", answer: 'BENUE', row: 0, col: 2 },
-      { num: 3, text: 'Nobel Laureate: Wole ___', answer: 'SOYIN', row: 0, col: 4 },
-    ]
-  },
-  { id: 'rivers', label: '🏞️ Rivers & Water', desc: 'Rivers, lakes & waterfalls', color: '#06b6d4', size: 5,
-    across: [
-      { num: 1, text: 'River that gives Nigeria its name', answer: 'NIGER', row: 0, col: 0 },
-      { num: 3, text: 'Longest river entirely in Nigeria', answer: 'BENUE', row: 2, col: 0 },
-    ],
-    down: [
-      { num: 1, text: 'Waterfall town in Osun State (Erin-Ijesha)', answer: 'NILE', row: 0, col: 0 },
-      { num: 2, text: 'Lake in Borno State, shrinking fast', answer: 'CHAD', row: 0, col: 3 },
-    ]
-  },
-  { id: 'states', label: '🗺️ State Capitals', desc: 'Match states to capitals', color: '#8b5cf6', size: 5,
-    across: [
-      { num: 1, text: 'Capital of Kano State', answer: 'KANO', row: 0, col: 0 },
-      { num: 3, text: 'Capital of Rivers State', answer: 'PHC', row: 2, col: 0 },
-      { num: 4, text: 'Capital of Oyo State', answer: 'IBADAN', row: 3, col: 0 },
-    ],
-    down: [
-      { num: 1, text: 'Capital of Kaduna State', answer: 'KAD', row: 0, col: 0 },
-      { num: 2, text: 'Capital of Ogun State', answer: 'ABEO', row: 0, col: 2 },
-    ]
-  },
-  { id: 'food', label: '🍲 Nigerian Food', desc: 'Dishes, snacks & ingredients', color: '#ef4444', size: 5,
-    across: [
-      { num: 1, text: 'Famous Nigerian rice dish', answer: 'JOLLOF', row: 0, col: 0 },
-      { num: 3, text: 'Fried bean cake (breakfast staple)', answer: 'AKARA', row: 2, col: 0 },
-    ],
-    down: [
-      { num: 1, text: 'Cassava flour meal (swallow)', answer: 'GARRI', row: 0, col: 0 },
-      { num: 2, text: 'Fermented locust bean condiment', answer: 'OGIRI', row: 0, col: 3 },
-    ]
-  },
-  { id: 'music', label: '🎵 Nigerian Music', desc: 'Artists, genres & hits', color: '#ec4899', size: 5,
-    across: [
-      { num: 1, text: 'Genre Fela Kuti created', answer: 'AFRO', row: 0, col: 0 },
-      { num: 3, text: 'Wizkid hit song "___" (Come Closer)', answer: 'OJUEL', row: 2, col: 0 },
-    ],
-    down: [
-      { num: 1, text: 'Burna Boy album: African ___ (Giant)', answer: 'AFRI', row: 0, col: 0 },
-      { num: 2, text: 'Lagos nightclub island for concerts', answer: 'ROVE', row: 0, col: 3 },
-    ]
-  },
-  { id: 'sport', label: '⚽ Nigerian Sports', desc: 'Football, athletes & records', color: '#22c55e', size: 5,
-    across: [
-      { num: 1, text: 'Nigeria national football team (Super ___)', answer: 'EAGLE', row: 0, col: 0 },
-      { num: 3, text: 'Olympic gold sprinter: Blessing ___', answer: 'OKAGB', row: 2, col: 0 },
-    ],
-    down: [
-      { num: 1, text: 'Legendary striker: Jay-Jay ___', answer: 'EAKIN', row: 0, col: 0 },
-      { num: 2, text: 'City of the 2003 All Africa Games', answer: 'ABUJA', row: 0, col: 3 },
-    ]
-  },
-  { id: 'pidgin', label: '🗣️ Pidgin English', desc: 'Translate the slangs!', color: '#f59e0b', size: 5,
-    across: [
-      { num: 1, text: '"How far" means ___', answer: 'HELLO', row: 0, col: 0 },
-      { num: 3, text: '"Wahala" means ___', answer: 'TROUB', row: 2, col: 0 },
-    ],
-    down: [
-      { num: 1, text: '"Hustle" means to ___', answer: 'GRIND', row: 0, col: 0 },
-      { num: 2, text: '"E choke" means it\'s ___', answer: 'EPIC', row: 0, col: 3 },
-    ]
-  },
-  { id: 'nollywood', label: '🎬 Nollywood', desc: 'Movies, actors & directors', color: '#a855f7', size: 5,
-    across: [
-      { num: 1, text: 'Nigeria\'s film industry', answer: 'NOLLY', row: 0, col: 0 },
-      { num: 3, text: 'Actor: Genevieve ___ (Nnaji)', answer: 'NNAJI', row: 2, col: 0 },
-    ],
-    down: [
-      { num: 1, text: 'First Nollywood film (1992): Living in ___', answer: 'BOND', row: 0, col: 0 },
-      { num: 2, text: 'Comedy king: ___ Bello-Osagie (AY)', answer: 'ADEYI', row: 0, col: 3 },
-    ]
-  },
-  { id: 'yoruba', label: '🏛️ Yoruba Words', desc: 'Basic Yoruba vocabulary', color: '#0ea5e9', size: 5,
-    across: [
-      { num: 1, text: 'Yoruba for "water"', answer: 'OMI', row: 0, col: 0 },
-      { num: 3, text: 'Yoruba for "house"', answer: 'ILE', row: 2, col: 0 },
-    ],
-    down: [
-      { num: 1, text: 'Yoruba for "money"', answer: 'OWO', row: 0, col: 0 },
-      { num: 2, text: 'Yoruba for "road"', answer: 'ONA', row: 0, col: 2 },
-    ]
-  },
-  { id: 'igbo', label: '🌴 Igbo Words', desc: 'Basic Igbo vocabulary', color: '#22c55e', size: 5,
-    across: [
-      { num: 1, text: 'Igbo for "thank you"', answer: 'DALU', row: 0, col: 0 },
-      { num: 3, text: 'Igbo for "food"', answer: 'NRI', row: 2, col: 0 },
-    ],
-    down: [
-      { num: 1, text: 'Igbo new yam festival', answer: 'DIRI', row: 0, col: 0 },
-      { num: 2, text: 'Igbo for "one" (otu)', answer: 'OTU', row: 0, col: 2 },
-    ]
-  },
-  { id: 'hausa', label: '🕌 Hausa Words', desc: 'Basic Hausa vocabulary', color: '#f97316', size: 5,
-    across: [
-      { num: 1, text: 'Hausa for "welcome"', answer: 'SANNU', row: 0, col: 0 },
-      { num: 3, text: 'Hausa for "market"', answer: 'KASUWA', row: 2, col: 0 },
-    ],
-    down: [
-      { num: 1, text: 'Hausa for "king" (Sarki)', answer: 'SARKI', row: 0, col: 0 },
-      { num: 2, text: 'Hausa for "water"', answer: 'RUWA', row: 0, col: 3 },
-    ]
-  },
-  { id: 'landmarks', label: '🏗️ Landmarks', desc: 'Famous Nigerian structures', color: '#64748b', size: 5,
-    across: [
-      { num: 1, text: 'Rock housing the Presidential Villa', answer: 'ASO', row: 0, col: 0 },
-      { num: 3, text: 'Gateway rock on Abuja highway', answer: 'ZUMA', row: 2, col: 0 },
-    ],
-    down: [
-      { num: 1, text: 'Abeokuta rock fortress', answer: 'OLUMO', row: 0, col: 0 },
-      { num: 2, text: 'Sacred grove in Osun State', answer: 'OSUN', row: 0, col: 2 },
-    ]
-  },
-  { id: 'transport', label: '🚐 Transport', desc: 'Getting around Nigeria', color: '#eab308', size: 5,
-    across: [
-      { num: 1, text: 'Yellow Lagos bus (VW T3)', answer: 'DANFO', row: 0, col: 0 },
-      { num: 3, text: 'Three-wheeled taxi', answer: 'KEKE', row: 2, col: 0 },
-    ],
-    down: [
-      { num: 1, text: 'Motorbike taxi (banned in Lagos)', answer: 'OKADA', row: 0, col: 0 },
-      { num: 2, text: 'Lagos rapid transit bus', answer: 'BRT', row: 0, col: 3 },
-    ]
-  },
-  { id: 'markets', label: '🛒 Famous Markets', desc: 'Where Lagos shops', color: '#ef4444', size: 5,
-    across: [
-      { num: 1, text: 'Largest tech market in Africa (Ikeja)', answer: 'COMP', row: 0, col: 0 },
-      { num: 3, text: 'Auto parts market in Mushin', answer: 'LADIP', row: 2, col: 0 },
-    ],
-    down: [
-      { num: 1, text: 'Biggest market on Lagos Island', answer: 'BALOG', row: 0, col: 0 },
-      { num: 2, text: 'Mile 12 sells mainly ___', answer: 'FOOD', row: 0, col: 3 },
-    ]
-  },
-  { id: 'festivals', label: '🎊 Festivals', desc: 'Celebrations across Nigeria', color: '#a855f7', size: 5,
-    across: [
-      { num: 1, text: 'Calabar carnival month', answer: 'DEC', row: 0, col: 0 },
-      { num: 3, text: 'Durbar is celebrated during ___ (Eid)', answer: 'EID', row: 2, col: 0 },
-    ],
-    down: [
-      { num: 1, text: 'Ijebu-Ode horse festival: Ojude ___', answer: 'OBA', row: 0, col: 0 },
-      { num: 2, text: 'Argungu ___ festival in Kebbi', answer: 'FISH', row: 0, col: 2 },
-    ]
-  },
-  { id: 'nature', label: '🌿 Wildlife & Nature', desc: 'Parks, reserves & animals', color: '#16a34a', size: 5,
-    across: [
-      { num: 1, text: 'Game reserve in Bauchi State', answer: 'YANK', row: 0, col: 0 },
-      { num: 3, text: 'Gorilla sanctuary in Cross River', answer: 'AFI', row: 2, col: 0 },
-    ],
-    down: [
-      { num: 1, text: 'Lekki conservation center walk: canopy ___', answer: 'WALK', row: 0, col: 0 },
-      { num: 2, text: 'Nigeria\'s largest national park: Gashaka ___', answer: 'GUMTI', row: 0, col: 3 },
-    ]
-  },
-  { id: 'history', label: '📜 Nigerian History', desc: 'Key dates & events', color: '#78716c', size: 5,
-    across: [
-      { num: 1, text: 'Year Nigeria gained independence', answer: 'SIXTY', row: 0, col: 0 },
-      { num: 3, text: 'Civil war region (1967-70)', answer: 'BIAFR', row: 2, col: 0 },
-    ],
-    down: [
-      { num: 1, text: 'First PM: Tafawa ___', answer: 'BALEW', row: 0, col: 0 },
-      { num: 2, text: 'City that was capital before Abuja', answer: 'LAGOS', row: 0, col: 2 },
-    ]
-  },
-  { id: 'tech', label: '💻 Nigerian Tech', desc: 'Startups & innovation', color: '#0284c7', size: 5,
-    across: [
-      { num: 1, text: 'Fintech unicorn founded by Shola Akinlade', answer: 'PAYSTACK', row: 0, col: 0 },
-      { num: 3, text: 'Ride-hailing app popular in Lagos', answer: 'BOLT', row: 2, col: 0 },
-    ],
-    down: [
-      { num: 1, text: 'CcHub innovation hub location in Yaba', answer: 'YABA', row: 0, col: 0 },
-      { num: 2, text: 'Flutterwave payment ___', answer: 'API', row: 0, col: 3 },
-    ]
-  },
-]
+import { getCrosswords } from '../lib/cms.js'
 
 export default function CrosswordGame() {
   const navigate = useNavigate()
   const { showStarBurst, openChest, rewardProps } = useRewardSystem()
+
+  // CMS data
+  const [PUZZLES, setPUZZLES] = useState([])
+  const [cmsLoading, setCmsLoading] = useState(true)
+  const [cmsError, setCmsError] = useState(null)
+
+  function loadPuzzles() {
+    setCmsLoading(true); setCmsError(null)
+    getCrosswords().then(({ data, error }) => {
+      if (error) { setCmsError(error); setCmsLoading(false); return }
+      setPUZZLES(data)
+      setCmsLoading(false)
+    })
+  }
+  useEffect(() => { loadPuzzles() }, [])
+
   const [selectedPuzzle, setSelectedPuzzle] = useState(null)
   const [started, setStarted] = useState(false)
   const [grid, setGrid] = useState([])
@@ -327,6 +135,19 @@ export default function CrosswordGame() {
     ['A','S','D','F','G','H','J','K','L'],
     ['Z','X','C','V','B','N','M','BACKSPACE']
   ]
+
+  // Loading / Error
+  if (cmsLoading) return <div className="game-lobby"><div className="lb-empty">Loading crosswords...</div></div>
+  if (cmsError) return (
+    <div className="game-lobby">
+      <button className="gh-back" onClick={() => navigate('/play')}>← Back</button>
+      <div className="lb-empty" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ fontSize: '2rem' }}>⚠️</div>
+        <p style={{ color: '#ef4444', fontSize: '0.9rem' }}>{cmsError}</p>
+        <button onClick={loadPuzzles} style={{ padding: '0.5rem 1.2rem', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '0.5rem', fontWeight: 600, cursor: 'pointer' }}>Try Again</button>
+      </div>
+    </div>
+  )
 
   // ── PUZZLE SELECTOR ──────────────────────────────────────────────────────
   if (!started) {

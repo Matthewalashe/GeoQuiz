@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { WORD_DATA } from '../data/wordgame.js'
+import { getWordGame } from '../lib/cms.js'
 import { playCorrect, playWrong, playPinDrop, vibrate } from '../engine/audio.js'
 import { autoSubmitScore } from '../engine/leaderboard.js'
 import ResultCard from './ResultCard.jsx'
@@ -24,12 +24,26 @@ function scrambleWord(word) {
 
 export default function WordGame() {
   const navigate = useNavigate()
-  const [words] = useState(() => {
-    const solved = JSON.parse(localStorage.getItem('wanda_solved_words') || '[]')
-    const unsolved = WORD_DATA.filter(w => !solved.includes(w.word))
-    const pool = unsolved.length >= 8 ? unsolved : WORD_DATA
-    return shuffle(pool).slice(0, 8)
-  })
+  const [allWords, setAllWords] = useState([])
+  const [cmsLoading, setCmsLoading] = useState(true)
+  const [cmsError, setCmsError] = useState(null)
+
+  function loadWords() {
+    setCmsLoading(true); setCmsError(null)
+    getWordGame().then(({ data, error }) => {
+      if (error) { setCmsError(error); setCmsLoading(false); return }
+      setAllWords(data)
+      // Init first round
+      const solved = JSON.parse(localStorage.getItem('wanda_solved_words') || '[]')
+      const unsolved = data.filter(w => !solved.includes(w.word))
+      const pool = unsolved.length >= 8 ? unsolved : data
+      setWords(shuffle(pool).slice(0, 8))
+      setCmsLoading(false)
+    })
+  }
+  useEffect(() => { loadWords() }, [])
+
+  const [words, setWords] = useState([])
   const [idx, setIdx] = useState(0)
   const [scrambled, setScrambled] = useState([])
   const [placed, setPlaced] = useState([])
@@ -150,12 +164,25 @@ export default function WordGame() {
       // Track solved words
       const solved = JSON.parse(localStorage.getItem('wanda_solved_words') || '[]')
       const newSolved = [...new Set([...solved, ...results.filter(r => r.pts > 0).map(r => r.word.word)])]
-      if (newSolved.length >= WORD_DATA.length) localStorage.setItem('wanda_solved_words', '[]')
+      if (newSolved.length >= allWords.length) localStorage.setItem('wanda_solved_words', '[]')
       else localStorage.setItem('wanda_solved_words', JSON.stringify(newSolved))
       return
     }
     setIdx(prev => prev + 1)
   }
+
+  if (cmsLoading) return <div className="game-lobby"><div className="lb-empty">Loading word game...</div></div>
+  if (cmsError) return (
+    <div className="game-lobby">
+      <button className="gh-back" onClick={() => navigate('/play')}>← Back</button>
+      <div className="lb-empty" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ fontSize: '2rem' }}>⚠️</div>
+        <p style={{ color: '#ef4444', fontSize: '0.9rem' }}>{cmsError}</p>
+        <button onClick={loadWords} style={{ padding: '0.5rem 1.2rem', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '0.5rem', fontWeight: 600, cursor: 'pointer' }}>Try Again</button>
+      </div>
+    </div>
+  )
+  if (words.length === 0) return null
 
   // Final results
   if (phase === 'done') {
