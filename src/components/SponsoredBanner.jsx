@@ -28,8 +28,8 @@ export function SponsoredBanner({ questionId }) {
 
   useEffect(() => {
     getSponsors()
-      .then(sponsors => {
-        const found = sponsors.find(s => s.active && s.questionIds?.includes(questionId))
+      .then(({ data }) => {
+        const found = (data || []).find(s => s.active && s.questionIds?.includes(questionId))
         if (found) {
           // 30% chance to show (respect user experience)
           if (Math.random() <= 0.3) {
@@ -65,8 +65,8 @@ export function JourneyCard({ results }) {
 
   useEffect(() => {
     getSponsors()
-      .then(sponsors => {
-        setSponsorsList(sponsors)
+      .then(({ data }) => {
+        setSponsorsList(data || [])
         setLoading(false)
       })
       .catch(() => setLoading(false))

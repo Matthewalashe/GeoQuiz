@@ -90,17 +90,26 @@ export default function SpinWheel({ onClose }) {
   })
   const [poisList, setPoisList] = useState([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState(null)
   const animRef = useRef(null)
   const rotRef = useRef(0)
 
-  useEffect(() => {
+  function loadPOIs() {
+    setLoading(true)
+    setFetchError(null)
     getDiscoveryPOIs()
-      .then(data => {
+      .then(({ data, error }) => {
+        if (error) setFetchError(error)
         setPoisList(data)
         setLoading(false)
       })
-      .catch(() => setLoading(false))
-  }, [])
+      .catch(err => {
+        setFetchError(err.message || 'Failed to load places.')
+        setLoading(false)
+      })
+  }
+
+  useEffect(() => { loadPOIs() }, [])
 
   const { weighted, display } = buildSlices(category, poisList)
   const slices = display
@@ -191,6 +200,12 @@ export default function SpinWheel({ onClose }) {
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '320px', width: '320px' }}>
               <div className="loading-icon" style={{ animation: 'float 2s ease-in-out infinite', fontSize: '3rem' }}>🎡</div>
               <p style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>Loading spots...</p>
+            </div>
+          ) : fetchError ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '320px', width: '320px', gap: '0.75rem' }}>
+              <div style={{ fontSize: '2.5rem' }}>⚠️</div>
+              <p style={{ color: '#ef4444', fontSize: '0.85rem', textAlign: 'center' }}>{fetchError}</p>
+              <button onClick={loadPOIs} style={{ padding: '0.5rem 1.2rem', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '0.5rem', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem' }}>Try Again</button>
             </div>
           ) : (
             <>

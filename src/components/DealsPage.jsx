@@ -145,15 +145,24 @@ export default function DealsPage() {
   const [questOnly, setQuestOnly] = useState(false)
   const [dealsList, setDealsList] = useState([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState(null)
 
-  useEffect(() => {
+  function loadDeals() {
+    setLoading(true)
+    setFetchError(null)
     getDeals()
-      .then(data => {
+      .then(({ data, error }) => {
+        if (error) setFetchError(error)
         setDealsList(data)
         setLoading(false)
       })
-      .catch(() => setLoading(false))
-  }, [])
+      .catch(err => {
+        setFetchError(err.message || 'Failed to load deals.')
+        setLoading(false)
+      })
+  }
+
+  useEffect(() => { loadDeals() }, [])
 
   const filtered = useMemo(() => {
     return dealsList.filter(d => {
@@ -255,6 +264,12 @@ export default function DealsPage() {
         <div className="ex-empty" style={{ minHeight: '40vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           <div className="loading-icon" style={{ animation: 'float 2s ease-in-out infinite', fontSize: '3rem' }}>🧭</div>
           <p style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>Loading deals...</p>
+        </div>
+      ) : fetchError ? (
+        <div className="ex-empty" style={{ minHeight: '40vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
+          <div style={{ fontSize: '2.5rem' }}>⚠️</div>
+          <p style={{ color: '#ef4444', fontSize: '0.95rem', textAlign: 'center' }}>{fetchError}</p>
+          <button onClick={loadDeals} style={{ padding: '0.6rem 1.5rem', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '0.5rem', fontWeight: 600, cursor: 'pointer' }}>Try Again</button>
         </div>
       ) : (
         <div className="deals-content">

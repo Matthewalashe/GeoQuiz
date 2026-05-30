@@ -12,13 +12,6 @@ import {
 
 const FEATURED_IDS = ['nike-art', 'bungalow-ikoyi', 'lekki-conservation', 'new-afrika-shrine']
 
-const DEFAULT_SLIDES = [
-  { id: 'nike-art', title: 'Nike Art Gallery', sub: 'Lekki · Art & Culture', cta: 'Explore', img: '/images/postcards/nike-art-gallery.png' },
-  { id: 'lekki-conservation', title: 'Lekki Conservation Centre', sub: 'Lekki · Nature & Wildlife', cta: 'Discover', img: '/images/postcards/osun-grove.png' },
-  { id: 'new-afrika-shrine', title: 'New Afrika Shrine', sub: 'Ikeja · Music & Culture', cta: 'Experience', img: '/images/postcards/egungun-festival.png' },
-  { id: 'bungalow-ikoyi', title: 'The Bungalow Ikoyi', sub: 'Ikoyi · Dining & Nightlife', cta: 'Visit', img: '/images/postcards/lekki-ikoyi-bridge.png' },
-]
-
 const PLAY_ROW = [
   { id: 'quiz', path: '/play?mode=daily', label: 'Map Quiz', emoji: '📍', color: '#00c853', desc: 'Pin locations on the map' },
   { id: 'postcards', path: '/postcards', label: 'PostCards', emoji: '📷', color: '#8b5cf6', desc: 'Guess landmarks from photos' },
@@ -40,10 +33,11 @@ export default function Landing({ session, profile }) {
   const [listings, setListings] = useState([])
 
   useEffect(() => {
-    getListings().then(setListings).catch(console.error)
+    getListings()
+      .then(({ data }) => setListings(data || []))
+      .catch(console.error)
   }, [])
 
-  // Get featured listings — prefer CMS `is_featured`, fallback to hardcoded
   const heroSlides = useMemo(() => {
     const cmsFeatures = listings.filter(l => l.is_featured).sort((a, b) => (a.featured_order || 99) - (b.featured_order || 99))
     if (cmsFeatures.length >= 2) {
@@ -55,15 +49,17 @@ export default function Landing({ session, profile }) {
         img: l.photos?.[0] || '/images/postcards/national-theatre.png',
       }))
     }
-    return DEFAULT_SLIDES.map(slide => {
-      const listing = listings.find(l => l.id === slide.id)
-      return {
-        ...slide,
-        title: listing?.name || slide.title,
-        sub: listing ? `${listing.area} · ${listing.category}` : slide.sub,
-        img: listing?.photos?.[0] || slide.img,
-      }
-    })
+    // Fallback: use any available listings if no featured ones
+    if (listings.length > 0) {
+      return listings.slice(0, 4).map(l => ({
+        id: l.id,
+        title: l.name,
+        sub: `${l.area} · ${l.category}`,
+        cta: 'Explore',
+        img: l.photos?.[0] || '/images/postcards/national-theatre.png',
+      }))
+    }
+    return []
   }, [listings])
 
   const featured = useMemo(() => {

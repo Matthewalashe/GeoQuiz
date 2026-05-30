@@ -128,16 +128,25 @@ export default function Discovery() {
   const [showWheel, setShowWheel] = useState(false)
   const [poisList, setPoisList] = useState([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState(null)
 
-  // Fetch POIs
-  useEffect(() => {
+  function loadPOIs() {
+    setLoading(true)
+    setFetchError(null)
     getDiscoveryPOIs()
-      .then(data => {
+      .then(({ data, error }) => {
+        if (error) setFetchError(error)
         setPoisList(data)
         setLoading(false)
       })
-      .catch(() => setLoading(false))
-  }, [])
+      .catch(err => {
+        setFetchError(err.message || 'Failed to load places.')
+        setLoading(false)
+      })
+  }
+
+  // Fetch POIs
+  useEffect(() => { loadPOIs() }, [])
 
   // Request user location
   useEffect(() => {
@@ -249,6 +258,12 @@ export default function Discovery() {
         <div className="ex-empty" style={{ minHeight: '40vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           <div className="loading-icon" style={{ animation: 'float 2s ease-in-out infinite', fontSize: '3rem' }}>🧭</div>
           <p style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>Loading spots...</p>
+        </div>
+      ) : fetchError ? (
+        <div className="ex-empty" style={{ minHeight: '40vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
+          <div style={{ fontSize: '2.5rem' }}>⚠️</div>
+          <p style={{ color: '#ef4444', fontSize: '0.95rem', textAlign: 'center' }}>{fetchError}</p>
+          <button onClick={loadPOIs} style={{ padding: '0.6rem 1.5rem', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '0.5rem', fontWeight: 600, cursor: 'pointer' }}>Try Again</button>
         </div>
       ) : (
         <>

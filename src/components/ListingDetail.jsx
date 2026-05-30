@@ -93,15 +93,24 @@ export default function ListingDetail() {
   const navigate = useNavigate()
   const [listings, setListings] = useState([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState(null)
 
-  useEffect(() => {
+  function loadListings() {
+    setLoading(true)
+    setFetchError(null)
     getListings()
-      .then(data => {
-        setListings(data)
+      .then(({ data, error }) => {
+        if (error) setFetchError(error)
+        setListings(data || [])
         setLoading(false)
       })
-      .catch(() => setLoading(false))
-  }, [])
+      .catch(err => {
+        setFetchError(err.message || 'Failed to load listing.')
+        setLoading(false)
+      })
+  }
+
+  useEffect(() => { loadListings() }, [])
 
   const listing = listings.find(l => l.id === id)
 
@@ -148,6 +157,17 @@ export default function ListingDetail() {
         <button className="ld-back" onClick={() => navigate('/explore')}>← Back</button>
         <div className="loading-icon" style={{ animation: 'float 2s ease-in-out infinite', fontSize: '3rem' }}>🧭</div>
         <p style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>Loading place details...</p>
+      </section>
+    )
+  }
+
+  if (fetchError) {
+    return (
+      <section className="ld-page" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: '1rem' }}>
+        <button className="ld-back" onClick={() => navigate('/explore')}>← Back</button>
+        <div style={{ fontSize: '2.5rem' }}>⚠️</div>
+        <p style={{ color: '#ef4444', fontSize: '0.95rem', textAlign: 'center' }}>{fetchError}</p>
+        <button onClick={loadListings} style={{ padding: '0.6rem 1.5rem', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '0.5rem', fontWeight: 600, cursor: 'pointer' }}>Try Again</button>
       </section>
     )
   }

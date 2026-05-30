@@ -108,6 +108,7 @@ export default function GameScreen() {
   const [pendingNav, setPendingNav] = useState(null)
   const [showFog, setShowFog] = useState(false)
   const [exploredSpots, setExploredSpots] = useState(() => getExplored())
+  const [fetchError, setFetchError] = useState(null)
 
   // Refs to avoid stale closures in timer effects
   const userPinRef = useRef(null)
@@ -116,13 +117,19 @@ export default function GameScreen() {
 
   const timerEnabled = config?.timer > 0
 
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
+  function loadQuestions() {
     if (!config) return
+    setFetchError(null)
+    setPhase('loading')
+    setLoadProgress(0)
     let active = true
     getQuestions()
-      .then(allQuestions => {
+      .then(({ data: allQuestions, error }) => {
         if (!active) return
+        if (error) {
+          setFetchError(error)
+          return
+        }
         let pool = config.region === 'all'
           ? allQuestions
           : allQuestions.filter(q => q.region === config.region)
@@ -135,16 +142,26 @@ export default function GameScreen() {
         }
 
         const picked = pickRandomQuestions(pool, config.count, config.seed)
+        if (picked.length === 0) {
+          setFetchError('No questions available for your selected filters. Try different options.')
+          return
+        }
         setQuestions(picked)
       })
-      .catch(console.error)
+      .catch(err => {
+        if (!active) return
+        setFetchError(err.message || 'Failed to load questions.')
+      })
 
     let progress = 0
     const loadInterval = setInterval(() => {
       progress += Math.random() * 5 + 3
       if (progress >= 100) {
         progress = 100; clearInterval(loadInterval)
-        setTimeout(() => setPhase('placing'), 500)
+        setTimeout(() => {
+          // Only transition to 'placing' if questions loaded successfully
+          setPhase(prev => prev === 'loading' ? 'placing' : prev)
+        }, 500)
       }
       setLoadProgress(Math.min(progress, 100))
     }, 180)
@@ -152,6 +169,11 @@ export default function GameScreen() {
       active = false
       clearInterval(loadInterval)
     }
+  }
+
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    return loadQuestions()
   }, [config])
   /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -257,6 +279,18 @@ export default function GameScreen() {
       return
     }
     setCurrentIdx(prev => prev + 1); setPhase('placing'); setUserPin(null)
+  }
+
+  if (fetchError) {
+    return (
+      <div className="game-screen" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem', padding: '2rem', textAlign: 'center' }}>
+        <div style={{ fontSize: '3rem' }}>⚠️</div>
+        <h2 style={{ fontFamily: 'var(--font-head)', fontSize: '1.2rem', color: 'var(--text)' }}>Could Not Load Questions</h2>
+        <p style={{ color: '#ef4444', fontSize: '0.9rem', maxWidth: '300px' }}>{fetchError}</p>
+        <button onClick={loadQuestions} style={{ padding: '0.7rem 2rem', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '0.5rem', fontWeight: 600, cursor: 'pointer', fontSize: '1rem' }}>Try Again</button>
+        <button onClick={() => navigate('/play')} style={{ padding: '0.5rem 1.5rem', background: 'transparent', color: 'var(--text-secondary)', border: '1px solid var(--border)', borderRadius: '0.5rem', cursor: 'pointer', fontSize: '0.85rem' }}>Back to Menu</button>
+      </div>
+    )
   }
 
   if (!config || questions.length === 0) {

@@ -1,6 +1,7 @@
 /**
- * CMS Data Layer — Fetches content from Supabase with hardcoded fallback
- * Drop-in replacement for direct data imports
+ * CMS Data Layer — Fetches content from Supabase
+ * All get*() functions return { data: Array, error: string|null }
+ * No local fallbacks — if Supabase is unavailable, error is surfaced.
  */
 import { supabase } from './supabase.js'
 
@@ -33,11 +34,11 @@ export function parseStringArray(val) {
 
 function cached(key) {
   const entry = cache[key]
-  if (entry && Date.now() - entry.ts < CACHE_TTL) return entry.data
+  if (entry && Date.now() - entry.ts < CACHE_TTL) return entry.result
   return null
 }
-function setCache(key, data) {
-  cache[key] = { data, ts: Date.now() }
+function setCache(key, result) {
+  cache[key] = { result, ts: Date.now() }
 }
 export function clearCache(key) {
   if (key) delete cache[key]
@@ -70,8 +71,7 @@ export async function getListings() {
   const c = cached('listings')
   if (c) return c
   if (!supabase) {
-    const { LISTINGS } = await import('../data/listings.jsx')
-    return LISTINGS
+    return { data: [], error: 'Database connection unavailable.' }
   }
   try {
     const { data, error } = await supabase
@@ -97,11 +97,12 @@ export async function getListings() {
         tags: parseStringArray(d.tags),
       }
     })
-    setCache('listings', mapped)
-    return mapped
+    const result = { data: mapped, error: null }
+    setCache('listings', result)
+    return result
   } catch (e) {
     console.warn('CMS listings fetch error:', e.message)
-    return []
+    return { data: [], error: e.message || 'Failed to load listings.' }
   }
 }
 
@@ -110,8 +111,7 @@ export async function getDeals() {
   const c = cached('deals')
   if (c) return c
   if (!supabase) {
-    const { DEALS } = await import('../data/deals.js')
-    return DEALS
+    return { data: [], error: 'Database connection unavailable.' }
   }
   try {
     const { data, error } = await supabase
@@ -126,11 +126,12 @@ export async function getDeals() {
       questUnlock: d.quest_unlock,
       categoryLabel: d.category_label,
     }))
-    setCache('deals', mapped)
-    return mapped
+    const result = { data: mapped, error: null }
+    setCache('deals', result)
+    return result
   } catch (e) {
     console.warn('CMS deals fetch error:', e.message)
-    return []
+    return { data: [], error: e.message || 'Failed to load deals.' }
   }
 }
 
@@ -139,8 +140,7 @@ export async function getSponsors() {
   const c = cached('sponsors')
   if (c) return c
   if (!supabase) {
-    const { SPONSORS } = await import('../data/sponsors.js')
-    return SPONSORS
+    return { data: [], error: 'Database connection unavailable.' }
   }
   try {
     const { data, error } = await supabase
@@ -150,11 +150,12 @@ export async function getSponsors() {
       .eq('active', true)
     if (error) throw error
     const mapped = (data || []).map(s => ({ ...s, questionIds: s.question_ids }))
-    setCache('sponsors', mapped)
-    return mapped
+    const result = { data: mapped, error: null }
+    setCache('sponsors', result)
+    return result
   } catch (e) {
     console.warn('CMS sponsors fetch error:', e.message)
-    return []
+    return { data: [], error: e.message || 'Failed to load sponsors.' }
   }
 }
 
@@ -163,8 +164,7 @@ export async function getDiscoveryPOIs() {
   const c = cached('discovery')
   if (c) return c
   if (!supabase) {
-    const { DISCOVERY_POIS } = await import('../data/discovery.js')
-    return DISCOVERY_POIS
+    return { data: [], error: 'Database connection unavailable.' }
   }
   try {
     const { data, error } = await supabase
@@ -180,11 +180,12 @@ export async function getDiscoveryPOIs() {
       rating: d.rating ? parseFloat(d.rating) : 5.0,
       mapUrl: d.map_url,
     }))
-    setCache('discovery', mapped)
-    return mapped
+    const result = { data: mapped, error: null }
+    setCache('discovery', result)
+    return result
   } catch (e) {
     console.warn('CMS discovery fetch error:', e.message)
-    return []
+    return { data: [], error: e.message || 'Failed to load discoveries.' }
   }
 }
 
@@ -193,8 +194,7 @@ export async function getQuestions() {
   const c = cached('questions')
   if (c) return c
   if (!supabase) {
-    const Q = (await import('../data/questions.js')).default
-    return Q
+    return { data: [], error: 'Database connection unavailable.' }
   }
   try {
     const { data, error } = await supabase
@@ -218,11 +218,12 @@ export async function getQuestions() {
       },
       funFact: q.fun_fact,
     }))
-    setCache('questions', mapped)
-    return mapped
+    const result = { data: mapped, error: null }
+    setCache('questions', result)
+    return result
   } catch (e) {
     console.warn('CMS questions fetch error:', e.message)
-    return []
+    return { data: [], error: e.message || 'Failed to load questions.' }
   }
 }
 
@@ -237,7 +238,9 @@ export async function getConfig(key) {
 
 // ---- Admin: CRUD operations ----
 export async function adminFetch(table, filters = {}) {
-  if (!supabase) return fallbackFetch(table)
+  if (!supabase) {
+    throw new Error('Database connection unavailable. Cannot load admin data.')
+  }
   let query = supabase.from(table).select('*')
   if (table === 'cms_config') {
     query = query.order('key')
@@ -249,8 +252,7 @@ export async function adminFetch(table, filters = {}) {
   const { data, error } = await query
   if (error) {
     if (error.code === '42P01') {
-      console.warn(`Table ${table} not found. Falling back to local data.`)
-      return fallbackFetch(table)
+      throw new Error(`Table "${table}" does not exist. Please run the database migration first.`)
     }
     throw error
   }
@@ -263,30 +265,6 @@ export async function adminFetch(table, filters = {}) {
     })
   }
   return data || []
-}
-
-async function fallbackFetch(table) {
-  if (table === 'cms_listings') {
-    const { LISTINGS } = await import('../data/listings.jsx')
-    return LISTINGS
-  }
-  if (table === 'cms_deals') {
-    const { DEALS } = await import('../data/deals.js')
-    return DEALS
-  }
-  if (table === 'cms_sponsors') {
-    const { SPONSORS } = await import('../data/sponsors.js')
-    return SPONSORS
-  }
-  if (table === 'cms_discovery') {
-    const { DISCOVERY_POIS } = await import('../data/discovery.js')
-    return DISCOVERY_POIS
-  }
-  if (table === 'cms_questions') {
-    const Q = (await import('../data/questions.js')).default
-    return Q
-  }
-  return []
 }
 
 export async function adminUpsert(table, record) {
@@ -326,4 +304,3 @@ export async function uploadFile(file, folder = 'images') {
   const { data: { publicUrl } } = supabase.storage.from('media').getPublicUrl(name)
   return publicUrl
 }
-
