@@ -6,56 +6,7 @@ import { addXP } from '../engine/xp.js'
 import { autoSubmitScore } from '../engine/leaderboard.js'
 import { RewardsOverlay, useRewardSystem } from '../engine/rewards.jsx'
 import ResultCard from './ResultCard.jsx'
-
-// ── DATA ─────────────────────────────────────────────────────────────────────
-const PACKS = {
-  lagos: {
-    id: 'lagos', label: '🌊 Lagos Life', desc: 'Bridges, buses, markets & neighborhoods', color: '#0ea5e9',
-    questions: [
-      { q: 'Which is the longest bridge in Lagos?', options: ['Third Mainland Bridge', 'Carter Bridge', 'Eko Bridge', 'Lekki-Ikoyi Link Bridge'], ans: 0, fact: 'At 11.8 km, Third Mainland Bridge was the longest in Africa when built in 1990.' },
-      { q: 'What year was Lagos State created?', options: ['1960', '1967', '1976', '1991'], ans: 1, fact: 'Lagos State was created on 27 May 1967 from the former Western Region.' },
-      { q: 'What is the popular yellow commercial bus in Lagos called?', options: ['Keke', 'Okada', 'Danfo', 'Molue'], ans: 2, fact: 'Danfo buses carry over 10 million Lagosians daily.' },
-      { q: 'Which of these is NOT an LGA in Lagos State?', options: ['Ikeja', 'Surulere', 'Ogbomoso', 'Epe'], ans: 2, fact: 'Ogbomoso is in Oyo State. Lagos has 20 LGAs.' },
-      { q: 'What is the famous arts market in Lekki called?', options: ['Balogun Market', 'Lekki Arts & Crafts Market', 'Tejuosho Market', 'Computer Village'], ans: 1, fact: 'Lekki Arts & Crafts Market is Lagos\'s top destination for souvenirs and local art.' },
-      { q: 'What does "CMS" stand for in Lagos bus stop name?', options: ['Central Motor Services', 'Church Missionary Society', 'City Municipal Services', 'Central Market Street'], ans: 1, fact: 'The Church Missionary Society arrived in Lagos in 1842.' },
-      { q: 'Which is Africa\'s largest open-air electronics market?', options: ['Trade Fair Complex', 'Computer Village, Ikeja', 'Alaba International', 'Ladipo Market'], ans: 1, fact: 'Computer Village generates ₦1.5 billion daily with over 5,000 shops.' },
-      { q: 'Which bridge links Lagos Mainland to Lagos Island?', options: ['Third Mainland only', 'Carter Bridge only', 'Eko Bridge only', 'All three bridges'], ans: 3, fact: 'Three bridges serve as links — Third Mainland (11.8 km), Carter (1901), and Eko (1975).' },
-      { q: 'Oshodi was famously called the most dangerous bus stop in which continent?', options: ['The World', 'Africa', 'West Africa', 'Nigeria'], ans: 1, fact: 'Before Fashola\'s 2009 cleanup, Oshodi had 500,000+ daily commuters and rampant crime.' },
-      { q: 'What is "Agbado" known for among Lagos commuters?', options: ['Last affordable bus stop', 'Fastest BRT route', 'The end of Lagos', 'Cheapest fuel station'], ans: 2, fact: '"Agbado is the end of Lagos" — it marks where Lagos meets Ogun State.' },
-    ]
-  },
-  nigeria: {
-    id: 'nigeria', label: '🇳🇬 Nigeria Essentials', desc: 'History, landmarks & national icons', color: '#22c55e',
-    questions: [
-      { q: 'In what year did Nigeria gain independence?', options: ['1955', '1960', '1963', '1970'], ans: 1, fact: 'Nigeria gained independence from Britain on 1 October 1960.' },
-      { q: 'Which rock formation appears on the ₦100 note?', options: ['Olumo Rock', 'Aso Rock', 'Zuma Rock', 'Idanre Hills'], ans: 2, fact: 'Zuma Rock stands 725m high — "Gateway to Abuja".' },
-      { q: 'What does FESTAC stand for?', options: ['Federal State Arts Council', 'Festival of Arts & Culture', 'Festival of African Culture', 'Federal Arts Commission'], ans: 1, fact: 'FESTAC 77 attracted 17,000 participants from 59 countries to Lagos.' },
-      { q: 'Which city is Nigeria\'s seat of government?', options: ['Lagos', 'Kano', 'Ibadan', 'Abuja'], ans: 3, fact: 'Abuja became the capital in 1991, replacing Lagos for neutrality.' },
-      { q: 'Which Nigerian author won the Nobel Prize for Literature?', options: ['Chinua Achebe', 'Wole Soyinka', 'Ben Okri', 'Chimamanda Adichie'], ans: 1, fact: 'Wole Soyinka won in 1986, the first African to receive the Nobel Prize in Literature.' },
-      { q: 'What is Nigeria\'s national animal?', options: ['Lion', 'Elephant', 'Eagle', 'Horse'], ans: 2, fact: 'The Eagle on the coat of arms represents strength.' },
-      { q: 'Which state produces most of Nigeria\'s cocoa?', options: ['Oyo', 'Ondo', 'Osun', 'Ekiti'], ans: 1, fact: 'Ondo State accounts for over 40% of Nigeria\'s cocoa production.' },
-      { q: 'Who was Nigeria\'s first military head of state?', options: ['Yakubu Gowon', 'Nnamdi Azikiwe', 'Tafawa Balewa', 'Aguiyi-Ironsi'], ans: 3, fact: 'Aguiyi-Ironsi became head of state after the January 1966 coup.' },
-      { q: 'What is the Niger-Delta region primarily known for?', options: ['Agriculture', 'Oil production', 'Tin mining', 'Cocoa farming'], ans: 1, fact: 'Nigeria is Africa\'s largest oil producer with 35+ billion barrels in the Niger Delta.' },
-      { q: 'Olumo Rock is located in which city?', options: ['Ibadan', 'Ijebu-Ode', 'Abeokuta', 'Osogbo'], ans: 2, fact: 'Olumo Rock in Abeokuta served as a natural fortress during 19th century inter-tribal wars.' },
-    ]
-  },
-  culture: {
-    id: 'culture', label: '🎭 Culture & Vibes', desc: 'Food, music, slang & festivals', color: '#f97316',
-    questions: [
-      { q: 'Which dish is Ewa Agoyin typically paired with?', options: ['Rice', 'Agege Bread', 'Pounded Yam', 'Eba'], ans: 1, fact: 'Ewa Agoyin + Agege Bread is Lagos\'s most iconic street breakfast.' },
-      { q: 'The Eyo Festival masquerade is unique to which city?', options: ['Ibadan', 'Abeokuta', 'Lagos', 'Benin City'], ans: 2, fact: 'The Eyo Festival features white-robed masquerades parading through Lagos Island.' },
-      { q: 'What Afrobeats artist made "Ojuelegba" globally famous?', options: ['Davido', 'Burna Boy', 'Wizkid', 'Fela Kuti'], ans: 2, fact: 'Wizkid\'s "Ojuelegba" was remixed by Drake and Skepta, making it an international hit.' },
-      { q: 'Which Nigerian musician is called "Abami Eda"?', options: ['Wizkid', 'Burna Boy', 'Fela Kuti', '2Baba'], ans: 2, fact: '"Abami Eda" (peculiar being) was Fela Kuti\'s nickname. His Afrobeat was deeply political.' },
-      { q: 'What does "Omo, e choke!" mean in Lagos slang?', options: ['It is expensive', 'It is amazing', 'I am tired', 'It is crowded'], ans: 1, fact: '"E choke" was popularized by Davido and means something is absolutely amazing.' },
-      { q: 'What is "Okrika" in Lagos markets?', options: ['Stolen goods', 'Second-hand clothes', 'Fake designer bags', 'Cheap local fabric'], ans: 1, fact: '"Bend-down-select" Okrika clothes arrive in bales from Europe.' },
-      { q: 'The Lisabi Festival celebrates which historical event?', options: ['Founding of Lagos', 'Egba liberation from Oyo', 'Fall of Benin Empire', 'Battle of Abeokuta'], ans: 1, fact: 'Lisabi Agbongbo Akala led the Egba revolt against Oyo around 1775.' },
-      { q: 'Which slang means "it is finished" in Lagos pidgin?', options: ['"E don be"', '"Ko si"', '"Sharp-sharp"', '"Agbero"'], ans: 0, fact: '"E don be" is the universal Lagos phrase for something completely finished or sold out.' },
-      { q: 'What Yoruba word became universal Lagos friend slang?', options: ['Aburo', 'Omo', 'Olorun', 'Baba'], ans: 1, fact: '"Omo" (meaning child) became a universal term of address across ethnic groups in Lagos.' },
-      { q: 'Which beach is only accessible by boat in Lagos?', options: ['Elegushi Beach', 'Tarkwa Bay', 'Lekki Beach', 'Oniru Beach'], ans: 1, fact: 'Tarkwa Bay is a sheltered beach near the harbour with no road access — boats only.' },
-    ]
-  }
-}
-const PACK_LIST = Object.values(PACKS)
+import { getTriviaPacks } from '../lib/cms.js'
 
 function shuffle(arr) {
   const a = [...arr]
@@ -90,6 +41,23 @@ function CollectButton({ points, stars, onCollect, collected }) {
 export default function TriviaGame() {
   const navigate = useNavigate()
   const { popXP, celebrateCorrect, celebrateWrong, openChest, showStarBurst, rewardProps } = useRewardSystem()
+
+  // CMS data
+  const [PACKS, setPACKS] = useState({})
+  const [PACK_LIST, setPACK_LIST] = useState([])
+  const [cmsLoading, setCmsLoading] = useState(true)
+  const [cmsError, setCmsError] = useState(null)
+
+  function loadPacks() {
+    setCmsLoading(true); setCmsError(null)
+    getTriviaPacks().then(({ data, error }) => {
+      if (error) { setCmsError(error); setCmsLoading(false); return }
+      setPACKS(data)
+      setPACK_LIST(Object.values(data))
+      setCmsLoading(false)
+    })
+  }
+  useEffect(() => { loadPacks() }, [])
 
   const [selectedPack, setSelectedPack] = useState(null)
   const [started, setStarted] = useState(false)
@@ -212,6 +180,19 @@ export default function TriviaGame() {
   }
 
   // PACK SELECTOR
+  // Loading / Error state
+  if (cmsLoading) return <div className="game-lobby"><div className="lb-empty">Loading trivia packs...</div></div>
+  if (cmsError) return (
+    <div className="game-lobby">
+      <button className="gh-back" onClick={() => navigate('/play')}>← Back</button>
+      <div className="lb-empty" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ fontSize: '2rem' }}>⚠️</div>
+        <p style={{ color: '#ef4444', fontSize: '0.9rem' }}>{cmsError}</p>
+        <button onClick={loadPacks} style={{ padding: '0.5rem 1.2rem', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '0.5rem', fontWeight: 600, cursor: 'pointer' }}>Try Again</button>
+      </div>
+    </div>
+  )
+
   if (!started) {
     return (
       <div className="game-lobby">
