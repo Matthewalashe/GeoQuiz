@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet'
 import { CATEGORIES, PRICE_LABELS } from '../data/listings.jsx'
-import { getListings } from '../lib/cms.js'
+import { supabase } from '../lib/supabase.js'
 import { SearchRegular, MapRegular, ListRegular, StarRegular, VehicleBusRegular, VehicleSubwayRegular } from '@fluentui/react-icons'
 import TransitLayers from './TransitLayers.jsx'
 
@@ -28,14 +28,87 @@ export default function Explore() {
   const [showRail, setShowRail] = useState(true)
   const [listings, setListings] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    getListings()
-      .then(data => {
-        setListings(data)
+    async function loadListings() {
+      try {
+        setLoading(true)
+        setError(null)
+        if (!supabase) {
+          throw new Error('Supabase client is not initialized. Please configure your .env file.')
+        }
+
+        const { data, error } = await supabase
+          .from('cms_listings')
+          .select('*')
+          .eq('status', 'published')
+          .order('name')
+
+        if (error) throw error
+
+        const PRICE_MIN_MAP = {
+          '₦': 1000,
+          '₦₦': 5000,
+          '₦₦₦': 15000,
+          '₦₦₦₦': 30000,
+          '₦ Budget': 1000,
+          '₦₦ Mid-range': 5000,
+          '₦₦₦ Premium': 15000,
+          '₦₦₦₦ Luxury': 30000
+        }
+
+        const parseStringArray = (val) => {
+          if (!val) return []
+          if (Array.isArray(val)) return val
+          if (typeof val === 'string') {
+            const trimmed = val.trim()
+            if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+              try { return JSON.parse(trimmed) } catch (e) {}
+            }
+            if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+              return trimmed
+                .slice(1, -1)
+                .split(',')
+                .map(s => s.trim().replace(/^"|"$/g, '').replace(/\\"/g, '"'))
+                .filter(Boolean)
+            }
+            if (trimmed.includes(',')) {
+              return trimmed.split(',').map(s => s.trim()).filter(Boolean)
+            }
+            return [trimmed]
+          }
+          return []
+        }
+
+        const mapped = (data || []).map(d => {
+          let pMin = d.price_min ? parseInt(d.price_min, 10) : null
+          if (pMin === null && d.price_range) {
+            pMin = PRICE_MIN_MAP[d.price_range] || null
+          }
+          return {
+            ...d,
+            priceRange: d.price_range,
+            price_min: pMin,
+            price_max: d.price_max ? parseInt(d.price_max, 10) : null,
+            lat: d.lat ? parseFloat(d.lat) : null,
+            lng: d.lng ? parseFloat(d.lng) : null,
+            rating: d.rating ? parseFloat(d.rating) : 5.0,
+            photos: parseStringArray(d.photos),
+            tags: parseStringArray(d.tags),
+          }
+        })
+
+        setListings(mapped)
+      } catch (err) {
+        console.error('Explore listings fetch error:', err)
+        setError(err.message || 'Failed to load places.')
+      } finally {
         setLoading(false)
-      })
-      .catch(() => setLoading(false))
+      }
+    }
+
+    loadListings()
   }, [])
 
   const filtered = useMemo(() => {
@@ -97,10 +170,98 @@ export default function Explore() {
         )}
       </div>
 
-      {loading ? (
+      <style>{`
+        .ex-skeleton-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 0.6rem;
+        }
+        @media (max-width: 400px) {
+          .ex-skeleton-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+        .ex-skeleton-card {
+          background: var(--surface);
+          border: 1px solid var(--border);
+          border-radius: var(--radius-md);
+          overflow: hidden;
+          height: 200px;
+          display: flex;
+          flex-direction: column;
+        }
+        .ex-skeleton-img {
+          height: 120px;
+          background: var(--border);
+          opacity: 0.4;
+        }
+        .ex-skeleton-body {
+          padding: 0.55rem 0.65rem;
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 0.4rem;
+        }
+        .ex-skeleton-line {
+          background: var(--border);
+          opacity: 0.5;
+          border-radius: 4px;
+        }
+        .ex-skeleton-title {
+          height: 14px;
+          width: 70%;
+        }
+        .ex-skeleton-sub {
+          height: 10px;
+          width: 40%;
+        }
+        .ex-skeleton-footer {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-top: auto;
+        }
+        .ex-skeleton-rating {
+          height: 10px;
+          width: 30%;
+        }
+        .ex-skeleton-hours {
+          height: 10px;
+          width: 25%;
+        }
+        .ex-skeleton-pulse {
+          animation: exSkeletonPulse 1.5s ease-in-out infinite;
+        }
+        @keyframes exSkeletonPulse {
+          0%, 100% { opacity: 0.5; }
+          50% { opacity: 1; }
+        }
+      `}</style>
+
+      {error ? (
         <div className="ex-empty" style={{ minHeight: '40vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-          <div className="loading-icon" style={{ animation: 'float 2s ease-in-out infinite', fontSize: '3rem' }}>🧭</div>
-          <p style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>Loading places...</p>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚠️</div>
+          <h3 style={{ color: 'var(--text)', marginBottom: '0.5rem', fontSize: '1.2rem', fontFamily: 'var(--font-head)', fontWeight: 800 }}>Failed to load places</h3>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', maxWidth: '400px', fontSize: '0.85rem', lineHeight: 1.5 }}>{error}</p>
+          <button className="btn btn-primary" onClick={() => window.location.reload()}>
+            Try Again
+          </button>
+        </div>
+      ) : loading ? (
+        <div className="ex-skeleton-grid">
+          {Array.from({ length: 6 }).map((_, idx) => (
+            <div key={idx} className="ex-skeleton-card ex-skeleton-pulse">
+              <div className="ex-skeleton-img" />
+              <div className="ex-skeleton-body">
+                <div className="ex-skeleton-line ex-skeleton-title" />
+                <div className="ex-skeleton-line ex-skeleton-sub" />
+                <div className="ex-skeleton-footer">
+                  <div className="ex-skeleton-line ex-skeleton-rating" />
+                  <div className="ex-skeleton-line ex-skeleton-hours" />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
         <>

@@ -19,10 +19,7 @@ export const supabase = supabaseUrl && supabaseAnonKey
 // ---- Waitlist ----
 export async function submitWaitlist({ name, email, role, message, referral }) {
   if (!supabase) {
-    const existing = JSON.parse(localStorage.getItem('geoquiz_waitlist') || '[]')
-    existing.push({ name, email, role, message, referral, created_at: new Date().toISOString() })
-    localStorage.setItem('geoquiz_waitlist', JSON.stringify(existing))
-    return { success: true, fallback: true }
+    throw new Error('Database connection unavailable. Please check your internet and try again.')
   }
   const { error } = await supabase.from('waitlist').insert([{ name, email, role, message, referral }])
   if (error) throw error
@@ -49,16 +46,7 @@ export async function submitWaitlist({ name, email, role, message, referral }) {
 // ---- Leaderboard ----
 export async function submitScore({ playerName, score, maxScore, questionCount, categories, difficulty, avatar, gameType = 'quiz' }) {
   if (!supabase) {
-    const existing = JSON.parse(localStorage.getItem('geoquiz_leaderboard') || '[]')
-    existing.push({
-      player_name: playerName, score, max_score: maxScore,
-      question_count: questionCount, categories, difficulty, avatar,
-      game_type: gameType,
-      created_at: new Date().toISOString(),
-    })
-    existing.sort((a, b) => b.score - a.score)
-    localStorage.setItem('geoquiz_leaderboard', JSON.stringify(existing.slice(0, 100)))
-    return { success: true, fallback: true }
+    throw new Error('Database connection unavailable. Your score could not be saved.')
   }
   const { error } = await supabase.from('leaderboard').insert([{
     player_name: playerName,

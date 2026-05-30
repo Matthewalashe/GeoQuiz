@@ -66,6 +66,7 @@ export default function ResultsScreen() {
   const [showConfetti, setShowConfetti] = useState(false)
   const [leaderboard, setLeaderboard] = useState([])
   const [xpResult, setXpResult] = useState(null)
+  const [saveError, setSaveError] = useState(null)
 
   useEffect(() => {
     if (!data) navigate('/', { replace: true })
@@ -88,6 +89,7 @@ export default function ResultsScreen() {
   async function handleSaveScore() {
     if (!playerName.trim() || !data) return
     setSaving(true)
+    setSaveError(null)
     localStorage.setItem('geoquiz_player', playerName.trim())
     const prev = parseInt(localStorage.getItem('geoquiz_total_perfects') || '0', 10)
     localStorage.setItem('geoquiz_total_perfects', prev + perfectCount)
@@ -110,7 +112,7 @@ export default function ResultsScreen() {
       if (data.totalScore === data.maxScore) setShowAchievement({ type: 'gold' })
     } catch (err) {
       console.error('Save score error:', err)
-      setSaved(true)
+      setSaveError(err.message || 'Could not save your score. Please try again.')
     } finally { setSaving(false) }
   }
 
@@ -251,6 +253,11 @@ export default function ResultsScreen() {
       {!saved ? (
         <div className="glass" style={{ padding: '1.25rem', textAlign: 'center' }}>
           <h3 style={{ fontFamily: 'var(--font-head)', fontSize: '1rem', marginBottom: '0.75rem' }}>Save Your Score</h3>
+          {saveError && (
+            <div style={{ marginBottom: '0.75rem', padding: '0.75rem 1rem', borderRadius: '0.5rem', background: 'rgba(239,68,68,0.12)', color: '#ef4444', fontSize: '0.85rem' }}>
+              ⚠️ {saveError}
+            </div>
+          )}
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <input type="text" value={playerName} onChange={e => setPlayerName(e.target.value)}
               placeholder="Your name" maxLength={30}
@@ -259,7 +266,7 @@ export default function ResultsScreen() {
             <button onClick={handleSaveScore} disabled={!playerName.trim() || saving}
               style={{ padding: '0.65rem 1.2rem', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '0.5rem',
                 fontWeight: 600, cursor: 'pointer', opacity: !playerName.trim() || saving ? 0.5 : 1 }}>
-              {saving ? '...' : 'Save'}
+              {saving ? '...' : saveError ? 'Retry' : 'Save'}
             </button>
           </div>
         </div>

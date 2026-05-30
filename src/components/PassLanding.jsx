@@ -43,11 +43,13 @@ export default function PassLanding() {
   const [interest, setInterest] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
 
   async function handleSubmit(e) {
     e.preventDefault()
     if (!name.trim() || !email.trim()) return
     setSaving(true)
+    setError(null)
     try {
       await submitWaitlist({
         name: name.trim(),
@@ -55,11 +57,13 @@ export default function PassLanding() {
         role: 'pass_interest',
         message: interest || 'Wanda Pass waitlist',
       })
+      setSubmitted(true)
     } catch (err) {
       console.error(err)
+      setError('Something went wrong. Please try again.')
+    } finally {
+      setSaving(false)
     }
-    setSubmitted(true)
-    setSaving(false)
   }
 
   return (
@@ -159,6 +163,11 @@ export default function PassLanding() {
             <p className="pass-waitlist-desc">
               Join the waitlist to get early access and launch-day pricing.
             </p>
+            {error && (
+              <div style={{ marginBottom: '0.75rem', padding: '0.75rem 1rem', borderRadius: '0.5rem', background: 'rgba(239,68,68,0.12)', color: '#ef4444', fontSize: '0.9rem', textAlign: 'center' }}>
+                ⚠️ {error}
+              </div>
+            )}
             <form className="pass-form" onSubmit={handleSubmit}>
               <input
                 type="text" placeholder="Your name" value={name}
