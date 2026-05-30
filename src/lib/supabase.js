@@ -47,28 +47,27 @@ export async function submitWaitlist({ name, email, role, message }) {
 }
 
 // ---- Leaderboard ----
-export async function submitScore({ playerName, score, maxScore, questionCount, categories, difficulty, avatar, gameType = 'quiz' }) {
+export async function submitScore({ playerName, score, maxScore, questionCount, categories, difficulty, gameType = 'quiz' }) {
   if (!supabase) {
     throw new Error('Database connection unavailable. Your score could not be saved.')
   }
-  const { error } = await supabase.from('leaderboard').insert([{
+  const row = {
     player_name: playerName,
     score,
     max_score: maxScore,
     question_count: questionCount,
-    categories,
-    difficulty,
-    avatar,
     game_type: gameType,
-  }])
+  }
+  if (categories) row.categories = categories
+  if (difficulty) row.difficulty = difficulty
+  const { error } = await supabase.from('leaderboard').insert([row])
   if (error) throw error
   return { success: true }
 }
 
 export async function fetchLeaderboard(limit = 30) {
   if (!supabase) {
-    const data = JSON.parse(localStorage.getItem('geoquiz_leaderboard') || '[]')
-    return data.slice(0, limit)
+    throw new Error('Database connection unavailable.')
   }
   // Query real users from profiles, ordered by total XP
   const { data, error } = await supabase
