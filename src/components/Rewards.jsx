@@ -1,55 +1,108 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import {
   getXPData, getLevel, getLevelProgress, getLevelTitle, getXPToNextLevel,
   getCurrentLeague, getNextLeague, getXPToNextLeague, LEAGUE_TIERS,
   DAILY_REWARDS, getRewardsData, claimDailyReward, canClaimToday,
 } from '../engine/xp.js'
-import { fetchLeaguePeers } from '../lib/supabase.js'
+import { fetchLeaguePeers, supabase } from '../lib/supabase.js'
 
-export default function Rewards() {
+export default function Rewards({ session, profile }) {
   const navigate = useNavigate()
   const [tab, setTab] = useState('rewards') // rewards | league
+  const [loading, setLoading] = useState(!session)
+  const [checkedSession, setCheckedSession] = useState(session)
+
+  // If no session prop, independently check auth
+  useEffect(() => {
+    if (session) { setCheckedSession(session); setLoading(false); return }
+    if (!supabase) { setLoading(false); return }
+    supabase.auth.getSession().then(({ data: { session: s } }) => {
+      if (s) setCheckedSession(s)
+      setLoading(false)
+    }).catch(() => setLoading(false))
+  }, [session])
+
+  // ─── AUTH GATE ──────────────────────────────────────────
+  if (loading) {
+    return (
+      <section className="rewards-page" style={{ display: 'grid', placeItems: 'center', minHeight: '70vh' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🎁</div>
+          <p style={{ color: 'var(--text-secondary)' }}>Loading rewards...</p>
+        </div>
+      </section>
+    )
+  }
+
+  if (!checkedSession) {
+    return (
+      <section className="rewards-page" style={{ display: 'grid', placeItems: 'center', minHeight: '70vh' }}>
+        <div style={{ textAlign: 'center', maxWidth: 400, padding: '2rem' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎁</div>
+          <h2 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Sign In to Earn Rewards</h2>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: 1.6 }}>
+            Create an account or sign in to claim daily rewards, track your streak, compete in leagues, and save your scores across devices.
+          </p>
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link to="/auth" className="btn btn-primary" style={{ minWidth: 140 }}>Sign In</Link>
+            <Link to="/auth?mode=signup" className="btn btn-outline" style={{ minWidth: 140 }}>Create Account</Link>
+          </div>
+          <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+            <div>🔥 Daily streak rewards — up to 7 days</div>
+            <div>🏆 Compete in league leaderboards</div>
+            <div>📊 Track your XP and level progress</div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  // ─── AUTHENTICATED REWARDS ──────────────────────────────
+  return <RewardsContent session={checkedSession} profile={profile} navigate={navigate} tab={tab} setTab={setTab} />
+}
+
+function RewardsContent({ session, profile, navigate, tab, setTab }) {
   const [xp, setXP] = useState(getXPData)
   const [rewards, setRewards] = useState(getRewardsData)
   const [canClaim, setCanClaim] = useState(canClaimToday)
   const [claimResult, setClaimResult] = useState(null)
   const [showConfetti, setShowConfetti] = useState(false)
 
-  // Pre-compute confetti positions (lazy init runs once, avoids purity issues)
   const [confettiBits] = useState(() => Array.from({ length: 30 }, () => ({
     x: `${Math.random() * 100}%`,
     delay: `${Math.random() * 0.5}s`,
   })))
 
-  const level = getLevel(xp.totalXP)
+  // Prefer Supabase profile data over localStorage
+  const displayXP = profile?.total_xp ?? xp.totalXP
+  const level = getLevel(displayXP)
   const title = getLevelTitle(level)
-  const league = getCurrentLeague(xp.totalXP)
-  const nextLeague = getNextLeague(xp.totalXP)
-  const xpToNext = getXPToNextLeague(xp.totalXP)
-  const playerName = localStorage.getItem('geoquiz_player') || 'Explorer'
+  const league = getCurrentLeague(displayXP)
+  const nextLeague = getNextLeague(displayXP)
+  const xpToNext = getXPToNextLeague(displayXP)
+  const playerName = profile?.username || profile?.full_name || session?.user?.email?.split('@')[0] || 'Explorer'
+  const displayAvatar = profile?.avatar_url || '🧭'
   const [peers, setPeers] = useState([])
 
   // Fetch real league peers from Supabase
   useEffect(() => {
-    const nextLg = getNextLeague(xp.totalXP)
+    const nextLg = getNextLeague(displayXP)
     const minXP = league.minXP
     const maxXP = nextLg ? nextLg.minXP - 1 : 999999
     fetchLeaguePeers(Math.max(0, minXP - 500), maxXP + 500, 20).then(data => {
-      // Mark current player and sort
       const withPlayer = data.map(p => ({
         ...p,
-        isPlayer: p.name?.toLowerCase() === playerName.toLowerCase(),
+        isPlayer: p.id === session?.user?.id,
       }))
-      // Ensure player is in list
       const hasPlayer = withPlayer.some(p => p.isPlayer)
       if (!hasPlayer) {
-        withPlayer.push({ name: playerName, avatar: localStorage.getItem('geoquiz_avatar') || '🧭', xp: xp.totalXP || 0, level: level, isPlayer: true })
+        withPlayer.push({ id: session?.user?.id, name: playerName, avatar: displayAvatar, xp: displayXP, level, isPlayer: true })
       }
       withPlayer.sort((a, b) => (b.xp || 0) - (a.xp || 0))
       setPeers(withPlayer)
-    }).catch(() => setPeers([{ name: playerName, avatar: '🧭', xp: xp.totalXP || 0, isPlayer: true }]))
-  }, [xp.totalXP])
+    }).catch(() => setPeers([{ name: playerName, avatar: displayAvatar, xp: displayXP, isPlayer: true }]))
+  }, [displayXP])
 
   function handleClaim() {
     const result = claimDailyReward()
@@ -142,10 +195,10 @@ export default function Rewards() {
           <div className="rw-xp-card">
             <div className="rw-xp-top">
               <span>{title.emoji} Lv.{level} {title.title}</span>
-              <span>{xp.totalXP} XP</span>
+              <span>{displayXP} XP</span>
             </div>
-            <div className="rw-xp-bar"><div className="rw-xp-fill" style={{ width: `${getLevelProgress(xp.totalXP) * 100}%` }} /></div>
-            <div className="rw-xp-bot">{getXPToNextLevel(xp.totalXP)} XP to Level {level + 1}</div>
+            <div className="rw-xp-bar"><div className="rw-xp-fill" style={{ width: `${getLevelProgress(displayXP) * 100}%` }} /></div>
+            <div className="rw-xp-bot">{getXPToNextLevel(displayXP)} XP to Level {level + 1}</div>
           </div>
         </div>
       )}
@@ -169,7 +222,7 @@ export default function Rewards() {
           <div className="rw-tiers">
             {LEAGUE_TIERS.map(t => {
               const isActive = t.id === league.id
-              const isReached = xp.totalXP >= t.minXP
+              const isReached = displayXP >= t.minXP
               return (
                 <div key={t.id} className={`rw-tier ${isActive ? 'active' : ''} ${isReached ? 'reached' : ''}`}>
                   <span className="rw-tier-emoji">{t.emoji}</span>

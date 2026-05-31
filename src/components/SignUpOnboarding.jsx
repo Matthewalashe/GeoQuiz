@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { playStepComplete, playCelebration, playButtonTap, vibrateTap, vibrateSuccess } from '../engine/audio.js'
+import { updateProfile } from '../lib/supabase.js'
 import {
   PersonRegular, ImageRegular, HeartRegular,
   CheckmarkCircleRegular, ArrowRightRegular, ArrowLeftRegular,
@@ -21,7 +22,7 @@ const INTERESTS = [
   { id: 'deals', label: 'Find Deals', icon: <GiftRegular />, color: '#f59e0b' },
 ]
 
-export default function SignUpOnboarding({ username: initialUsername, onComplete }) {
+export default function SignUpOnboarding({ username: initialUsername, session, onComplete }) {
   const navigate = useNavigate()
   const [step, setStep] = useState(0)
   const [avatar, setAvatar] = useState('🧭')
@@ -62,12 +63,23 @@ export default function SignUpOnboarding({ username: initialUsername, onComplete
     }, 200)
   }
 
-  function finish() {
+  async function finish() {
     playButtonTap()
     localStorage.setItem('geoquiz_avatar', avatar)
     localStorage.setItem('geoquiz_player', username.trim())
     localStorage.setItem('wanda_interests', JSON.stringify(interests))
     localStorage.setItem('wanda_onboarded', '1')
+    // Sync avatar & username to Supabase profiles table
+    if (session?.user?.id) {
+      try {
+        await updateProfile(session.user.id, {
+          avatar_url: avatar,
+          username: username.trim(),
+        })
+      } catch (e) {
+        console.warn('Could not sync onboarding profile:', e.message)
+      }
+    }
     if (onComplete) onComplete({ avatar, username: username.trim(), interests })
     else navigate('/dashboard')
   }

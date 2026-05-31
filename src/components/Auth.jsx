@@ -25,6 +25,7 @@ export default function Auth() {
   const [success, setSuccess] = useState(null)
   const [showPw, setShowPw] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
+  const [authSession, setAuthSession] = useState(null)
   const [googleReady, setGoogleReady] = useState(false)
   const googleBtnRef = useRef(null)
   const gisInitialized = useRef(false)
@@ -254,7 +255,7 @@ export default function Auth() {
       if (data?.session?.user) {
         await ensureProfile(data.session.user)
         const wasOnboarded = localStorage.getItem('wanda_onboarded')
-        if (!wasOnboarded) { setShowOnboarding(true); setLoading(false) }
+        if (!wasOnboarded) { setAuthSession(data.session); setShowOnboarding(true); setLoading(false) }
         else navigate('/dashboard', { replace: true })
         return
       }
@@ -265,7 +266,7 @@ export default function Auth() {
           const result = await signIn({ email, password })
           if (result?.user) await ensureProfile(result.user)
           const wasOnboarded = localStorage.getItem('wanda_onboarded')
-          if (!wasOnboarded) { setShowOnboarding(true); setLoading(false) }
+          if (!wasOnboarded) { setAuthSession({ user: result.user }); setShowOnboarding(true); setLoading(false) }
           else navigate(searchParams.get('redirect') || '/dashboard', { replace: true })
           return
         } catch {
@@ -350,7 +351,7 @@ export default function Auth() {
   }
 
   if (showOnboarding) {
-    return <SignUpOnboarding username={formData.username} onComplete={handleOnboardingComplete} />
+    return <SignUpOnboarding username={formData.username} session={authSession} onComplete={handleOnboardingComplete} />
   }
 
   // ─── RENDER ────────────────────────────────────────────

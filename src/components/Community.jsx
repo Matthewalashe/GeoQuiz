@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { fetchPosts, fetchReplies, createPost, toggleLike, reportPost } from '../lib/supabase.js'
+import { Link } from 'react-router-dom'
+import { fetchPosts, fetchReplies, createPost, toggleLike, reportPost, supabase } from '../lib/supabase.js'
 import { getXPData, getLevel, getLevelTitle } from '../engine/xp.js'
 import {
   HeartRegular,
@@ -34,7 +35,7 @@ function timeAgo(dateStr) {
   return new Date(dateStr).toLocaleDateString('en-NG', { month: 'short', day: 'numeric' })
 }
 
-function PostItem({ post, username, onLike, onReport }) {
+function PostItem({ post, username, userId, profile, isAuthenticated, onLike, onReport }) {
   const [showReplies, setShowReplies] = useState(false)
   const [replies, setReplies] = useState([])
   const [replyText, setReplyText] = useState('')
@@ -61,16 +62,16 @@ function PostItem({ post, username, onLike, onReport }) {
   }
 
   async function handleReply() {
-    if (!replyText.trim() || replying) return
+    if (!isAuthenticated || !replyText.trim() || replying) return
     setReplying(true)
     try {
-      const xp = getXPData()
+      const displayXP = profile?.total_xp ?? getXPData().totalXP
       const newReply = await createPost({
         author: username,
         content: sanitize(replyText),
         parentId: post.id,
-        level: getLevel(xp.totalXP),
-        avatar: localStorage.getItem('geoquiz_avatar') || '🎭',
+        level: getLevel(displayXP),
+        avatar: profile?.avatar_url || '🧭',
       })
       setReplies(prev => [...prev, newReply])
       setReplyText('')
@@ -94,6 +95,8 @@ function PostItem({ post, username, onLike, onReport }) {
     }
   }
 
+  const displayAvatar = profile?.avatar_url || '🧭'
+
   return (
     <article className="x-post">
       {/* Avatar column */}
@@ -113,9 +116,11 @@ function PostItem({ post, username, onLike, onReport }) {
             <span className="x-dot">·</span>
             <span className="x-time">{timeAgo(post.created_at)}</span>
           </div>
-          <button className="x-menu-btn" onClick={() => setShowMenu(!showMenu)}>
-            <MoreHorizontalRegular fontSize={18} />
-          </button>
+          {isAuthenticated && (
+            <button className="x-menu-btn" onClick={() => setShowMenu(!showMenu)}>
+              <MoreHorizontalRegular fontSize={18} />
+            </button>
+          )}
           {showMenu && (
             <div className="x-dropdown">
               <button onClick={() => { onReport(post.id); setShowMenu(false) }}>
@@ -134,7 +139,7 @@ function PostItem({ post, username, onLike, onReport }) {
             <ChatRegular fontSize={17} />
             <span>{replyCount > 0 ? replyCount : ''}</span>
           </button>
-          <button className={`x-action ${liked ? 'x-liked' : ''}`} onClick={() => onLike(post.id)}>
+          <button className={`x-action ${liked ? 'x-liked' : ''}`} onClick={() => isAuthenticated ? onLike(post.id) : null} style={!isAuthenticated ? { opacity: 0.5, cursor: 'default' } : {}}>
             {liked ? <HeartFilled fontSize={17} /> : <HeartRegular fontSize={17} />}
             <span>{likeCount > 0 ? likeCount : ''}</span>
           </button>
@@ -169,7 +174,7 @@ function PostItem({ post, username, onLike, onReport }) {
                     </div>
                     <div className="x-post-body x-reply-body">{r.content}</div>
                     <div className="x-actions x-actions-sm">
-                      <button className={`x-action ${rLiked ? 'x-liked' : ''}`} onClick={() => onLike(r.id)}>
+                      <button className={`x-action ${rLiked ? 'x-liked' : ''}`} onClick={() => isAuthenticated ? onLike(r.id) : null} style={!isAuthenticated ? { opacity: 0.5, cursor: 'default' } : {}}>
                         {rLiked ? <HeartFilled fontSize={15} /> : <HeartRegular fontSize={15} />}
                         <span>{(r.likes || []).length > 0 ? (r.likes || []).length : ''}</span>
                       </button>
@@ -178,26 +183,32 @@ function PostItem({ post, username, onLike, onReport }) {
                 </div>
               )
             })}
-            {/* Reply composer */}
-            <div className="x-reply-compose">
-              <div className="x-avatar x-avatar-sm">{localStorage.getItem('geoquiz_avatar') || '🎭'}</div>
-              <input
-                type="text"
-                value={replyText}
-                onChange={e => setReplyText(e.target.value)}
-                placeholder="Post your reply"
-                maxLength={500}
-                onKeyDown={e => e.key === 'Enter' && handleReply()}
-                className="x-reply-input"
-              />
-              <button
-                className="x-reply-send"
-                onClick={handleReply}
-                disabled={!replyText.trim() || replying}
-              >
-                <SendRegular fontSize={18} />
-              </button>
-            </div>
+            {/* Reply composer — only for authenticated users */}
+            {isAuthenticated ? (
+              <div className="x-reply-compose">
+                <div className="x-avatar x-avatar-sm">{displayAvatar}</div>
+                <input
+                  type="text"
+                  value={replyText}
+                  onChange={e => setReplyText(e.target.value)}
+                  placeholder="Post your reply"
+                  maxLength={500}
+                  onKeyDown={e => e.key === 'Enter' && handleReply()}
+                  className="x-reply-input"
+                />
+                <button
+                  className="x-reply-send"
+                  onClick={handleReply}
+                  disabled={!replyText.trim() || replying}
+                >
+                  <SendRegular fontSize={18} />
+                </button>
+              </div>
+            ) : (
+              <div style={{ padding: '0.75rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                <Link to="/auth" style={{ color: 'var(--primary)' }}>Sign in</Link> to reply
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -205,14 +216,34 @@ function PostItem({ post, username, onLike, onReport }) {
   )
 }
 
-export default function Community() {
+export default function Community({ session, profile }) {
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
   const [newPost, setNewPost] = useState('')
   const [posting, setPosting] = useState(false)
-  const [username, setUsername] = useState(() => localStorage.getItem('geoquiz_player') || '')
-  const [nameSet, setNameSet] = useState(() => !!localStorage.getItem('geoquiz_player'))
   const [lastPostTime, setLastPostTime] = useState(0)
+  const [checkedSession, setCheckedSession] = useState(session)
+  const [checkedProfile, setCheckedProfile] = useState(profile)
+
+  // If no session prop, independently check auth
+  useEffect(() => {
+    if (session) { setCheckedSession(session); return }
+    if (!supabase) return
+    supabase.auth.getSession().then(({ data: { session: s } }) => {
+      if (s) {
+        setCheckedSession(s)
+        // Fetch profile
+        supabase.from('profiles').select('*').eq('id', s.user.id).single()
+          .then(({ data }) => { if (data) setCheckedProfile(data) })
+      }
+    }).catch(() => {})
+  }, [session])
+
+  useEffect(() => { if (profile) setCheckedProfile(profile) }, [profile])
+
+  const isAuthenticated = !!checkedSession
+  const username = checkedProfile?.username || checkedProfile?.full_name || checkedSession?.user?.email?.split('@')[0] || ''
+  const displayAvatar = checkedProfile?.avatar_url || '🧭'
 
   const loadPosts = useCallback(async () => {
     try {
@@ -222,30 +253,22 @@ export default function Community() {
     setLoading(false)
   }, [])
 
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => { loadPosts() }, [loadPosts])
-  /* eslint-enable react-hooks/set-state-in-effect */
-
-  function handleSetName() {
-    if (username.trim().length < 2) return
-    localStorage.setItem('geoquiz_player', username.trim())
-    setNameSet(true)
-  }
 
   async function handlePost() {
-    if (!newPost.trim() || posting) return
+    if (!isAuthenticated || !newPost.trim() || posting) return
     if (Date.now() - lastPostTime < 15000) {
       alert('Please wait a moment before posting again.')
       return
     }
     setPosting(true)
     try {
-      const xp = getXPData()
+      const displayXP = checkedProfile?.total_xp ?? getXPData().totalXP
       const post = await createPost({
         author: username,
         content: sanitize(newPost),
-        level: getLevel(xp.totalXP),
-        avatar: localStorage.getItem('geoquiz_avatar') || '🎭',
+        level: getLevel(displayXP),
+        avatar: displayAvatar,
       })
       setPosts(prev => [post, ...prev])
       setNewPost('')
@@ -255,7 +278,7 @@ export default function Community() {
   }
 
   async function handleLike(postId) {
-    if (!username) return
+    if (!isAuthenticated || !username) return
     try {
       await toggleLike(postId, username)
       setPosts(prev => prev.map(p => {
@@ -272,6 +295,7 @@ export default function Community() {
   }
 
   async function handleReport(postId) {
+    if (!isAuthenticated) return
     if (!confirm('Report this post as inappropriate?')) return
     try {
       await reportPost(postId)
@@ -287,31 +311,11 @@ export default function Community() {
         <h2>Feed</h2>
       </div>
 
-      {/* Name gate */}
-      {!nameSet ? (
-        <div className="x-name-gate">
-          <div className="x-avatar" style={{ fontSize: '2rem' }}>🎭</div>
-          <h3>Join the Feed</h3>
-          <p>Set your display name to start posting</p>
-          <div className="x-name-form">
-            <input
-              type="text"
-              value={username}
-              onChange={e => setUsername(e.target.value)}
-              placeholder="Your display name"
-              maxLength={30}
-              onKeyDown={e => e.key === 'Enter' && handleSetName()}
-            />
-            <button className="btn btn-primary btn-sm" onClick={handleSetName} disabled={username.trim().length < 2}>
-              Join
-            </button>
-          </div>
-        </div>
-      ) : (
-        /* Composer */
+      {/* Auth-gated composer / sign-in prompt */}
+      {isAuthenticated ? (
         <div className="x-compose">
           <div className="x-compose-avatar">
-            <div className="x-avatar">{localStorage.getItem('geoquiz_avatar') || '🎭'}</div>
+            <div className="x-avatar">{displayAvatar}</div>
           </div>
           <div className="x-compose-body">
             <textarea
@@ -333,11 +337,21 @@ export default function Community() {
             </div>
           </div>
         </div>
+      ) : (
+        <div className="x-name-gate">
+          <div className="x-avatar" style={{ fontSize: '2rem' }}>🎭</div>
+          <h3>Join the Conversation</h3>
+          <p>Sign in to post, react, and reply to the community feed.</p>
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', marginTop: '0.75rem' }}>
+            <Link to="/auth" className="btn btn-primary btn-sm">Sign In</Link>
+            <Link to="/auth?mode=signup" className="btn btn-outline btn-sm">Create Account</Link>
+          </div>
+        </div>
       )}
 
       <div className="x-divider" />
 
-      {/* Feed List */}
+      {/* Feed List — visible to everyone */}
       {loading ? (
         <div className="x-empty">Loading feed...</div>
       ) : posts.length === 0 ? (
@@ -352,6 +366,9 @@ export default function Community() {
               key={p.id}
               post={p}
               username={username}
+              userId={checkedSession?.user?.id}
+              profile={checkedProfile}
+              isAuthenticated={isAuthenticated}
               onLike={handleLike}
               onReport={handleReport}
             />

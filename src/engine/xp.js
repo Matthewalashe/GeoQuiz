@@ -7,6 +7,22 @@ const STORAGE_KEY = 'geoquiz_xp'
 const LEAGUE_KEY = 'geoquiz_league'
 const REWARDS_KEY = 'geoquiz_rewards'
 
+// Debounced XP sync to Supabase (2s delay to batch rapid gains)
+let _syncTimer = null
+function debouncedSync() {
+  clearTimeout(_syncTimer)
+  _syncTimer = setTimeout(async () => {
+    try {
+      const { supabase, syncLocalProgress } = await import('../lib/supabase.js')
+      if (!supabase) return
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user?.id) await syncLocalProgress(session.user.id)
+    } catch (e) {
+      console.warn('XP sync failed:', e.message)
+    }
+  }, 2000)
+}
+
 // XP per level (500 XP each)
 const XP_PER_LEVEL = 500
 const MAX_LEVEL = 50
@@ -118,6 +134,7 @@ export function addXP(type, multiplier = 1) {
   data.xpHistory.push({ type, amount, date: new Date().toISOString() })
   if (data.xpHistory.length > 20) data.xpHistory = data.xpHistory.slice(-20)
   saveXPData(data)
+  debouncedSync()
 
   return { totalXP: data.totalXP, level: newLevel, leveledUp: newLevel > oldLevel, oldLevel, newLevel, xpAdded: amount }
 }
@@ -168,6 +185,7 @@ export function processDailyLogin() {
   data.xpHistory.push({ type: 'DAILY_LOGIN', amount: loginXP + streakXP, date: today })
   if (data.xpHistory.length > 20) data.xpHistory = data.xpHistory.slice(-20)
   saveXPData(data)
+  debouncedSync()
 
   return {
     alreadyLoggedIn: false, streakSaved, loginXP, streakXP,

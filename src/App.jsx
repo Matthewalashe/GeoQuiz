@@ -250,7 +250,7 @@ export default function App() {
             <Route path="/challenge" element={<Challenge />} />
             <Route path="/dashboard" element={<Dashboard session={session} profile={profile} />} />
             <Route path="/achievements" element={<Achievements />} />
-            <Route path="/community" element={<Community />} />
+            <Route path="/community" element={<Community session={session} profile={profile} />} />
             <Route path="/postcards" element={<PostCards />} />
             <Route path="/puzzle" element={<PuzzleGame />} />
             <Route path="/wordgame" element={<WordGame />} />
@@ -258,7 +258,7 @@ export default function App() {
             <Route path="/coloring" element={<ColoringGame />} />
             <Route path="/trivia" element={<TriviaGame />} />
             <Route path="/adventure" element={<AdventureGame />} />
-            <Route path="/rewards" element={<Rewards />} />
+            <Route path="/rewards" element={<Rewards session={session} profile={profile} />} />
             <Route path="/story" element={<StoryMode />} />
             <Route path="/discovery" element={<Discovery />} />
             <Route path="/deals" element={<DealsPage />} />

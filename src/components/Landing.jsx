@@ -27,7 +27,7 @@ export default function Landing({ session, profile }) {
   const title = getLevelTitle(level)
   const league = getCurrentLeague(xp.totalXP)
   const streak = xp.streakDays || 0
-  const playerName = profile?.display_name || localStorage.getItem('geoquiz_player') || 'Explorer'
+  const playerName = profile?.username || profile?.full_name || localStorage.getItem('geoquiz_player') || 'Explorer'
   const totalPoints = profile?.total_xp || xp.totalXP
 
   const [listings, setListings] = useState([])
