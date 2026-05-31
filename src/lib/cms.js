@@ -5,6 +5,21 @@
  */
 import { supabase } from './supabase.js'
 
+/**
+ * Convert raw fetch/Supabase errors into user-friendly messages.
+ * Detects offline, DNS, timeout, and CORS issues.
+ */
+function friendlyError(err) {
+  const msg = (err?.message || String(err)).toLowerCase()
+  if (!navigator.onLine || msg.includes('failed to fetch') || msg.includes('networkerror') || msg.includes('network request failed') || msg.includes('load failed') || msg.includes('dns'))
+    return 'No internet connection. Connect to Wi-Fi and try again.'
+  if (msg.includes('timeout') || msg.includes('timed out'))
+    return 'Connection timed out. Please check your internet and try again.'
+  if (msg.includes('cors') || msg.includes('blocked'))
+    return 'Connection blocked. Please try again later.'
+  return err?.message || 'Something went wrong. Please try again.'
+}
+
 // In-memory cache with short TTL so admin edits propagate fast
 const cache = {}
 const CACHE_TTL = 30 * 1000 // 30 seconds
@@ -102,7 +117,7 @@ export async function getListings() {
     return result
   } catch (e) {
     console.warn('CMS listings fetch error:', e.message)
-    return { data: [], error: e.message || 'Failed to load listings.' }
+    return { data: [], error: friendlyError(e) || 'Failed to load listings.' }
   }
 }
 
@@ -131,7 +146,7 @@ export async function getDeals() {
     return result
   } catch (e) {
     console.warn('CMS deals fetch error:', e.message)
-    return { data: [], error: e.message || 'Failed to load deals.' }
+    return { data: [], error: friendlyError(e) || 'Failed to load deals.' }
   }
 }
 
@@ -155,7 +170,7 @@ export async function getSponsors() {
     return result
   } catch (e) {
     console.warn('CMS sponsors fetch error:', e.message)
-    return { data: [], error: e.message || 'Failed to load sponsors.' }
+    return { data: [], error: friendlyError(e) || 'Failed to load sponsors.' }
   }
 }
 
@@ -185,7 +200,7 @@ export async function getDiscoveryPOIs() {
     return result
   } catch (e) {
     console.warn('CMS discovery fetch error:', e.message)
-    return { data: [], error: e.message || 'Failed to load discoveries.' }
+    return { data: [], error: friendlyError(e) || 'Failed to load discoveries.' }
   }
 }
 
@@ -223,7 +238,7 @@ export async function getQuestions() {
     return result
   } catch (e) {
     console.warn('CMS questions fetch error:', e.message)
-    return { data: [], error: e.message || 'Failed to load questions.' }
+    return { data: [], error: friendlyError(e) || 'Failed to load questions.' }
   }
 }
 
@@ -275,7 +290,7 @@ export async function getTriviaPacks() {
     return result
   } catch (e) {
     console.warn('CMS trivia fetch error:', e.message)
-    return { data: {}, error: e.message || 'Failed to load trivia packs.' }
+    return { data: {}, error: friendlyError(e) || 'Failed to load trivia packs.' }
   }
 }
 
@@ -304,7 +319,7 @@ export async function getCrosswords() {
     return result
   } catch (e) {
     console.warn('CMS crosswords fetch error:', e.message)
-    return { data: [], error: e.message || 'Failed to load crosswords.' }
+    return { data: [], error: friendlyError(e) || 'Failed to load crosswords.' }
   }
 }
 
@@ -334,7 +349,7 @@ export async function getWordGame() {
     return result
   } catch (e) {
     console.warn('CMS wordgame fetch error:', e.message)
-    return { data: [], error: e.message || 'Failed to load word game data.' }
+    return { data: [], error: friendlyError(e) || 'Failed to load word game data.' }
   }
 }
 
@@ -364,7 +379,7 @@ export async function getPostcards() {
     return result
   } catch (e) {
     console.warn('CMS postcards fetch error:', e.message)
-    return { data: [], error: e.message || 'Failed to load postcards.' }
+    return { data: [], error: friendlyError(e) || 'Failed to load postcards.' }
   }
 }
 
@@ -390,7 +405,7 @@ export async function getPuzzleImages() {
     return result
   } catch (e) {
     console.warn('CMS puzzles fetch error:', e.message)
-    return { data: [], error: e.message || 'Failed to load puzzle images.' }
+    return { data: [], error: friendlyError(e) || 'Failed to load puzzle images.' }
   }
 }
 
@@ -422,7 +437,7 @@ export async function getAdventures() {
     return result
   } catch (e) {
     console.warn('CMS adventures fetch error:', e.message)
-    return { data: {}, error: e.message || 'Failed to load adventures.' }
+    return { data: {}, error: friendlyError(e) || 'Failed to load adventures.' }
   }
 }
 
@@ -457,7 +472,7 @@ export async function getCampaign() {
     return result
   } catch (e) {
     console.warn('CMS campaign fetch error:', e.message)
-    return { data: [], error: e.message || 'Failed to load campaign data.' }
+    return { data: [], error: friendlyError(e) || 'Failed to load campaign data.' }
   }
 }
 
@@ -487,7 +502,7 @@ export async function getColoringScenes() {
     return result
   } catch (e) {
     console.warn('CMS coloring fetch error:', e.message)
-    return { data: [], error: e.message || 'Failed to load coloring scenes.' }
+    return { data: [], error: friendlyError(e) || 'Failed to load coloring scenes.' }
   }
 }
 
