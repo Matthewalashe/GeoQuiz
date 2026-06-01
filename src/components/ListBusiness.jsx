@@ -2,29 +2,78 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase, uploadBusinessFile } from '../lib/supabase.js'
 
+// ─── Expanded categories for informal sector ───
 const CATS = [
-  'restaurant','hotel','attraction','nightlife','park','culture',
-  'experience','shopping','event','heritage','market','beach','art',
-  'cafe','fitness','spa','coworking','logistics','education',
-  'healthcare','artisan','trader','services','salon','photography',
-  'fashion','tech','real-estate','entertainment','transport',
+  // Food & Hospitality
+  { value: 'restaurant', label: 'Restaurant', emoji: '🍽️' },
+  { value: 'cafe', label: 'Café / Coffee', emoji: '☕' },
+  { value: 'hotel', label: 'Hotel / Lodge', emoji: '🏨' },
+  { value: 'bar', label: 'Bar / Lounge', emoji: '🍸' },
+  { value: 'nightlife', label: 'Nightlife / Club', emoji: '🎶' },
+  // Shopping & Markets
+  { value: 'shopping', label: 'Shopping / Retail', emoji: '🛍️' },
+  { value: 'market', label: 'Market', emoji: '🏪' },
+  { value: 'fashion', label: 'Fashion / Clothing', emoji: '👗' },
+  // Tourism & Culture
+  { value: 'attraction', label: 'Attraction / Landmark', emoji: '📍' },
+  { value: 'park', label: 'Park / Nature', emoji: '🌿' },
+  { value: 'culture', label: 'Culture / Museum', emoji: '🎭' },
+  { value: 'heritage', label: 'Heritage Site', emoji: '🏛️' },
+  { value: 'beach', label: 'Beach', emoji: '🏖️' },
+  { value: 'experience', label: 'Experience / Activity', emoji: '⭐' },
+  { value: 'event', label: 'Events / Venue', emoji: '🎪' },
+  { value: 'art', label: 'Art / Gallery', emoji: '🎨' },
+  // Services & Informal Sector
+  { value: 'artisan', label: 'Artisan / Craftsperson', emoji: '🔨' },
+  { value: 'handyman', label: 'Handyman / Repairs', emoji: '🔧' },
+  { value: 'tour-guide', label: 'Tour Guide', emoji: '🗺️' },
+  { value: 'trader', label: 'Trader / Vendor', emoji: '📦' },
+  { value: 'tailor', label: 'Tailor / Seamstress', emoji: '🧵' },
+  { value: 'salon', label: 'Salon / Barber', emoji: '💇' },
+  { value: 'photography', label: 'Photography / Video', emoji: '📸' },
+  { value: 'logistics', label: 'Logistics / Delivery', emoji: '🚚' },
+  { value: 'transport', label: 'Transport / Driver', emoji: '🚗' },
+  { value: 'cleaning', label: 'Cleaning / Laundry', emoji: '🧹' },
+  { value: 'catering', label: 'Catering / Food Service', emoji: '🍲' },
+  // Professional
+  { value: 'tech', label: 'Tech / Digital', emoji: '💻' },
+  { value: 'coworking', label: 'Coworking Space', emoji: '🏢' },
+  { value: 'education', label: 'Education / Tutoring', emoji: '📚' },
+  { value: 'healthcare', label: 'Healthcare / Clinic', emoji: '🏥' },
+  { value: 'fitness', label: 'Fitness / Gym', emoji: '💪' },
+  { value: 'spa', label: 'Spa / Wellness', emoji: '🧖' },
+  { value: 'real-estate', label: 'Real Estate', emoji: '🏠' },
+  { value: 'entertainment', label: 'Entertainment', emoji: '🎬' },
+  { value: 'services', label: 'Other Services', emoji: '🛠️' },
 ]
+
 const PRICE_OPTIONS = [
-  { value: '\u20A6', label: '\u20A6 — Budget' },
-  { value: '\u20A6\u20A6', label: '\u20A6\u20A6 — Mid-range' },
-  { value: '\u20A6\u20A6\u20A6', label: '\u20A6\u20A6\u20A6 — Premium' },
-  { value: '\u20A6\u20A6\u20A6\u20A6', label: '\u20A6\u20A6\u20A6\u20A6 — Luxury' },
+  { value: '₦', label: '₦ — Budget' },
+  { value: '₦₦', label: '₦₦ — Mid-range' },
+  { value: '₦₦₦', label: '₦₦₦ — Premium' },
+  { value: '₦₦₦₦', label: '₦₦₦₦ — Luxury' },
+]
+
+const STEPS = [
+  { id: 'info', title: 'Business Info', emoji: '🏪', desc: 'Tell us about your business' },
+  { id: 'media', title: 'Logo & Photos', emoji: '📸', desc: 'Show off your business' },
+  { id: 'contact', title: 'Contact', emoji: '📞', desc: 'How can customers reach you?' },
+  { id: 'details', title: 'Details', emoji: '📝', desc: 'Hours and description' },
+  { id: 'review', title: 'Review', emoji: '✅', desc: 'Preview and submit' },
 ]
 
 export default function ListBusiness() {
   const navigate = useNavigate()
   const [session, setSession] = useState(null)
   const [authLoading, setAuthLoading] = useState(true)
+  const [step, setStep] = useState(0)
+  const [animDir, setAnimDir] = useState('next') // 'next' | 'prev'
 
   const [form, setForm] = useState({
     name: '', category: '', subcategory: '', area: '', address: '',
     phone: '', whatsapp: '', website: '', instagram: '',
     hours: '', priceRange: '', description: '',
+    products: [''], // array of product/service strings
   })
 
   // Logo state
@@ -56,7 +105,7 @@ export default function ListBusiness() {
     return () => subscription.unsubscribe()
   }, [])
 
-  // ─── Cleanup blob URLs on unmount ───
+  // Cleanup blob URLs
   useEffect(() => {
     return () => {
       if (logoPreview) URL.revokeObjectURL(logoPreview)
@@ -68,18 +117,29 @@ export default function ListBusiness() {
     setForm(prev => ({ ...prev, [field]: value }))
   }
 
+  // ─── Product handlers ───
+  function addProduct() {
+    if (form.products.length >= 10) return
+    setForm(prev => ({ ...prev, products: [...prev.products, ''] }))
+  }
+  function updateProduct(idx, value) {
+    setForm(prev => {
+      const products = [...prev.products]
+      products[idx] = value
+      return { ...prev, products }
+    })
+  }
+  function removeProduct(idx) {
+    if (form.products.length <= 1) return
+    setForm(prev => ({ ...prev, products: prev.products.filter((_, i) => i !== idx) }))
+  }
+
   // ─── Logo handlers ───
   function handleLogoSelect(e) {
     const file = e.target.files?.[0]
     if (!file) return
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Logo image must be under 5MB')
-      return
-    }
-    if (!file.type.startsWith('image/')) {
-      setError('Please upload an image file')
-      return
-    }
+    if (file.size > 5 * 1024 * 1024) { setError('Logo image must be under 5MB'); return }
+    if (!file.type.startsWith('image/')) { setError('Please upload an image file'); return }
     if (logoPreview) URL.revokeObjectURL(logoPreview)
     setLogoFile(file)
     setLogoPreview(URL.createObjectURL(file))
@@ -96,10 +156,7 @@ export default function ListBusiness() {
   // ─── Photo handlers ───
   function handlePhotosSelect(e) {
     const files = Array.from(e.target.files || [])
-    if (photoFiles.length + files.length > 4) {
-      setError('Maximum 4 photos allowed')
-      return
-    }
+    if (photoFiles.length + files.length > 5) { setError('Maximum 5 photos allowed'); return }
     const validFiles = files.filter(f => {
       if (f.size > 5 * 1024 * 1024) { setError('Each photo must be under 5MB'); return false }
       if (!f.type.startsWith('image/')) { setError('Only image files allowed'); return false }
@@ -117,17 +174,26 @@ export default function ListBusiness() {
     setPhotoPreviews(prev => prev.filter((_, i) => i !== index))
   }
 
-  // ─── Submit handler ───
-  async function handleSubmit(e) {
-    e.preventDefault()
-    if (!form.name.trim() || !form.category || !form.area.trim()) {
-      setError('Please fill in at least the business name, category, and area.')
+  // ─── Navigation ───
+  function goNext() {
+    if (step === 0 && (!form.name.trim() || !form.category || !form.area.trim())) {
+      setError('Please fill in business name, category, and area.')
       return
     }
-    if (!supabase) {
-      setError('Service unavailable. Please try again later.')
-      return
-    }
+    setError('')
+    setAnimDir('next')
+    setStep(s => Math.min(s + 1, STEPS.length - 1))
+  }
+
+  function goBack() {
+    setError('')
+    setAnimDir('prev')
+    setStep(s => Math.max(s - 1, 0))
+  }
+
+  // ─── Submit ───
+  async function handleSubmit() {
+    if (!supabase) { setError('Service unavailable.'); return }
     setSubmitting(true)
     setError('')
     setUploadProgress('')
@@ -136,32 +202,23 @@ export default function ListBusiness() {
       let logoUrl = ''
       let photoUrls = []
 
-      // Upload logo if provided
       if (logoFile) {
         setUploadProgress('Uploading logo...')
-        try {
-          logoUrl = await uploadBusinessFile(logoFile, 'logo')
-        } catch (uploadErr) {
-          console.warn('Logo upload failed:', uploadErr.message)
-          // Non-blocking: continue without logo
-        }
+        try { logoUrl = await uploadBusinessFile(logoFile, 'logo') }
+        catch (e) { console.warn('Logo upload failed:', e.message) }
       }
 
-      // Upload photos if provided
       if (photoFiles.length > 0) {
         for (let i = 0; i < photoFiles.length; i++) {
           setUploadProgress(`Uploading photo ${i + 1} of ${photoFiles.length}...`)
-          try {
-            const url = await uploadBusinessFile(photoFiles[i], 'photo')
-            photoUrls.push(url)
-          } catch (uploadErr) {
-            console.warn(`Photo ${i + 1} upload failed:`, uploadErr.message)
-            // Non-blocking: continue with remaining photos
-          }
+          try { photoUrls.push(await uploadBusinessFile(photoFiles[i], 'photo')) }
+          catch (e) { console.warn(`Photo ${i + 1} upload failed:`, e.message) }
         }
       }
 
       setUploadProgress('Submitting listing...')
+
+      const products = form.products.map(p => p.trim()).filter(Boolean)
 
       const insertData = {
         name: form.name.trim(),
@@ -178,6 +235,7 @@ export default function ListBusiness() {
         description: form.description.trim() || null,
         logo_url: logoUrl || null,
         photos: photoUrls.length > 0 ? photoUrls : null,
+        products: products.length > 0 ? products : null,
         status: 'pending',
         submitted_by: session?.user?.id || null,
       }
@@ -186,36 +244,30 @@ export default function ListBusiness() {
         .from('business_listings')
         .insert([insertData])
 
-      if (insertError) {
-        console.error('Insert error:', insertError)
-        throw new Error(insertError.message || 'Failed to submit listing. Please try again.')
-      }
+      if (insertError) throw new Error(insertError.message || 'Failed to submit.')
 
       setDone(true)
     } catch (err) {
-      console.error('Listing submission error:', err)
-      setError(err.message || 'Something went wrong. Please try again.')
+      setError(err.message || 'Something went wrong.')
     }
     setSubmitting(false)
     setUploadProgress('')
   }
 
-  // ─── SUCCESS STATE ───
+  // ═══ SUCCESS ═══
   if (done) {
     return (
       <section className="lb-form-page">
         <div className="lb-success">
           <span className="lb-success-icon">🎉</span>
           <h2>Listing submitted!</h2>
-          <p>We will review your business and add it to Wanda within 24-48 hours.</p>
+          <p>We'll review your business and add it to Wanda within 24-48 hours.</p>
           <div className="lb-success-actions">
             <Link to="/explore" className="lb-back-link">Browse directory →</Link>
             <button className="lb-another-btn" onClick={() => {
-              setDone(false)
-              setForm({ name: '', category: '', subcategory: '', area: '', address: '', phone: '', whatsapp: '', website: '', instagram: '', hours: '', priceRange: '', description: '' })
-              removeLogo()
-              setPhotoFiles([])
-              setPhotoPreviews([])
+              setDone(false); setStep(0)
+              setForm({ name: '', category: '', subcategory: '', area: '', address: '', phone: '', whatsapp: '', website: '', instagram: '', hours: '', priceRange: '', description: '', products: [''] })
+              removeLogo(); setPhotoFiles([]); setPhotoPreviews([])
             }}>Submit another listing</button>
           </div>
         </div>
@@ -223,7 +275,7 @@ export default function ListBusiness() {
     )
   }
 
-  // ─── AUTH LOADING ───
+  // ═══ AUTH LOADING ═══
   if (authLoading) {
     return (
       <section className="lb-form-page">
@@ -235,7 +287,7 @@ export default function ListBusiness() {
     )
   }
 
-  // ─── NOT LOGGED IN ───
+  // ═══ NOT LOGGED IN ═══
   if (!session) {
     return (
       <section className="lb-form-page">
@@ -254,7 +306,9 @@ export default function ListBusiness() {
     )
   }
 
-  // ─── MAIN FORM ───
+  // ═══ WIZARD ═══
+  const catObj = CATS.find(c => c.value === form.category)
+
   return (
     <section className="lb-form-page">
       <div className="lb-form-header">
@@ -263,151 +317,285 @@ export default function ListBusiness() {
         <p>Get discovered by thousands of people exploring Lagos. Free to list.</p>
       </div>
 
-      <form className="lb-form" onSubmit={handleSubmit}>
-        {error && <div className="lb-error">{error}</div>}
+      {/* ─── Progress Bar ─── */}
+      <div className="lb-wizard-progress">
+        {STEPS.map((s, i) => (
+          <div key={s.id} className={`lb-wiz-step ${i < step ? 'done' : ''} ${i === step ? 'active' : ''}`}>
+            <div className="lb-wiz-dot">
+              {i < step ? '✓' : s.emoji}
+            </div>
+            <span className="lb-wiz-label">{s.title}</span>
+          </div>
+        ))}
+        <div className="lb-wiz-line">
+          <div className="lb-wiz-line-fill" style={{ width: `${(step / (STEPS.length - 1)) * 100}%` }} />
+        </div>
+      </div>
 
-        {/* ─── Basic Info ─── */}
-        <fieldset className="lb-fieldset">
-          <legend>Basic info</legend>
-          <label className="lb-label">
-            Business name *
-            <input type="text" value={form.name} onChange={e => update('name', e.target.value)}
-              placeholder="e.g. Mama Cass Restaurant" required />
-          </label>
-          <div className="lb-row">
+      {error && <div className="lb-error">{error}</div>}
+
+      {/* ─── Step Content ─── */}
+      <div className={`lb-step-content lb-anim-${animDir}`} key={step}>
+        <div className="lb-step-header">
+          <span className="lb-step-emoji">{STEPS[step].emoji}</span>
+          <h2 className="lb-step-title">{STEPS[step].title}</h2>
+          <p className="lb-step-desc">{STEPS[step].desc}</p>
+        </div>
+
+        {/* ═══ STEP 1: Business Info ═══ */}
+        {step === 0 && (
+          <div className="lb-fields">
+            <label className="lb-label">
+              Business name *
+              <input type="text" value={form.name} onChange={e => update('name', e.target.value)}
+                placeholder="e.g. Mama Cass Restaurant" />
+            </label>
+
             <label className="lb-label">
               Category *
-              <select value={form.category} onChange={e => update('category', e.target.value)} required>
-                <option value="">Select category</option>
-                {CATS.map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
-              </select>
+              <div className="lb-cat-grid">
+                {CATS.map(c => (
+                  <button key={c.value} type="button"
+                    className={`lb-cat-chip ${form.category === c.value ? 'selected' : ''}`}
+                    onClick={() => update('category', c.value)}>
+                    <span>{c.emoji}</span> {c.label}
+                  </button>
+                ))}
+              </div>
             </label>
+
             <label className="lb-label">
               Sub-category
               <input type="text" value={form.subcategory} onChange={e => update('subcategory', e.target.value)}
-                placeholder="e.g. Fine Dining, Boutique" />
+                placeholder="e.g. Fine Dining, Boutique, Electrician" />
             </label>
-          </div>
-          <div className="lb-row">
-            <label className="lb-label">
-              Area / Neighborhood *
-              <input type="text" value={form.area} onChange={e => update('area', e.target.value)}
-                placeholder="e.g. Victoria Island, Lekki" required />
-            </label>
-            <label className="lb-label">
-              Price range
-              <select value={form.priceRange} onChange={e => update('priceRange', e.target.value)}>
-                <option value="">Select range</option>
-                {PRICE_OPTIONS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
-              </select>
-            </label>
-          </div>
-          <label className="lb-label">
-            Full address
-            <input type="text" value={form.address} onChange={e => update('address', e.target.value)}
-              placeholder="Street address" />
-          </label>
-        </fieldset>
 
-        {/* ─── Logo & Photos ─── */}
-        <fieldset className="lb-fieldset">
-          <legend>Logo & Photos</legend>
+            <div className="lb-row">
+              <label className="lb-label">
+                Area / Neighborhood *
+                <input type="text" value={form.area} onChange={e => update('area', e.target.value)}
+                  placeholder="e.g. Victoria Island, Lekki" />
+              </label>
+              <label className="lb-label">
+                Price range
+                <select value={form.priceRange} onChange={e => update('priceRange', e.target.value)}>
+                  <option value="">Select range</option>
+                  {PRICE_OPTIONS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+                </select>
+              </label>
+            </div>
 
-          <label className="lb-label">Business Logo</label>
-          <div className="lb-upload-zone" onClick={() => !logoPreview && logoInputRef.current?.click()}>
-            {logoPreview ? (
-              <div className="lb-logo-preview">
-                <img src={logoPreview} alt="Logo preview" />
-                <button type="button" className="lb-remove-btn" onClick={e => { e.stopPropagation(); removeLogo() }}>✕</button>
-              </div>
-            ) : (
-              <div className="lb-upload-placeholder">
-                <span className="lb-upload-icon">🏷️</span>
-                <span>Tap to upload your business logo</span>
-                <span className="lb-upload-hint">JPG, PNG or WebP · Max 5MB</span>
-              </div>
-            )}
-            <input ref={logoInputRef} type="file" accept="image/*" onChange={handleLogoSelect} style={{ display: 'none' }} />
-          </div>
-
-          <label className="lb-label" style={{ marginTop: '0.75rem' }}>
-            Business Photos <span className="lb-label-hint">(up to 4 — show your best!)</span>
-          </label>
-          <div className="lb-photos-grid">
-            {photoPreviews.map((preview, i) => (
-              <div key={i} className="lb-photo-thumb">
-                <img src={preview} alt={`Photo ${i + 1}`} />
-                <button type="button" className="lb-remove-btn" onClick={() => removePhoto(i)}>✕</button>
-              </div>
-            ))}
-            {photoFiles.length < 4 && (
-              <div className="lb-photo-add" onClick={() => photoInputRef.current?.click()}>
-                <span className="lb-photo-add-icon">📸</span>
-                <span className="lb-photo-add-label">Add photo</span>
-              </div>
-            )}
-            <input ref={photoInputRef} type="file" accept="image/*" multiple onChange={handlePhotosSelect} style={{ display: 'none' }} />
-          </div>
-        </fieldset>
-
-        {/* ─── Contact ─── */}
-        <fieldset className="lb-fieldset">
-          <legend>Contact</legend>
-          <div className="lb-row">
             <label className="lb-label">
-              Phone
-              <input type="tel" value={form.phone} onChange={e => update('phone', e.target.value)}
-                placeholder="08012345678" />
+              Full address
+              <input type="text" value={form.address} onChange={e => update('address', e.target.value)}
+                placeholder="Street address" />
             </label>
-            <label className="lb-label">
-              WhatsApp
-              <input type="tel" value={form.whatsapp} onChange={e => update('whatsapp', e.target.value)}
-                placeholder="08012345678" />
-            </label>
-          </div>
-          <div className="lb-row">
-            <label className="lb-label">
-              Website
-              <input type="url" value={form.website} onChange={e => update('website', e.target.value)}
-                placeholder="https://..." />
-            </label>
-            <label className="lb-label">
-              Instagram
-              <input type="text" value={form.instagram} onChange={e => update('instagram', e.target.value)}
-                placeholder="@yourbusiness" />
-            </label>
-          </div>
-        </fieldset>
 
-        {/* ─── Details ─── */}
-        <fieldset className="lb-fieldset">
-          <legend>Details</legend>
-          <label className="lb-label">
-            Opening hours
-            <input type="text" value={form.hours} onChange={e => update('hours', e.target.value)}
-              placeholder="e.g. Mon-Sun 9AM-10PM" />
-          </label>
-          <label className="lb-label">
-            Description
-            <textarea value={form.description} onChange={e => update('description', e.target.value)}
-              placeholder="Tell visitors what makes your business special (max 300 characters)"
-              maxLength={300} rows={4} />
-          </label>
-        </fieldset>
-
-        {/* ─── Upload progress indicator ─── */}
-        {uploadProgress && (
-          <div className="lb-progress">
-            <div className="lb-spinner-small" />
-            <span>{uploadProgress}</span>
+            {/* Products / Services */}
+            <div className="lb-products-section">
+              <label className="lb-label">Products / Services you offer</label>
+              <p className="lb-products-hint">Add what you sell or services you provide (up to 10)</p>
+              {form.products.map((prod, i) => (
+                <div key={i} className="lb-product-row">
+                  <input
+                    type="text" value={prod}
+                    onChange={e => updateProduct(i, e.target.value)}
+                    placeholder={i === 0 ? 'e.g. Jollof Rice, Hair Braiding, Plumbing...' : 'Add another...'}
+                    maxLength={60}
+                  />
+                  {form.products.length > 1 && (
+                    <button type="button" className="lb-product-remove" onClick={() => removeProduct(i)}>✕</button>
+                  )}
+                </div>
+              ))}
+              {form.products.length < 10 && (
+                <button type="button" className="lb-product-add" onClick={addProduct}>
+                  + Add {form.products.length === 1 && form.products[0] === '' ? 'a product or service' : 'another'}
+                </button>
+              )}
+            </div>
           </div>
         )}
 
-        <button type="submit" className="lb-submit" disabled={submitting}>
-          {submitting ? 'Submitting...' : 'Submit listing'}
-        </button>
-        <p className="lb-note">Listings are reviewed within 24-48 hours before going live.</p>
-      </form>
+        {/* ═══ STEP 2: Logo & Photos ═══ */}
+        {step === 1 && (
+          <div className="lb-fields">
+            <label className="lb-label">Business Logo / Profile Image</label>
+            <div className="lb-upload-zone" onClick={() => !logoPreview && logoInputRef.current?.click()}>
+              {logoPreview ? (
+                <div className="lb-logo-preview">
+                  <img src={logoPreview} alt="Logo preview" />
+                  <button type="button" className="lb-remove-btn" onClick={e => { e.stopPropagation(); removeLogo() }}>✕</button>
+                </div>
+              ) : (
+                <div className="lb-upload-placeholder">
+                  <span className="lb-upload-icon">🏷️</span>
+                  <span>Tap to upload your business logo</span>
+                  <span className="lb-upload-hint">JPG, PNG or WebP · Max 5MB</span>
+                </div>
+              )}
+              <input ref={logoInputRef} type="file" accept="image/*" onChange={handleLogoSelect} style={{ display: 'none' }} />
+            </div>
+
+            <label className="lb-label" style={{ marginTop: '1rem' }}>
+              Business Photos <span className="lb-label-hint">(up to 5 — show your best!)</span>
+            </label>
+            <div className="lb-photos-grid">
+              {photoPreviews.map((preview, i) => (
+                <div key={i} className="lb-photo-thumb">
+                  <img src={preview} alt={`Photo ${i + 1}`} />
+                  <button type="button" className="lb-remove-btn" onClick={() => removePhoto(i)}>✕</button>
+                </div>
+              ))}
+              {photoFiles.length < 5 && (
+                <div className="lb-photo-add" onClick={() => photoInputRef.current?.click()}>
+                  <span className="lb-photo-add-icon">📸</span>
+                  <span className="lb-photo-add-label">Add photo</span>
+                </div>
+              )}
+              <input ref={photoInputRef} type="file" accept="image/*" multiple onChange={handlePhotosSelect} style={{ display: 'none' }} />
+            </div>
+            <p className="lb-upload-hint" style={{ marginTop: '0.5rem' }}>
+              Good photos help customers find you. Show your storefront, products, or workspace.
+            </p>
+          </div>
+        )}
+
+        {/* ═══ STEP 3: Contact ═══ */}
+        {step === 2 && (
+          <div className="lb-fields">
+            <div className="lb-row">
+              <label className="lb-label">
+                Phone
+                <input type="tel" value={form.phone} onChange={e => update('phone', e.target.value)}
+                  placeholder="08012345678" />
+              </label>
+              <label className="lb-label">
+                WhatsApp
+                <input type="tel" value={form.whatsapp} onChange={e => update('whatsapp', e.target.value)}
+                  placeholder="08012345678" />
+              </label>
+            </div>
+            <div className="lb-row">
+              <label className="lb-label">
+                Website
+                <input type="url" value={form.website} onChange={e => update('website', e.target.value)}
+                  placeholder="https://..." />
+              </label>
+              <label className="lb-label">
+                Instagram
+                <input type="text" value={form.instagram} onChange={e => update('instagram', e.target.value)}
+                  placeholder="@yourbusiness" />
+              </label>
+            </div>
+          </div>
+        )}
+
+        {/* ═══ STEP 4: Details ═══ */}
+        {step === 3 && (
+          <div className="lb-fields">
+            <label className="lb-label">
+              Opening hours
+              <input type="text" value={form.hours} onChange={e => update('hours', e.target.value)}
+                placeholder="e.g. Mon-Sun 9AM-10PM" />
+            </label>
+            <label className="lb-label">
+              Description
+              <textarea value={form.description} onChange={e => update('description', e.target.value)}
+                placeholder="Tell visitors what makes your business special (max 300 characters)"
+                maxLength={300} rows={5} />
+              <span className="lb-char-count">{form.description.length}/300</span>
+            </label>
+          </div>
+        )}
+
+        {/* ═══ STEP 5: Review ═══ */}
+        {step === 4 && (
+          <div className="lb-review">
+            <div className="lb-review-card">
+              {/* Gallery preview */}
+              {(logoPreview || photoPreviews.length > 0) && (
+                <div className="lb-review-gallery">
+                  {logoPreview && (
+                    <div className="lb-review-logo">
+                      <img src={logoPreview} alt="Logo" />
+                    </div>
+                  )}
+                  {photoPreviews.length > 0 && (
+                    <div className="lb-review-photos">
+                      {photoPreviews.map((p, i) => (
+                        <img key={i} src={p} alt={`Photo ${i + 1}`} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Info */}
+              <div className="lb-review-info">
+                <div className="lb-review-cat">
+                  {catObj && <span className="lb-review-cat-badge">{catObj.emoji} {catObj.label}</span>}
+                  {form.priceRange && <span className="lb-review-price">{form.priceRange}</span>}
+                </div>
+                <h3 className="lb-review-name">{form.name || 'Business Name'}</h3>
+                {form.subcategory && <p className="lb-review-sub">{form.subcategory}</p>}
+                <p className="lb-review-area">📍 {form.area || 'Area'}{form.address ? ` · ${form.address}` : ''}</p>
+
+                {form.description && <p className="lb-review-desc">{form.description}</p>}
+
+                {/* Products */}
+                {form.products.some(p => p.trim()) && (
+                  <div className="lb-review-products">
+                    <strong>Products & Services</strong>
+                    <div className="lb-review-product-list">
+                      {form.products.filter(p => p.trim()).map((p, i) => (
+                        <span key={i} className="lb-review-product-tag">{p.trim()}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Contact */}
+                <div className="lb-review-contact">
+                  {form.phone && <div>📞 {form.phone}</div>}
+                  {form.whatsapp && <div>💬 {form.whatsapp}</div>}
+                  {form.website && <div>🌐 {form.website}</div>}
+                  {form.instagram && <div>📷 {form.instagram}</div>}
+                  {form.hours && <div>🕐 {form.hours}</div>}
+                </div>
+              </div>
+            </div>
+
+            {uploadProgress && (
+              <div className="lb-progress">
+                <div className="lb-spinner-small" />
+                <span>{uploadProgress}</span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ─── Navigation ─── */}
+      <div className="lb-wizard-nav">
+        {step > 0 && (
+          <button type="button" className="lb-nav-back" onClick={goBack} disabled={submitting}>
+            ← Back
+          </button>
+        )}
+        <div style={{ flex: 1 }} />
+        {step < STEPS.length - 1 ? (
+          <button type="button" className="lb-nav-next" onClick={goNext}>
+            Continue →
+          </button>
+        ) : (
+          <button type="button" className="lb-submit" onClick={handleSubmit} disabled={submitting}>
+            {submitting ? 'Submitting...' : 'Submit Listing ✨'}
+          </button>
+        )}
+      </div>
+
+      <p className="lb-note">Listings are reviewed within 24-48 hours before going live.</p>
     </section>
   )
 }

@@ -1,6 +1,7 @@
 // Wanda - Lagos Seed Listings (50 real places)
 
-import { LISTING_IMAGES } from './siteAssets.js'
+
+const LISTING_IMAGES = {} // was in siteAssets.js, no longer needed
 import {
   SearchRegular, FoodPizzaRegular, BuildingMultipleRegular,
   LocationRegular, DrinkMargaritaRegular, TreeDeciduousRegular,

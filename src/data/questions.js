@@ -347,7 +347,7 @@ export function pickRandomQuestions(pool, count, seed) {
 }
 
 // Region support
-import ABUJA_Q from './questions-abuja.js'
+const ABUJA_Q = [] // migrated to Supabase CMS
 
 export const REGIONS = [
   { id: 'lagos', label: 'Lagos', icon: '🌊', center: [6.5, 3.4], zoom: 11 },

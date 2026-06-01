@@ -430,9 +430,6 @@ function CrudSection({ table, session, profile }) {
 function Overview() {
   const [stats, setStats] = useState({})
   const [userCount, setUserCount] = useState(0)
-  const [seeding, setSeeding] = useState(false)
-  const [seedProgress, setSeedProgress] = useState('')
-  const [seedResult, setSeedResult] = useState(null)
   const [toast, setToast] = useState(null)
 
   useEffect(() => {
@@ -450,25 +447,9 @@ function Overview() {
       } catch { setUserCount(0) }
     }
     load()
-  }, [seedResult])
-
-  async function handleSeed() {
-    if (!confirm('This will import ALL hardcoded content (listings, deals, sponsors, discovery, questions) into your CMS database. Existing entries with the same ID will be updated. Continue?')) return
-    setSeeding(true)
-    setSeedResult(null)
-    try {
-      const { seedAllContent } = await import('../../lib/cms-seed.js')
-      const result = await seedAllContent(msg => setSeedProgress(msg))
-      setSeedResult(result)
-      setToast({ msg: `Imported: ${result.listings} listings, ${result.deals} deals, ${result.sponsors} sponsors, ${result.discovery} discovery, ${result.questions} questions`, type: 'success' })
-    } catch (e) {
-      setToast({ msg: 'Seed failed: ' + e.message, type: 'error' })
-    }
-    setSeeding(false)
-  }
+  }, [])
 
   const totalContent = (stats.cms_listings || 0) + (stats.cms_deals || 0) + (stats.cms_sponsors || 0) + (stats.cms_discovery || 0) + (stats.cms_questions || 0)
-  const isEmpty = totalContent === 0
 
   return (
     <>
@@ -482,67 +463,17 @@ function Overview() {
         <div className="admin-stat-card"><div className="stat-icon"><PeopleRegular /></div><div className="stat-value">{userCount}</div><div className="stat-label">Users</div></div>
       </div>
 
-      {/* Seed CTA — shows prominently when CMS is empty */}
       <div className="admin-table-wrap" style={{ padding: '2rem' }}>
-        {isEmpty ? (
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📦</div>
-            <h3 style={{ color: '#fff', marginBottom: '0.5rem', fontSize: '1.3rem' }}>Your CMS is empty</h3>
-            <p style={{ color: '#94a3b8', marginBottom: '1.5rem', maxWidth: '500px', margin: '0 auto 1.5rem' }}>
-              All your platform content (46 listings, 22 deals, 5 sponsors, 76 discovery POIs, 275 quiz questions)
-              is currently hardcoded in JavaScript files. Import it all into the database so you can edit everything from this dashboard.
-            </p>
-            <button
-              className="admin-btn admin-btn-primary"
-              style={{ padding: '0.75rem 2rem', fontSize: '1rem' }}
-              onClick={handleSeed}
-              disabled={seeding}
-            >
-              {seeding ? `${seedProgress}` : '🚀 Import All Content to CMS'}
-            </button>
-          </div>
-        ) : (
-          <div>
-            <h3 style={{ color: '#fff', marginBottom: '0.75rem' }}>Welcome to Wanda CMS</h3>
-            <p style={{ color: '#94a3b8', marginBottom: '1rem' }}>
-              You have <strong style={{ color: '#fff' }}>{totalContent}</strong> content items in your database.
-              Use the sidebar to manage listings, deals, sponsors, discovery POIs, quiz questions, and users.
-            </p>
-            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-              <button
-                className="admin-btn admin-btn-ghost"
-                onClick={handleSeed}
-                disabled={seeding}
-                style={{ fontSize: '0.85rem' }}
-              >
-                {seeding ? seedProgress : '🔄 Re-sync from code (updates existing, adds new)'}
-              </button>
-            </div>
-            <p style={{ marginTop: '1rem', fontSize: '0.75rem', color: '#64748b' }}>
-              All changes go live immediately when status is "published". Set to "draft" to hide content.
-            </p>
-          </div>
-        )}
-
-        {/* Seed results */}
-        {seedResult && (
-          <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(0,200,83,0.08)', borderRadius: '0.75rem', border: '1px solid rgba(0,200,83,0.2)' }}>
-            <strong style={{ color: '#00c853' }}>Import Complete</strong>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '0.5rem', marginTop: '0.75rem' }}>
-              <div style={{ color: '#94a3b8' }}>Listings: <strong style={{ color: '#fff' }}>{seedResult.listings}</strong></div>
-              <div style={{ color: '#94a3b8' }}>Deals: <strong style={{ color: '#fff' }}>{seedResult.deals}</strong></div>
-              <div style={{ color: '#94a3b8' }}>Sponsors: <strong style={{ color: '#fff' }}>{seedResult.sponsors}</strong></div>
-              <div style={{ color: '#94a3b8' }}>Discovery: <strong style={{ color: '#fff' }}>{seedResult.discovery}</strong></div>
-              <div style={{ color: '#94a3b8' }}>Questions: <strong style={{ color: '#fff' }}>{seedResult.questions}</strong></div>
-            </div>
-            {seedResult.errors.length > 0 && (
-              <div style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: '#ef4444' }}>
-                {seedResult.errors.length} errors: {seedResult.errors.slice(0, 3).join('; ')}
-                {seedResult.errors.length > 3 && `... and ${seedResult.errors.length - 3} more`}
-              </div>
-            )}
-          </div>
-        )}
+        <div>
+          <h3 style={{ color: '#fff', marginBottom: '0.75rem' }}>Welcome to Wanda CMS</h3>
+          <p style={{ color: '#94a3b8', marginBottom: '1rem' }}>
+            You have <strong style={{ color: '#fff' }}>{totalContent}</strong> content items in your database.
+            Use the sidebar to manage listings, deals, sponsors, discovery POIs, quiz questions, and users.
+          </p>
+          <p style={{ fontSize: '0.75rem', color: '#64748b' }}>
+            All changes go live immediately when status is "published". Set to "draft" to hide content.
+          </p>
+        </div>
       </div>
 
       {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}

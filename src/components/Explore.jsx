@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet'
 import { CATEGORIES, PRICE_LABELS } from '../data/listings.jsx'
 import { supabase } from '../lib/supabase.js'
-import { SearchRegular, MapRegular, ListRegular, StarRegular, VehicleBusRegular, VehicleSubwayRegular } from '@fluentui/react-icons'
+import { SearchRegular, MapRegular, ListRegular, StarRegular, VehicleBusRegular, VehicleSubwayRegular, MyLocationRegular } from '@fluentui/react-icons'
 import TransitLayers from './TransitLayers.jsx'
 
 function StarRating({ rating = 0 }) {
@@ -18,6 +18,20 @@ function StarRating({ rating = 0 }) {
 
 const LAGOS_CENTER = [6.52, 3.40]
 
+// Haversine distance in km
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const R = 6371
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLng = (lng2 - lng1) * Math.PI / 180
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+function formatDist(km) {
+  if (km < 1) return `${Math.round(km * 1000)}m`
+  return `${km.toFixed(1)}km`
+}
+
 export default function Explore() {
   const [params] = useSearchParams()
   const initCat = params.get('category') || 'all'
@@ -29,6 +43,28 @@ export default function Explore() {
   const [listings, setListings] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [nearMe, setNearMe] = useState(false)
+  const [userLoc, setUserLoc] = useState(null)
+  const [locating, setLocating] = useState(false)
+
+  function handleNearMe() {
+    if (nearMe) { setNearMe(false); return }
+    if (userLoc) { setNearMe(true); return }
+    if (!navigator.geolocation) { setError('Location not supported by your browser'); return }
+    setLocating(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserLoc({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+        setNearMe(true)
+        setLocating(false)
+      },
+      (err) => {
+        setError(err.code === 1 ? 'Location access denied. Please enable location in your browser settings.' : 'Could not get your location. Please try again.')
+        setLocating(false)
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    )
+  }
 
   useEffect(() => {
     async function loadListings() {
@@ -119,14 +155,23 @@ export default function Explore() {
       results = results.filter(l =>
         l.name.toLowerCase().includes(q) ||
         l.area.toLowerCase().includes(q) ||
-        l.description.toLowerCase().includes(q) ||
+        l.description?.toLowerCase().includes(q) ||
         l.subcategory?.toLowerCase().includes(q) ||
         l.category?.toLowerCase().includes(q) ||
         l.tags?.some(t => t.includes(q))
       )
     }
+    // Near Me: add distance and sort
+    if (nearMe && userLoc) {
+      results = results
+        .map(l => ({
+          ...l,
+          _dist: (l.lat && l.lng) ? haversineKm(userLoc.lat, userLoc.lng, l.lat, l.lng) : 9999,
+        }))
+        .sort((a, b) => a._dist - b._dist)
+    }
     return results
-  }, [listings, search, category])
+  }, [listings, search, category, nearMe, userLoc])
 
   return (
     <section className="ex-page">
@@ -140,6 +185,15 @@ export default function Explore() {
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
+        <button
+          className={`ex-near-me-btn ${nearMe ? 'active' : ''}`}
+          onClick={handleNearMe}
+          disabled={locating}
+          title={nearMe ? 'Show all' : 'Near me'}
+        >
+          <MyLocationRegular fontSize={18} />
+          {locating ? '...' : ''}
+        </button>
         <button
           className="ex-view-toggle"
           onClick={() => setView(v => v === 'list' ? 'map' : 'list')}
@@ -164,10 +218,15 @@ export default function Explore() {
 
       {/* Results count */}
       <div className="ex-results-meta">
-        <span>{filtered.length} {filtered.length === 1 ? 'place' : 'places'}</span>
-        {category !== 'all' && (
-          <button className="ex-clear" onClick={() => setCategory('all')}>Clear filter</button>
-        )}
+        <span>{filtered.length} {filtered.length === 1 ? 'place' : 'places'}{nearMe ? ' near you' : ''}</span>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          {nearMe && (
+            <button className="ex-clear" onClick={() => setNearMe(false)}>📍 Clear location</button>
+          )}
+          {category !== 'all' && (
+            <button className="ex-clear" onClick={() => setCategory('all')}>Clear filter</button>
+          )}
+        </div>
       </div>
 
       <style>{`
@@ -330,7 +389,12 @@ export default function Explore() {
                   </div>
                   <div className="ex-card-body">
                     <h3 className="ex-card-name">{listing.name}</h3>
-                    <p className="ex-card-sub">{listing.subcategory} · {listing.area}</p>
+                    <p className="ex-card-sub">
+                      {listing.subcategory} · {listing.area}
+                      {nearMe && listing._dist < 9999 && (
+                        <span className="ex-dist-badge">{formatDist(listing._dist)}</span>
+                      )}
+                    </p>
                     <div className="ex-card-meta">
                       <span className="ex-card-rating">
                         <StarRating rating={listing.rating} /> ({listing.reviewCount || Math.floor(listing.rating * 6)})

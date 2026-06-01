@@ -3,7 +3,7 @@
 // Phase 3, Milestone 3.3
 // ============================================
 
-import { SITE_IMAGES, SITE_LOGOS } from './siteAssets.js'
+
 
 export const DISCOVERY_CATEGORIES = [
   { id: 'all',        icon: '🗺️',  label: 'All' },
