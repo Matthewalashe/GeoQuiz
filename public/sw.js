@@ -1,4 +1,4 @@
-const CACHE = 'wanda-v12'
+const CACHE = 'wanda-v13'
 
 self.addEventListener('install', e => {
   self.skipWaiting()

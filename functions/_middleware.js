@@ -19,7 +19,7 @@ export async function onRequest(context) {
     newResponse.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     newResponse.headers.set('Pragma', 'no-cache');
     newResponse.headers.set('Expires', '0');
-    newResponse.headers.set('X-Wanda-Version', '3.1');
+    newResponse.headers.set('X-Wanda-Version', '4.0');
     // Ensure service worker can be updated
     newResponse.headers.delete('ETag');
     return newResponse;
