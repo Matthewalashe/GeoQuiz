@@ -62,15 +62,28 @@
         };
       })();
 
-      // Global error handler
-      window.onerror = function(msg, url, line) {
-        console.warn('[Global Error]', msg, url, line);
-        return true;
+      // Global error handler — LOG but do NOT swallow errors
+      window.onerror = function(msg, url, line, col, err) {
+        console.error('[Global Error]', msg, url, line, col, err);
+        // return false = let browser show the error normally in console
+        return false;
       };
       window.addEventListener('unhandledrejection', function(e) {
-        console.warn('[Unhandled Promise]', e.reason);
-        e.preventDefault();
+        console.error('[Unhandled Promise]', e.reason);
+        // Do NOT call e.preventDefault() — let the error appear in console
       });
+
+      // Safety net: if React fails to mount within 6 seconds, show recovery UI
+      setTimeout(function() {
+        var root = document.getElementById('root');
+        if (root && root.children.length === 0) {
+          root.innerHTML = '<div style="padding:2rem;text-align:center;font-family:Inter,sans-serif;color:#fff;background:#1a1a2e;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center">'
+            + '<h2 style="color:#C8963E;margin-bottom:1rem">App failed to load</h2>'
+            + '<p style="color:#aaa;margin-bottom:1.5rem;max-width:350px">Something went wrong during startup. Clear data and reload to fix.</p>'
+            + '<button onclick="try{localStorage.clear();sessionStorage.clear()}catch(e){};if(window.caches){caches.keys().then(function(k){k.forEach(function(n){caches.delete(n)})})};if(navigator.serviceWorker){navigator.serviceWorker.getRegistrations().then(function(r){r.forEach(function(s){s.unregister()})})};setTimeout(function(){location.reload()},400)" style="padding:12px 32px;border-radius:25px;background:#C8963E;color:#fff;border:none;font-size:16px;cursor:pointer">Clear &amp; Reload</button>'
+            + '</div>';
+        }
+      }, 6000);
     </script>
     <script type="module" src="/src/main.jsx"></script>
     <script>
