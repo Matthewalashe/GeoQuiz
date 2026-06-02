@@ -484,8 +484,14 @@ export default function Auth() {
       <div className="auth-visual">
         <div className="auth-visual-overlay" />
         <div className="auth-visual-content">
+          <img src="/wanda-logo.png" alt="" style={{ height: 56, marginBottom: '1.5rem', filter: 'brightness(10)' }} />
           <div className="auth-quote">"The world is a book and those who do not travel read only one page."</div>
           <div className="auth-quote-author">— Augustine of Hippo</div>
+          <div style={{ marginTop: '2rem', display: 'flex', gap: '1.5rem', fontSize: '0.85rem', opacity: 0.8 }}>
+            <span>🗺️ Explore Nigeria</span>
+            <span>🏆 Earn Rewards</span>
+            <span>🤝 Community</span>
+          </div>
         </div>
       </div>
     </div>
