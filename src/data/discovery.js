@@ -116,12 +116,7 @@ export const DISCOVERY_POIS = [
   { id: 'w3', name: 'The Palms Food Court', category: 'wifi', lat: 6.4487, lng: 3.5419, area: 'Lekki', rating: 4.1, description: 'Free WiFi while you dine at The Palms mall.', sponsored: false, cta: 'Get Directions', mapUrl: 'https://maps.google.com/?q=The+Palms+Shopping+Mall+Lekki' },
 ]
 
-// Enrich each POI with its real downloaded image and logo
-DISCOVERY_POIS.forEach(poi => {
-  poi.image = SITE_IMAGES[poi.id]?.[0] || null
-  poi.images = SITE_IMAGES[poi.id] || []
-  poi.logo = SITE_LOGOS[poi.id] || null
-})
+// Images now come from Supabase CMS, not from local siteAssets
 
 export function getPOIsByCategory(categoryId) {
   if (categoryId === 'all') return DISCOVERY_POIS
