@@ -10,7 +10,7 @@ import {
 } from '@fluentui/react-icons'
 
 // App version — visible on auth page so we can verify PWA received the update
-const APP_VERSION = 'v3.4'
+const APP_VERSION = 'v4.0'
 
 // Google Client ID for in-app sign-in (no browser redirect)
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
@@ -62,6 +62,13 @@ export default function Auth() {
       }).catch(err => console.warn('[Auth] getSession error:', err))
       const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
         try {
+          if (event === 'PASSWORD_RECOVERY') {
+            // User clicked reset link in email — show the reset form
+            setMode('reset')
+            setSuccess('Enter your new password below.')
+            setLoading(false)
+            return
+          }
           if ((event === 'SIGNED_IN') && session?.user) {
             await goToDashboard(session.user)
             setLoading(false)
@@ -208,7 +215,7 @@ export default function Auth() {
     if (!msg) return 'Something went wrong. Please try again.'
     const m = msg.toLowerCase()
     if (m.includes('weak_password') || m.includes('password should contain')) return 'Password must include: uppercase (A-Z), lowercase (a-z), number (0-9), and special character (!@#$%).'
-    if (m.includes('invalid login') || m.includes('invalid credentials')) return 'Incorrect email or password.'
+    if (m.includes('invalid login') || m.includes('invalid credentials')) return 'Incorrect email or password. If you signed up with Google, use the Google button above.'
     if (m.includes('already registered') || m.includes('already been registered') || m.includes('already exists')) return 'This email is already registered. Try signing in instead.'
     if (m.includes('password should be') || m.includes('at least')) return 'Password must be at least 6 characters.'
     if (m.includes('rate limit') || m.includes('too many') || m.includes('exceeded') || m.includes('security purposes')) return 'Too many attempts. Please wait a minute and try again.'
@@ -310,6 +317,8 @@ export default function Auth() {
           navigate(searchParams.get('redirect') || '/dashboard', { replace: true })
           return
         } catch { setError('Your email needs confirmation. Please try again.') }
+      } else if (msg.includes('invalid login') || msg.includes('invalid credentials')) {
+        setError('Incorrect email or password. If you signed up with Google, please use the "Continue with Google" button above.')
       } else { setError(friendlyError(err.message)) }
       setLoading(false)
     }

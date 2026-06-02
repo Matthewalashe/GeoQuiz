@@ -283,8 +283,12 @@ export async function signInWithGoogle() {
 
 export async function resetPassword(email) {
   if (!supabase) throw new Error('Supabase not configured')
+  // Use production URL explicitly — PWA context may have a different origin
+  const redirectUrl = window.location.hostname === 'localhost'
+    ? window.location.origin + '/auth?mode=reset'
+    : 'https://visitnaija.online/auth?mode=reset'
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: window.location.origin + '/auth?mode=reset',
+    redirectTo: redirectUrl,
   })
   if (error) throw error
 }
