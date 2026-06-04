@@ -7,7 +7,9 @@ import {
   DataBarVerticalRegular, LocationRegular, GiftRegular, DiamondRegular,
   MapRegular, QuestionRegular, SettingsRegular, CheckmarkCircleRegular,
   DismissCircleRegular, MailInboxRegular, WrenchRegular, PeopleRegular,
-  PersonRegular, ShieldCheckmarkRegular, EditRegular
+  PersonRegular, ShieldCheckmarkRegular, EditRegular,
+  CoinMultipleRegular, StoreMicrosoftRegular, PlayCircleRegular,
+  ArrowSortRegular, BookQuestionMarkRegular, CalendarRegular
 } from '@fluentui/react-icons'
 
 // Section configs
@@ -21,6 +23,14 @@ const SECTIONS = [
   { id: 'submissions', label: 'Submissions', icon: <MailInboxRegular /> },
   { id: 'users', label: 'Users', icon: <PeopleRegular /> },
   { id: 'settings', label: 'Settings', icon: <SettingsRegular /> },
+  // ─── Game Engine Config ───
+  { id: '_divider_game', label: '── Game Engine ──', divider: true },
+  { id: 'coin_config', label: 'Coin Config', icon: <CoinMultipleRegular />, gameTable: 'coin_config' },
+  { id: 'store_items', label: 'Store Items', icon: <StoreMicrosoftRegular />, gameTable: 'store_items' },
+  { id: 'game_config', label: 'Games', icon: <PlayCircleRegular />, gameTable: 'game_config' },
+  { id: 'level_config', label: 'Level Config', icon: <ArrowSortRegular />, gameTable: 'level_config' },
+  { id: 'question_bank', label: 'Question Bank', icon: <BookQuestionMarkRegular />, gameTable: 'questions' },
+  { id: 'seasons', label: 'Seasons', icon: <CalendarRegular />, gameTable: 'seasons' },
 ]
 
 const FIELD_DEFS = {
@@ -1232,6 +1242,9 @@ export default function AdminDashboard({ session, profile }) {
               <div key={s.id}>
                 {i === 1 && <div className="admin-nav-divider" />}
                 {i === visibleSections.length - 1 && <div className="admin-nav-divider" />}
+                {s.divider ? (
+                  <div className="admin-nav-divider" style={{ padding: '0.5rem 1rem 0.2rem', fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{s.label}</div>
+                ) : (
                 <button
                   className={`admin-nav-item ${active === s.id ? 'active' : ''}`}
                   onClick={() => setActive(s.id)}
@@ -1239,6 +1252,7 @@ export default function AdminDashboard({ session, profile }) {
                   <span className="nav-icon">{s.icon}</span>
                   {s.label}
                 </button>
+                )}
               </div>
             ))}
           </nav>
@@ -1255,8 +1269,314 @@ export default function AdminDashboard({ session, profile }) {
           {active === 'settings' && <SettingsSection session={session} />}
           {active === 'submissions' && <SubmissionsSection session={session} />}
           {section?.table && <CrudSection table={section.table} session={session} profile={profile} />}
+          {section?.gameTable && <GameConfigSection table={section.gameTable} session={session} />}
         </main>
       </div>
     </AdminGuard>
+  )
+}
+
+// ─── GAME ENGINE CONFIG SECTION ─────────────────────────────────
+// Generic CRUD for game engine config tables.
+// Reads/writes directly to Supabase (admin role has RLS write access).
+
+const GAME_TABLE_FIELDS = {
+  coin_config: [
+    { key: 'key', label: 'Config Key', type: 'text', required: true, readOnlyOnEdit: true },
+    { key: 'value', label: 'Value (integer)', type: 'number', required: true },
+    { key: 'description', label: 'Description', type: 'text', full: true },
+  ],
+  store_items: [
+    { key: 'slug', label: 'Slug', type: 'text', required: true, readOnlyOnEdit: true },
+    { key: 'name', label: 'Name', type: 'text', required: true },
+    { key: 'description', label: 'Description', type: 'text', full: true },
+    { key: 'category', label: 'Category', type: 'select', options: ['consumable','cosmetic','tangible'] },
+    { key: 'price_coins', label: 'Price (coins)', type: 'number', required: true },
+    { key: 'icon', label: 'Icon (emoji)', type: 'text' },
+    { key: 'is_available', label: 'Available', type: 'checkbox' },
+    { key: 'is_one_time', label: 'One-time purchase', type: 'checkbox' },
+    { key: 'sort_order', label: 'Sort Order', type: 'number' },
+    { key: 'saving_count', label: 'Users Saving', type: 'number' },
+  ],
+  game_config: [
+    { key: 'slug', label: 'Slug', type: 'text', required: true, readOnlyOnEdit: true },
+    { key: 'name', label: 'Display Name', type: 'text', required: true },
+    { key: 'description', label: 'Description', type: 'text', full: true },
+    { key: 'icon', label: 'Icon (emoji)', type: 'text' },
+    { key: 'max_levels', label: 'Max Levels', type: 'number' },
+    { key: 'is_enabled', label: 'Enabled', type: 'checkbox' },
+    { key: 'sort_order', label: 'Sort Order', type: 'number' },
+    { key: 'route', label: 'Frontend Route', type: 'text' },
+  ],
+  level_config: [
+    { key: 'level_min', label: 'Level Min', type: 'number', required: true },
+    { key: 'level_max', label: 'Level Max', type: 'number', required: true },
+    { key: 'difficulty', label: 'Difficulty (1-5)', type: 'number', required: true, min: 1, max: 5 },
+    { key: 'time_limit_secs', label: 'Time Limit (secs)', type: 'number', required: true },
+    { key: 'description', label: 'Description', type: 'text', full: true },
+  ],
+  questions: [
+    { key: 'game_type', label: 'Game Type', type: 'select', required: true, options: ['map_quiz','postcards','guessword','trivia','pinpoint','flagstack'] },
+    { key: 'category', label: 'Category', type: 'text' },
+    { key: 'difficulty', label: 'Difficulty (1-5)', type: 'number', required: true, min: 1, max: 5 },
+    { key: 'question_text', label: 'Question', type: 'textarea', required: true, full: true },
+    { key: 'options', label: 'Options (JSON array)', type: 'textarea', full: true, placeholder: '["Option A","Option B","Option C","Option D"]' },
+    { key: 'correct_answer', label: 'Correct Answer', type: 'text', required: true },
+    { key: 'explanation', label: 'Explanation', type: 'textarea', full: true },
+    { key: 'media_url', label: 'Media URL', type: 'text', full: true },
+    { key: 'lat', label: 'Latitude', type: 'number', step: '0.000001' },
+    { key: 'lng', label: 'Longitude', type: 'number', step: '0.000001' },
+    { key: 'source', label: 'Source', type: 'select', options: ['manual','ai','community','opentdb','restcountries'] },
+    { key: 'is_active', label: 'Active', type: 'checkbox' },
+  ],
+  seasons: [
+    { key: 'name', label: 'Season Name', type: 'text', required: true },
+    { key: 'starts_at', label: 'Start Date', type: 'datetime-local', required: true },
+    { key: 'ends_at', label: 'End Date', type: 'datetime-local', required: true },
+    { key: 'is_active', label: 'Active', type: 'checkbox' },
+  ],
+}
+
+const GAME_TABLE_COLS = {
+  coin_config: ['key', 'value', 'description'],
+  store_items: ['name', 'category', 'price_coins', 'is_available', 'sort_order'],
+  game_config: ['name', 'slug', 'max_levels', 'is_enabled', 'sort_order'],
+  level_config: ['level_min', 'level_max', 'difficulty', 'time_limit_secs'],
+  questions: ['game_type', 'category', 'difficulty', 'question_text', 'source', 'is_active'],
+  seasons: ['name', 'starts_at', 'ends_at', 'is_active'],
+}
+
+const GAME_TABLE_PK = {
+  coin_config: 'key',
+  store_items: 'id',
+  game_config: 'slug',
+  level_config: 'id',
+  questions: 'id',
+  seasons: 'id',
+}
+
+function GameConfigSection({ table, session }) {
+  const [rows, setRows] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [modal, setModal] = useState(null)
+  const [form, setForm] = useState({})
+  const [saving, setSaving] = useState(false)
+  const [toast, setToast] = useState(null)
+  const [confirm, setConfirm] = useState(null)
+
+  const fields = GAME_TABLE_FIELDS[table] || []
+  const cols = GAME_TABLE_COLS[table] || []
+  const pk = GAME_TABLE_PK[table] || 'id'
+  const isEditing = modal && modal !== 'create'
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      if (!supabase) throw new Error('Supabase not available')
+      let query = supabase.from(table).select('*')
+      // Order by sort_order if available, else by first column
+      if (['store_items', 'game_config'].includes(table)) query = query.order('sort_order')
+      else if (table === 'level_config') query = query.order('level_min')
+      else if (table === 'questions') query = query.order('created_at', { ascending: false }).limit(200)
+      else if (table === 'seasons') query = query.order('starts_at', { ascending: false })
+      else query = query.order(pk)
+      const { data, error } = await query
+      if (error) throw error
+      setRows(data || [])
+    } catch (e) {
+      setToast({ msg: 'Load failed: ' + e.message, type: 'error' })
+    }
+    setLoading(false)
+  }, [table, pk])
+
+  useEffect(() => { load() }, [load])
+
+  function openCreate() {
+    const defaults = {}
+    fields.forEach(f => {
+      if (f.type === 'checkbox') defaults[f.key] = false
+      else if (f.type === 'number') defaults[f.key] = ''
+      else defaults[f.key] = ''
+    })
+    setForm(defaults)
+    setModal('create')
+  }
+
+  function openEdit(row) {
+    const formData = { ...row }
+    // Convert options JSONB to string for editing
+    if (formData.options && typeof formData.options !== 'string') {
+      formData.options = JSON.stringify(formData.options)
+    }
+    // Convert dates for datetime-local inputs
+    if (formData.starts_at) formData.starts_at = formData.starts_at.slice(0, 16)
+    if (formData.ends_at) formData.ends_at = formData.ends_at.slice(0, 16)
+    setForm(formData)
+    setModal(row)
+  }
+
+  async function handleSave() {
+    setSaving(true)
+    try {
+      if (!supabase) throw new Error('Supabase not available')
+      const record = { ...form }
+
+      // Parse options JSON if present
+      if (typeof record.options === 'string' && record.options.trim()) {
+        try { record.options = JSON.parse(record.options) } catch { /* keep as string */ }
+      }
+
+      // Convert numeric fields
+      fields.forEach(f => {
+        if (f.type === 'number' && record[f.key] !== '' && record[f.key] != null) {
+          record[f.key] = Number(record[f.key])
+        }
+      })
+
+      record.updated_at = new Date().toISOString()
+
+      // Only keep fields that are in the field def
+      const knownKeys = new Set(fields.map(f => f.key))
+      ;['id','updated_at','created_at'].forEach(k => knownKeys.add(k))
+      const clean = {}
+      for (const [k, v] of Object.entries(record)) {
+        if (knownKeys.has(k)) clean[k] = v
+      }
+
+      if (modal === 'create') {
+        const { error } = await supabase.from(table).insert(clean)
+        if (error) throw error
+      } else {
+        const { error } = await supabase.from(table).update(clean).eq(pk, record[pk])
+        if (error) throw error
+      }
+
+      setToast({ msg: 'Saved!', type: 'success' })
+      setModal(null)
+      load()
+    } catch (e) {
+      setToast({ msg: e.message, type: 'error' })
+    }
+    setSaving(false)
+  }
+
+  async function handleDelete(row) {
+    try {
+      if (!supabase) throw new Error('Supabase not available')
+      const { error } = await supabase.from(table).delete().eq(pk, row[pk])
+      if (error) throw error
+      setToast({ msg: 'Deleted', type: 'success' })
+      setConfirm(null)
+      load()
+    } catch (e) {
+      setToast({ msg: e.message, type: 'error' })
+    }
+  }
+
+  const filtered = rows.filter(r =>
+    !search || Object.values(r).some(v => String(v).toLowerCase().includes(search.toLowerCase()))
+  )
+
+  return (
+    <>
+      <div className="admin-toolbar">
+        <input className="admin-search" placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} />
+        <button className="admin-btn admin-btn-primary" onClick={openCreate}>+ Add New</button>
+        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginLeft: 'auto' }}>{filtered.length} records</span>
+      </div>
+
+      <div className="admin-table-wrap">
+        {loading ? (
+          <div className="admin-empty"><p>Loading...</p></div>
+        ) : filtered.length === 0 ? (
+          <div className="admin-empty"><p>No records. Click "Add New" to create one.</p></div>
+        ) : (
+          <table className="admin-table">
+            <thead><tr>
+              {cols.map(c => <th key={c}>{c.replace(/_/g, ' ')}</th>)}
+              <th>Actions</th>
+            </tr></thead>
+            <tbody>
+              {filtered.map((row, i) => (
+                <tr key={row[pk] || i}>
+                  {cols.map(c => {
+                    let val = row[c]
+                    if (typeof val === 'boolean') val = val ? '✅' : '—'
+                    if (c === 'question_text' && typeof val === 'string') val = val.slice(0, 60) + (val.length > 60 ? '…' : '')
+                    return <td key={c}>{val != null ? String(val) : '—'}</td>
+                  })}
+                  <td>
+                    <button className="admin-btn admin-btn-sm" onClick={() => openEdit(row)}>Edit</button>
+                    {' '}
+                    <button className="admin-btn admin-btn-sm admin-btn-danger" onClick={() => setConfirm(row)}>Del</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* Edit/Create Modal */}
+      {modal && (
+        <div className="admin-modal-overlay" onClick={() => setModal(null)}>
+          <div className="admin-modal" onClick={e => e.stopPropagation()}>
+            <h2>{modal === 'create' ? 'Create Record' : 'Edit Record'}</h2>
+            <div className="admin-modal-fields">
+              {fields.map(f => {
+                const isReadOnly = isEditing && f.readOnlyOnEdit
+                return (
+                  <div key={f.key} className={`admin-field ${f.full ? 'full' : ''}`}>
+                    <label>{f.label}{f.required && ' *'}</label>
+                    {f.type === 'select' ? (
+                      <select value={form[f.key] || ''} onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))} disabled={isReadOnly}>
+                        <option value="">—</option>
+                        {(f.options || []).map(o => <option key={o} value={o}>{o}</option>)}
+                      </select>
+                    ) : f.type === 'checkbox' ? (
+                      <input type="checkbox" checked={!!form[f.key]} onChange={e => setForm(p => ({ ...p, [f.key]: e.target.checked }))} disabled={isReadOnly} />
+                    ) : f.type === 'textarea' ? (
+                      <textarea value={form[f.key] || ''} onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))} rows={3} placeholder={f.placeholder} readOnly={isReadOnly} />
+                    ) : (
+                      <input
+                        type={f.type === 'datetime-local' ? 'datetime-local' : f.type}
+                        value={form[f.key] ?? ''}
+                        onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
+                        placeholder={f.placeholder}
+                        readOnly={isReadOnly}
+                        min={f.min} max={f.max} step={f.step}
+                      />
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+            <div className="admin-modal-actions">
+              <button className="admin-btn admin-btn-primary" onClick={handleSave} disabled={saving}>
+                {saving ? 'Saving...' : 'Save'}
+              </button>
+              <button className="admin-btn" onClick={() => setModal(null)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirm */}
+      {confirm && (
+        <div className="admin-modal-overlay" onClick={() => setConfirm(null)}>
+          <div className="admin-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 400 }}>
+            <h3>Delete this record?</h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>This action cannot be undone.</p>
+            <div className="admin-modal-actions">
+              <button className="admin-btn admin-btn-danger" onClick={() => handleDelete(confirm)}>Delete</button>
+              <button className="admin-btn" onClick={() => setConfirm(null)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
+    </>
   )
 }
