@@ -235,13 +235,12 @@ export default function Auth() {
     playButtonTap()
 
     const { email, password, username } = formData
-    const avatar = localStorage.getItem('geoquiz_avatar') || '🧭'
 
     try {
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { username: username || email.split('@')[0], full_name: '', avatar_url: avatar } }
+        options: { data: { username: username || email.split('@')[0], full_name: '' } }
       })
 
       if (signUpError) {

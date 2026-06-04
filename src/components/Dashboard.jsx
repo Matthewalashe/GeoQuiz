@@ -507,7 +507,7 @@ function ProfileSection({ profile, session, onRefresh }) {
 function JourneySection({ profile, xp }) {
   const displayXP = profile ? (profile.total_xp || 0) : xp.totalXP
   const displayLevel = getLevel(displayXP)
-  const displayAvatar = profile?.avatar_url || localStorage.getItem('geoquiz_avatar') || '🧭'
+  const displayAvatar = profile?.avatar_url || ''
   const exploredPct = getExplorationPercent()
   const checkIns = getCheckIns()
 

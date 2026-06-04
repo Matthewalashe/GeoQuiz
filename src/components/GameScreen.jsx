@@ -8,7 +8,6 @@ import { MapRegular, TrophyRegular } from '@fluentui/react-icons'
 import { SponsoredBanner } from './SponsoredBanner.jsx'
 import { trackAchievement } from './Achievements.jsx'
 import MapView from './MapView.jsx'
-import Onboarding from './Onboarding.jsx'
 import { markExplored, getExplored } from '../engine/exploration.js'
 
 const LABELED_DOTS = [
@@ -102,7 +101,6 @@ export default function GameScreen() {
   const [timeLeft, setTimeLeft] = useState(config?.timer || 0)
   const [streak, setStreak] = useState(0)
   const [bestStreak, setBestStreak] = useState(0)
-  const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem('geoquiz_onboarded'))
   const [showQuitModal, setShowQuitModal] = useState(false)
   const [loadProgress, setLoadProgress] = useState(0)
   const [pendingNav, setPendingNav] = useState(null)
@@ -340,7 +338,6 @@ export default function GameScreen() {
         </div>
       )}
 
-      {showOnboarding && <Onboarding onComplete={() => setShowOnboarding(false)} />}
 
       {/* Menu sidebar */}
       <div className={`legend-sidebar ${legendOpen ? 'open' : ''}`}>

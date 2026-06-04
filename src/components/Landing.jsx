@@ -16,8 +16,9 @@ const PLAY_ROW = [
   { id: 'quiz', path: '/play?mode=daily', label: 'Map Quiz', emoji: '📍', color: '#00c853', desc: 'Pin locations on the map' },
   { id: 'postcards', path: '/postcards', label: 'PostCards', emoji: '📷', color: '#8b5cf6', desc: 'Guess landmarks from photos' },
   { id: 'trivia', path: '/trivia', label: 'Trivia', emoji: '🧠', color: '#0ea5e9', desc: 'Test your knowledge' },
-  { id: 'puzzle', path: '/puzzle', label: 'Puzzle', emoji: '🧩', color: '#06b6d4', desc: 'Rearrange the image' },
-  { id: 'word', path: '/word', label: 'Word Game', emoji: '🔤', color: '#f59e0b', desc: 'Unscramble & learn' },
+  { id: 'pinpoint', path: '/pinpoint', label: 'PinPoint', emoji: '🎯', color: '#ef4444', desc: 'Drop a pin, score by distance' },
+  { id: 'flagstack', path: '/flagstack', label: 'FlagStack', emoji: '🏁', color: '#eab308', desc: 'Catch the falling flags' },
+  { id: 'word', path: '/wordgame', label: 'Word Game', emoji: '🔤', color: '#f59e0b', desc: 'Unscramble & learn' },
 ]
 
 export default function Landing({ session, profile }) {
@@ -27,7 +28,7 @@ export default function Landing({ session, profile }) {
   const title = getLevelTitle(level)
   const league = getCurrentLeague(xp.totalXP)
   const streak = xp.streakDays || 0
-  const playerName = profile?.username || profile?.full_name || localStorage.getItem('geoquiz_player') || 'Explorer'
+  const playerName = profile?.username || profile?.full_name || 'Explorer'
   const totalPoints = profile?.total_xp || xp.totalXP
 
   const [listings, setListings] = useState([])
@@ -81,6 +82,22 @@ export default function Landing({ session, profile }) {
   // ── Carousel state ──
   const [currentSlide, setCurrentSlide] = useState(0)
   const [paused, setPaused] = useState(false)
+  const [touchStart, setTouchStart] = useState(null)
+
+  function handleTouchStart(e) {
+    setTouchStart(e.touches[0].clientX)
+    setPaused(true)
+  }
+  function handleTouchEnd(e) {
+    if (touchStart === null) return
+    const diff = touchStart - e.changedTouches[0].clientX
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) nextSlide()
+      else prevSlide()
+    }
+    setTouchStart(null)
+    setPaused(false)
+  }
 
   const nextSlide = useCallback(() => {
     setCurrentSlide(p => (p + 1) % heroSlides.length)
@@ -106,6 +123,8 @@ export default function Landing({ session, profile }) {
         className="hero-carousel"
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
         {heroSlides.map((s, i) => (
           <div

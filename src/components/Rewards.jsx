@@ -6,10 +6,14 @@ import {
   DAILY_REWARDS, getRewardsData, claimDailyReward, canClaimToday,
 } from '../engine/xp.js'
 import { fetchLeaguePeers, supabase } from '../lib/supabase.js'
+import {
+  getBalance, purchaseItem, hasPurchased, canAfford,
+  getStoreByCategory, setActiveItem, getActiveItem,
+} from '../engine/coinEconomy.js'
 
 export default function Rewards({ session, profile }) {
   const navigate = useNavigate()
-  const [tab, setTab] = useState('rewards') // rewards | league
+  const [tab, setTab] = useState('rewards') // rewards | league | store
   const [loading, setLoading] = useState(!session)
   const [checkedSession, setCheckedSession] = useState(session)
 
@@ -134,7 +138,10 @@ function RewardsContent({ session, profile, navigate, tab, setTab }) {
       {/* Tabs */}
       <div className="rw-tabs">
         <button className={`rw-tab ${tab === 'rewards' ? 'active' : ''}`} onClick={() => setTab('rewards')}>
-          🎁 Daily Rewards
+          🎁 Rewards
+        </button>
+        <button className={`rw-tab ${tab === 'store' ? 'active' : ''}`} onClick={() => setTab('store')}>
+          🪙 Store
         </button>
         <button className={`rw-tab ${tab === 'league' ? 'active' : ''}`} onClick={() => setTab('league')}>
           {league.emoji} Leagues
@@ -258,10 +265,164 @@ function RewardsContent({ session, profile, navigate, tab, setTab }) {
         </div>
       )}
 
+      {/* ═══ STORE TAB ═══ */}
+      {tab === 'store' && <StoreTab />}
+
       <div className="rw-actions">
         <button className="btn btn-primary" onClick={() => navigate('/play')}>Play Now</button>
         <button className="btn btn-outline" onClick={() => navigate('/dashboard')}>Profile</button>
       </div>
     </section>
+  )
+}
+
+// ═══════════════════════════════════════════
+// STORE TAB COMPONENT
+// ═══════════════════════════════════════════
+function StoreTab() {
+  const [balance, setBalance] = useState(getBalance)
+  const [filter, setFilter] = useState('all')
+  const [purchasing, setPurchasing] = useState(null) // item being confirmed
+  const [lastPurchase, setLastPurchase] = useState(null)
+  const catalog = getStoreByCategory()
+
+  const categories = [
+    { id: 'all', label: 'All', emoji: '🏪' },
+    { id: 'theme', label: 'Themes', emoji: '🎨' },
+    { id: 'powerup', label: 'Power-ups', emoji: '⚡' },
+    { id: 'badge', label: 'Badges', emoji: '🏅' },
+  ]
+
+  const items = filter === 'all'
+    ? Object.values(catalog).flat()
+    : catalog[filter] || []
+
+  function handlePurchase(item) {
+    if (hasPurchased(item.id)) return
+    if (!canAfford(item.price)) return
+    setPurchasing(item)
+  }
+
+  function confirmPurchase() {
+    if (!purchasing) return
+    const result = purchaseItem(purchasing.id, purchasing.price)
+    if (result.success) {
+      setBalance(result.balance)
+      setLastPurchase(purchasing)
+      setTimeout(() => setLastPurchase(null), 3000)
+    }
+    setPurchasing(null)
+  }
+
+  function handleEquip(item) {
+    if (item.category === 'theme') setActiveItem('theme', item.id)
+    else if (item.category === 'badge') setActiveItem('badge', item.id)
+    setBalance(getBalance()) // trigger re-render
+  }
+
+  return (
+    <div className="st-store">
+      {/* Balance bar */}
+      <div className="st-balance glass">
+        <span className="st-balance-icon">🪙</span>
+        <span className="st-balance-amount">{balance.toLocaleString()}</span>
+        <span className="st-balance-label">coins</span>
+      </div>
+
+      {/* How to earn */}
+      <div className="st-earn-tips">
+        <span>Earn coins: </span>
+        <span className="st-tip">🎮 Play games</span>
+        <span className="st-tip">🔥 Daily streaks</span>
+        <span className="st-tip">🏆 Achievements</span>
+      </div>
+
+      {/* Category filter */}
+      <div className="st-filters">
+        {categories.map(cat => (
+          <button
+            key={cat.id}
+            className={`st-filter ${filter === cat.id ? 'active' : ''}`}
+            onClick={() => setFilter(cat.id)}
+          >
+            {cat.emoji} {cat.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Items grid */}
+      <div className="st-grid">
+        {items.map(item => {
+          const owned = hasPurchased(item.id)
+          const affordable = canAfford(item.price)
+          const active = getActiveItem(item.category) === item.id
+
+          return (
+            <div key={item.id} className={`st-card glass ${owned ? 'st-card-owned' : ''} ${active ? 'st-card-active' : ''}`}>
+              {/* Preview for themes */}
+              {item.preview && (
+                <div className="st-card-preview" style={{ background: item.preview }} />
+              )}
+
+              <div className="st-card-emoji">{item.emoji}</div>
+              <div className="st-card-name">{item.name}</div>
+              <div className="st-card-desc">{item.description}</div>
+
+              {item.consumable && <div className="st-card-uses">{item.uses} uses</div>}
+
+              {owned ? (
+                <div className="st-card-actions">
+                  {item.category !== 'powerup' && (
+                    <button
+                      className={`st-btn ${active ? 'st-btn-equipped' : 'st-btn-equip'}`}
+                      onClick={() => handleEquip(item)}
+                    >
+                      {active ? '✓ Equipped' : 'Equip'}
+                    </button>
+                  )}
+                  {item.category === 'powerup' && (
+                    <span className="st-owned-label">✓ Owned</span>
+                  )}
+                </div>
+              ) : (
+                <button
+                  className={`st-btn st-btn-buy ${!affordable ? 'st-btn-locked' : ''}`}
+                  onClick={() => handlePurchase(item)}
+                  disabled={!affordable}
+                >
+                  🪙 {item.price}
+                </button>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Purchase confirmation modal */}
+      {purchasing && (
+        <div className="st-modal-overlay" onClick={() => setPurchasing(null)}>
+          <div className="st-modal glass" onClick={e => e.stopPropagation()}>
+            <div className="st-modal-emoji">{purchasing.emoji}</div>
+            <h3 className="st-modal-title">Buy {purchasing.name}?</h3>
+            <p className="st-modal-desc">{purchasing.description}</p>
+            <div className="st-modal-price">
+              <span>🪙 {purchasing.price} coins</span>
+              <span className="st-modal-after">Balance after: {balance - purchasing.price}</span>
+            </div>
+            <div className="st-modal-actions">
+              <button className="st-btn st-btn-confirm" onClick={confirmPurchase}>Buy Now</button>
+              <button className="st-btn st-btn-cancel" onClick={() => setPurchasing(null)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Purchase success toast */}
+      {lastPurchase && (
+        <div className="st-toast">
+          ✅ {lastPurchase.emoji} {lastPurchase.name} purchased!
+        </div>
+      )}
+    </div>
   )
 }

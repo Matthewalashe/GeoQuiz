@@ -1,7 +1,8 @@
 import { useLocation, useNavigate, Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { getGrade, formatDistance } from '../engine/scoring.js'
-import { submitScore, fetchLeaderboard } from '../lib/supabase.js'
+import { submitScore, fetchLeaderboard, getProfile } from '../lib/supabase.js'
+import { supabase } from '../lib/supabase.js'
 import { ResultsMap } from './MapView.jsx'
 import { encodeChallenge } from './Challenge.jsx'
 import { awardGameXP, getLevel, getLevelTitle, getLevelProgress, getXPToNextLevel } from '../engine/xp.js'
@@ -59,7 +60,7 @@ export default function ResultsScreen() {
   const navigate = useNavigate()
   const data = location.state
 
-  const [playerName, setPlayerName] = useState(() => localStorage.getItem('geoquiz_player') || '')
+  const [playerName, setPlayerName] = useState('')
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
   const [showAchievement, setShowAchievement] = useState(null)
@@ -67,6 +68,22 @@ export default function ResultsScreen() {
   const [leaderboard, setLeaderboard] = useState([])
   const [xpResult, setXpResult] = useState(null)
   const [saveError, setSaveError] = useState(null)
+
+  // Auto-fetch profile username — no manual input
+  useEffect(() => {
+    async function loadProfile() {
+      if (!supabase) return
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.user) {
+          const profile = await getProfile(session.user.id)
+          const name = profile?.username || profile?.full_name || session.user.email?.split('@')[0] || 'Explorer'
+          setPlayerName(name)
+        }
+      } catch (e) { console.warn('Failed to load profile for results:', e) }
+    }
+    loadProfile()
+  }, [])
 
   useEffect(() => {
     if (!data) navigate('/', { replace: true })
@@ -90,15 +107,12 @@ export default function ResultsScreen() {
     if (!playerName.trim() || !data) return
     setSaving(true)
     setSaveError(null)
-    localStorage.setItem('geoquiz_player', playerName.trim())
-    const prev = parseInt(localStorage.getItem('geoquiz_total_perfects') || '0', 10)
-    localStorage.setItem('geoquiz_total_perfects', prev + perfectCount)
     try {
       await submitScore({
         playerName: playerName.trim(), score: data.totalScore,
         maxScore: data.maxScore, questionCount: data.questionCount,
         categories: data.config?.categories || [], difficulty: data.config?.difficulty || 'all',
-        avatar: localStorage.getItem('geoquiz_avatar') || '🧭', gameType: 'quiz',
+        avatar: '', gameType: 'quiz',
       })
       playCorrect(); vibrateSuccess()
       setSaved(true)
@@ -115,6 +129,13 @@ export default function ResultsScreen() {
       setSaveError(err.message || 'Could not save your score. Please try again.')
     } finally { setSaving(false) }
   }
+
+  // Auto-save score when playerName loads
+  useEffect(() => {
+    if (playerName && data && !saved && !saving) {
+      handleSaveScore()
+    }
+  }, [playerName]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!data) return null
 
@@ -249,32 +270,19 @@ export default function ResultsScreen() {
       {/* Encouragement */}
       <div className="results-encourage glass-subtle">{encouragement}</div>
 
-      {/* Save Score */}
-      {!saved ? (
-        <div className="glass" style={{ padding: '1.25rem', textAlign: 'center' }}>
-          <h3 style={{ fontFamily: 'var(--font-head)', fontSize: '1rem', marginBottom: '0.75rem' }}>Save Your Score</h3>
-          {saveError && (
-            <div style={{ marginBottom: '0.75rem', padding: '0.75rem 1rem', borderRadius: '0.5rem', background: 'rgba(239,68,68,0.12)', color: '#ef4444', fontSize: '0.85rem' }}>
-              ⚠️ {saveError}
-            </div>
-          )}
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <input type="text" value={playerName} onChange={e => setPlayerName(e.target.value)}
-              placeholder="Your name" maxLength={30}
-              style={{ flex: 1, padding: '0.65rem 0.75rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '0.5rem', color: 'var(--text)', fontSize: '0.9rem', fontFamily: 'var(--font-body)' }} />
-            <button onClick={handleSaveScore} disabled={!playerName.trim() || saving}
-              style={{ padding: '0.65rem 1.2rem', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '0.5rem',
-                fontWeight: 600, cursor: 'pointer', opacity: !playerName.trim() || saving ? 0.5 : 1 }}>
-              {saving ? '...' : saveError ? 'Retry' : 'Save'}
-            </button>
-          </div>
-        </div>
-      ) : (
+      {/* Score Status */}
+      {saved ? (
         <div style={{ textAlign: 'center', padding: '0.5rem', color: 'var(--primary)', fontWeight: 600, fontSize: '0.9rem' }}>
           <CheckmarkCircleRegular style={{ verticalAlign: 'middle', marginRight: '0.3rem' }} /> Score saved as "{playerName}"
         </div>
-      )}
+      ) : saving ? (
+        <div style={{ textAlign: 'center', padding: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Saving score...</div>
+      ) : saveError ? (
+        <div className="glass" style={{ padding: '1rem', textAlign: 'center' }}>
+          <div style={{ marginBottom: '0.5rem', color: '#ef4444', fontSize: '0.85rem' }}>⚠️ {saveError}</div>
+          <button onClick={handleSaveScore} style={{ padding: '0.5rem 1.2rem', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '0.5rem', fontWeight: 600, cursor: 'pointer' }}>Retry</button>
+        </div>
+      ) : null}
 
       {/* Map */}
       <div className="results-map-wrap glass-subtle" style={{ overflow: 'hidden' }}>

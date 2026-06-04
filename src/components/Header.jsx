@@ -11,8 +11,7 @@ import {
   SettingsRegular, MapRegular, HeartRegular, StoreMicrosoftRegular,
   GiftRegular, PersonRegular, TrophyRegular, SignOutRegular,
   PeopleRegular, NavigationRegular, DismissRegular,
-  ShieldCheckmarkRegular, WrenchRegular, StarRegular,
-  DataBarVerticalRegular, LocationRegular,
+  WrenchRegular, StarRegular, DataBarVerticalRegular,
 } from '@fluentui/react-icons'
 
 /** Generate a consistent gradient from a string (username) */
@@ -128,23 +127,10 @@ export default function Header({ theme, toggleTheme, session, profile, unreadNot
     <>
       {/* ═══ TOP HEADER ═══ */}
       <header className="header">
-        {/* Left: Profile avatar / menu btn (logged in) or Logo (logged out) */}
-        {session ? (
-          <button className="header-menu-btn" onClick={() => setMenuOpen(true)} aria-label="Menu">
-            <ProfileImg profile={profile} size={32} />
-          </button>
-        ) : (
-          <Link to="/" className="header-logo">
-            <img src="/wanda-logo.png" alt="Wanda" className="header-logo-img" />
-          </Link>
-        )}
-
-        {/* Center: Logo (logged in) or nothing */}
-        {session && (
-          <Link to="/" className="header-logo header-logo-center">
-            <img src="/wanda-logo.png" alt="Wanda" className="header-logo-img" />
-          </Link>
-        )}
+        {/* Left: Logo always */}
+        <Link to="/" className="header-logo">
+          <img src="/wanda-logo.png" alt="Wanda" className="header-logo-img" />
+        </Link>
 
         {/* Desktop nav links */}
         <nav className="header-nav desktop-nav">
@@ -157,18 +143,12 @@ export default function Header({ theme, toggleTheme, session, profile, unreadNot
           {admin && <Link to="/admin" className={pathname === '/admin' ? 'active' : ''} style={{ color: '#a78bfa', display: 'flex', alignItems: 'center', gap: '0.2rem' }}><SettingsRegular fontSize={16} /> CMS</Link>}
         </nav>
 
-        {/* Right: theme + XP */}
+        {/* Right: Menu button only */}
         <div className="header-right">
-          <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle dark mode" title={theme === 'dark' ? 'Light mode' : 'Dark mode'}>
-            {theme === 'dark' ? <WeatherSunnyRegular fontSize={18} /> : <WeatherMoonRegular fontSize={18} />}
-          </button>
           {session ? (
-            <Link to="/dashboard" className="xp-badge" title={`${title.title} — ${displayXP} XP`}>
-              <span className="xp-level">Lv.{level}</span>
-              <div className="xp-bar-mini">
-                <div className="xp-bar-fill" style={{ width: `${progress * 100}%` }} />
-              </div>
-            </Link>
+            <button className="header-menu-btn" onClick={() => setMenuOpen(true)} aria-label="Menu">
+              <NavigationRegular fontSize={22} />
+            </button>
           ) : (
             <Link to="/auth" className="header-signin">Sign In</Link>
           )}
@@ -193,6 +173,21 @@ export default function Header({ theme, toggleTheme, session, profile, unreadNot
             </div>
           </div>
         </div>
+
+        {/* Level + Theme row */}
+        <div className="menu-extras">
+          <Link to="/dashboard" className="menu-level-badge" onClick={() => setMenuOpen(false)}>
+            <span className="menu-level-num">Lv.{level}</span>
+            <div className="menu-level-bar"><div className="menu-level-fill" style={{ width: `${progress * 100}%` }} /></div>
+            <span className="menu-level-title">{title.emoji} {title.title}</span>
+          </Link>
+          <button className="menu-theme-btn" onClick={toggleTheme} aria-label="Toggle theme">
+            {theme === 'dark' ? <WeatherSunnyRegular fontSize={18} /> : <WeatherMoonRegular fontSize={18} />}
+            <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
+          </button>
+        </div>
+
+        <div className="menu-divider" />
 
         {/* Nav sections */}
         <div className="menu-section">

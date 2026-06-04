@@ -7,6 +7,7 @@ import { autoSubmitScore } from '../engine/leaderboard.js'
 import { RewardsOverlay, useRewardSystem } from '../engine/rewards.jsx'
 import ResultCard from './ResultCard.jsx'
 import { getTriviaPacks } from '../lib/cms.js'
+import { getQuestions } from '../engine/questionBank.js'
 
 function shuffle(arr) {
   const a = [...arr]
@@ -77,6 +78,42 @@ export default function TriviaGame() {
   const [pendingNav, setPendingNav] = useState(null)
   const answerBtnRefs = useRef([])
   const intervalRef = useRef(null)
+  const [fetchingAPI, setFetchingAPI] = useState(false)
+
+  // Quick Play categories using questionBank API
+  const QUICK_CATS = [
+    { id: 'qp-mixed', label: '🌍 Mixed', desc: 'Geography, Nigeria & general knowledge', category: 'mixed', color: '#8b5cf6' },
+    { id: 'qp-nigeria', label: '🇳🇬 Nigeria', desc: 'All about Nigeria', category: 'nigeria', color: '#00c853' },
+    { id: 'qp-africa', label: '🌍 Africa', desc: 'African countries & capitals', category: 'africa', color: '#f59e0b' },
+    { id: 'qp-geography', label: '🗺️ World', desc: 'Flags, capitals & currencies', category: 'geography', color: '#0ea5e9' },
+    { id: 'qp-general', label: '💡 General', desc: 'General knowledge trivia', category: 'general', color: '#ec4899' },
+    { id: 'qp-science', label: '🔬 Science', desc: 'Science & nature', category: 'science', color: '#06b6d4' },
+    { id: 'qp-history', label: '📜 History', desc: 'Historical events & figures', category: 'history', color: '#ef4444' },
+  ]
+
+  async function startQuickPlay(category) {
+    setFetchingAPI(true)
+    try {
+      const raw = await getQuestions({ count: 10, category })
+      if (raw.length === 0) throw new Error('No questions available')
+      // Convert questionBank format to trivia format
+      const pool = raw.map(r => ({
+        q: r.question,
+        options: r.options,
+        ans: r.options.indexOf(r.correct),
+        fact: r.funFact || `Category: ${r.category}`,
+        image: r.image || null,
+      }))
+      setQuestions(pool)
+      setIdx(0); setScore(0); setStreak(0); setPhase('playing'); setResults([])
+      setStarted(true)
+    } catch (err) {
+      console.error('Quick play error:', err)
+      setCmsError('Could not load questions. Check your internet connection.')
+    } finally {
+      setFetchingAPI(false)
+    }
+  }
 
   function startGame() {
     const pool = selectedPack === 'all'
@@ -199,28 +236,58 @@ export default function TriviaGame() {
         <button className="gh-back" onClick={() => navigate('/play')}>← Back</button>
         <h2 className="lobby-title">🧠 Trivia Challenge</h2>
         <p className="lobby-sub">Choose a category to test your knowledge</p>
+
+        {/* Quick Play — Unlimited API Questions */}
+        <h3 style={{ fontFamily: 'var(--font-head)', fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '1rem 0 0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>⚡ Quick Play — Unlimited</h3>
         <div className="lobby-packs">
-          <button className={`lobby-pack-card ${selectedPack === 'all' ? 'active' : ''}`}
-            style={{ '--pack-color': '#8b5cf6' }} onClick={() => setSelectedPack('all')}>
-            <span className="lpc-icon">🎯</span>
-            <span className="lpc-label">All Categories</span>
-            <span className="lpc-desc">Mix of all packs — 10 random questions</span>
-            <span className="lpc-count">{PACK_LIST.reduce((s, p) => s + p.questions.length, 0)} total questions</span>
-          </button>
-          {PACK_LIST.map(pack => (
-            <button key={pack.id} className={`lobby-pack-card ${selectedPack === pack.id ? 'active' : ''}`}
-              style={{ '--pack-color': pack.color }} onClick={() => setSelectedPack(pack.id)}>
-              <span className="lpc-icon">{pack.label.split(' ')[0]}</span>
-              <span className="lpc-label">{pack.label.split(' ').slice(1).join(' ')}</span>
-              <span className="lpc-desc">{pack.desc}</span>
-              <span className="lpc-count">{pack.questions.length} questions</span>
+          {QUICK_CATS.map(cat => (
+            <button key={cat.id} className="lobby-pack-card"
+              style={{ '--pack-color': cat.color }}
+              onClick={() => startQuickPlay(cat.category)}
+              disabled={fetchingAPI}
+            >
+              <span className="lpc-icon">{cat.label.split(' ')[0]}</span>
+              <span className="lpc-label">{cat.label.split(' ').slice(1).join(' ')}</span>
+              <span className="lpc-desc">{cat.desc}</span>
+              <span className="lpc-count">∞ questions</span>
             </button>
           ))}
         </div>
-        <button className="lobby-start-btn" disabled={!selectedPack} onClick={startGame}
-          style={{ background: selectedPack ? (PACKS[selectedPack]?.color || '#8b5cf6') : undefined }}>
-          Start Trivia →
-        </button>
+
+        {fetchingAPI && (
+          <div style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-secondary)' }}>
+            Loading questions...
+          </div>
+        )}
+
+        {/* CMS Packs */}
+        {PACK_LIST.length > 0 && (
+          <>
+            <h3 style={{ fontFamily: 'var(--font-head)', fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '1.5rem 0 0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>📦 Curated Packs</h3>
+            <div className="lobby-packs">
+              <button className={`lobby-pack-card ${selectedPack === 'all' ? 'active' : ''}`}
+                style={{ '--pack-color': '#8b5cf6' }} onClick={() => setSelectedPack('all')}>
+                <span className="lpc-icon">🎯</span>
+                <span className="lpc-label">All Categories</span>
+                <span className="lpc-desc">Mix of all packs — 10 random questions</span>
+                <span className="lpc-count">{PACK_LIST.reduce((s, p) => s + p.questions.length, 0)} total questions</span>
+              </button>
+              {PACK_LIST.map(pack => (
+                <button key={pack.id} className={`lobby-pack-card ${selectedPack === pack.id ? 'active' : ''}`}
+                  style={{ '--pack-color': pack.color }} onClick={() => setSelectedPack(pack.id)}>
+                  <span className="lpc-icon">{pack.label.split(' ')[0]}</span>
+                  <span className="lpc-label">{pack.label.split(' ').slice(1).join(' ')}</span>
+                  <span className="lpc-desc">{pack.desc}</span>
+                  <span className="lpc-count">{pack.questions.length} questions</span>
+                </button>
+              ))}
+            </div>
+            <button className="lobby-start-btn" disabled={!selectedPack} onClick={startGame}
+              style={{ background: selectedPack ? (PACKS[selectedPack]?.color || '#8b5cf6') : undefined }}>
+              Start Trivia →
+            </button>
+          </>
+        )}
       </div>
     )
   }

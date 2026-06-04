@@ -3,17 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import { playStepComplete, playCelebration, playButtonTap, vibrateTap, vibrateSuccess } from '../engine/audio.js'
 import { updateProfile } from '../lib/supabase.js'
 import {
-  PersonRegular, ImageRegular, HeartRegular,
+  PersonRegular, HeartRegular,
   CheckmarkCircleRegular, ArrowRightRegular, ArrowLeftRegular,
   MapRegular, GamesRegular, GiftRegular, CompassNorthwestRegular,
   FlashRegular,
 } from '@fluentui/react-icons'
-
-const AVATARS = [
-  '🧭','🗺️','🌍','🏆','💎','⚡','🔱','🛡️','🦅','🌀','🪘','🏺',
-  '🌴','🔥','🐆','🐘','🦁','🐊','🌊','🚀','⭐','🎯','🌟','🏅',
-  '🎮','🦊','🐯','🌙','🛰️','🎓','🎲','🧩','🎪','🐺','👑','🗿',
-]
 
 const INTERESTS = [
   { id: 'explore', label: 'Explore Lagos', icon: <CompassNorthwestRegular />, color: '#00c853' },
@@ -25,14 +19,13 @@ const INTERESTS = [
 export default function SignUpOnboarding({ username: initialUsername, session, onComplete }) {
   const navigate = useNavigate()
   const [step, setStep] = useState(0)
-  const [avatar, setAvatar] = useState('🧭')
   const [username, setUsername] = useState(initialUsername || '')
   const [interests, setInterests] = useState([])
   const [animating, setAnimating] = useState(false)
 
+  // No avatar step — users upload profile photos instead
   const STEPS = [
     { title: 'Welcome to Wanda', subtitle: 'Your guide to experiencing Nigeria', icon: <FlashRegular /> },
-    { title: 'Choose Your Avatar', subtitle: 'Pick an icon that represents you', icon: <ImageRegular /> },
     { title: 'Your Explorer Name', subtitle: 'What should we call you?', icon: <PersonRegular /> },
     { title: 'What excites you?', subtitle: 'Pick your interests — we\'ll personalize your feed', icon: <HeartRegular /> },
     { title: 'You\'re All Set!', subtitle: 'Let the adventure begin', icon: <CheckmarkCircleRegular /> },
@@ -40,7 +33,7 @@ export default function SignUpOnboarding({ username: initialUsername, session, o
 
   function goNext() {
     if (animating) return
-    if (step === 2 && username.trim().length < 2) return
+    if (step === 1 && username.trim().length < 2) return
     setAnimating(true)
     playStepComplete()
     vibrateTap()
@@ -65,22 +58,20 @@ export default function SignUpOnboarding({ username: initialUsername, session, o
 
   async function finish() {
     playButtonTap()
-    localStorage.setItem('geoquiz_avatar', avatar)
     localStorage.setItem('geoquiz_player', username.trim())
     localStorage.setItem('wanda_interests', JSON.stringify(interests))
     localStorage.setItem('wanda_onboarded', '1')
-    // Sync avatar & username to Supabase profiles table
+    // Sync username to Supabase profiles table (no avatar — user uploads profile photo separately)
     if (session?.user?.id) {
       try {
         await updateProfile(session.user.id, {
-          avatar_url: avatar,
           username: username.trim(),
         })
       } catch (e) {
         console.warn('Could not sync onboarding profile:', e.message)
       }
     }
-    if (onComplete) onComplete({ avatar, username: username.trim(), interests })
+    if (onComplete) onComplete({ username: username.trim(), interests })
     else navigate('/dashboard')
   }
 
@@ -113,30 +104,14 @@ export default function SignUpOnboarding({ username: initialUsername, session, o
               <div className="onboard-features">
                 <div className="onboard-feature"><MapRegular /> Explore 50+ real locations</div>
                 <div className="onboard-feature"><GamesRegular /> 8 unique game modes</div>
-                <div className="onboard-feature"><GiftRegular /> Earn XP & unlock rewards</div>
+                <div className="onboard-feature"><GiftRegular /> Earn coins & unlock rewards</div>
               </div>
             </div>
           )}
 
-          {/* Step 1: Avatar */}
+          {/* Step 1: Username */}
           {step === 1 && (
-            <div className="onboard-avatar-grid">
-              {AVATARS.map(a => (
-                <button
-                  key={a}
-                  className={`onboard-avatar-btn ${avatar === a ? 'selected' : ''}`}
-                  onClick={() => { setAvatar(a); playButtonTap(); vibrateTap() }}
-                >
-                  {a}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Step 2: Username */}
-          {step === 2 && (
             <div className="onboard-username">
-              <div className="onboard-avatar-preview">{avatar}</div>
               <input
                 type="text"
                 className="onboard-name-input"
@@ -147,11 +122,12 @@ export default function SignUpOnboarding({ username: initialUsername, session, o
                 autoFocus
               />
               <span className="onboard-name-hint">{username.trim().length < 2 ? 'At least 2 characters' : '✓ Looks good!'}</span>
+              <p className="onboard-photo-hint">You can add a profile photo later in your profile settings.</p>
             </div>
           )}
 
-          {/* Step 3: Interests */}
-          {step === 3 && (
+          {/* Step 2: Interests */}
+          {step === 2 && (
             <div className="onboard-interests">
               {INTERESTS.map(int => (
                 <button
@@ -168,12 +144,12 @@ export default function SignUpOnboarding({ username: initialUsername, session, o
             </div>
           )}
 
-          {/* Step 4: Ready */}
-          {step === 4 && (
+          {/* Step 3: Ready */}
+          {step === 3 && (
             <div className="onboard-ready">
-              <div className="onboard-ready-avatar">{avatar}</div>
+              <div className="onboard-ready-avatar">🎉</div>
               <div className="onboard-ready-name">{username || 'Explorer'}</div>
-              <div className="onboard-ready-msg">Welcome aboard, {username || 'Explorer'}! 🎉</div>
+              <div className="onboard-ready-msg">Welcome aboard, {username || 'Explorer'}!</div>
             </div>
           )}
         </div>
@@ -195,7 +171,7 @@ export default function SignUpOnboarding({ username: initialUsername, session, o
             <button
               className="onboard-btn onboard-btn-next"
               onClick={goNext}
-              disabled={step === 2 && username.trim().length < 2}
+              disabled={step === 1 && username.trim().length < 2}
             >
               {step === 0 ? "Let's Go" : 'Continue'} <ArrowRightRegular />
             </button>

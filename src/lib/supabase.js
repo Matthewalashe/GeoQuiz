@@ -257,7 +257,7 @@ export async function signUp({ email, password, username, fullName, avatar }) {
       data: {
         username: username || email.split('@')[0],
         full_name: fullName || '',
-        avatar_url: avatar || '🧭',
+        avatar_url: '',
       }
     }
   })
@@ -349,7 +349,7 @@ export async function ensureProfile(user) {
     email: user.email || '',
     username: user.user_metadata?.username || user.user_metadata?.name || user.email?.split('@')[0] || 'Explorer',
     full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
-    avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || localStorage.getItem('geoquiz_avatar') || '🧭',
+    avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
     role: 'user',
     total_xp: 0,
     streak_days: 0,
@@ -394,7 +394,6 @@ export async function updateProfile(userId, updates) {
 export async function syncLocalProgress(userId) {
   const localXP = JSON.parse(localStorage.getItem('geoquiz_xp') || '{}')
   const localPlayer = localStorage.getItem('geoquiz_player')
-  const localAvatar = localStorage.getItem('geoquiz_avatar')
 
   if (!localXP.totalXP && !localPlayer) return // Nothing to sync
 
@@ -403,7 +402,6 @@ export async function syncLocalProgress(userId) {
     streak_days: localXP.streakDays || 0,
     level: Math.floor((localXP.totalXP || 0) / 500) + 1,
     username: localPlayer || undefined,
-    avatar_url: localAvatar || undefined,
     achievements: localXP.badges || [],
   }
 

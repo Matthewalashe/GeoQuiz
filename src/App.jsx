@@ -50,14 +50,11 @@ import Dashboard from './components/Dashboard.jsx'
 import Achievements from './components/Achievements.jsx'
 import Community from './components/Community.jsx'
 import PostCards from './components/PostCards.jsx'
-import PuzzleGame from './components/PuzzleGame.jsx'
 import WordGame from './components/WordGame.jsx'
 import Rewards from './components/Rewards.jsx'
-import StoryMode from './components/StoryMode.jsx'
-import CrosswordGame from './components/CrosswordGame.jsx'
-import ColoringGame from './components/ColoringGame.jsx'
 import TriviaGame from './components/TriviaGame.jsx'
-import AdventureGame from './components/AdventureGame.jsx'
+import PinPointGame from './components/PinPointGame.jsx'
+import FlagStackGame from './components/FlagStackGame.jsx'
 import Discovery from './components/Discovery.jsx'
 import DealsPage from './components/DealsPage.jsx'
 import Explore from './components/Explore.jsx'
@@ -71,9 +68,12 @@ import InstallPrompt from './components/InstallPrompt.jsx'
 import PageTransition from './components/PageTransition.jsx'
 import Auth from './components/Auth.jsx'
 import AdminDashboard from './components/admin/AdminDashboard.jsx'
-import { processDailyLogin } from './engine/xp.js'
+import { processDailyLogin, getXPData, getLevel, getLevelTitle, getCurrentLeague } from './engine/xp.js'
+import { preloadQuestionBank } from './engine/questionBank.js'
 import { scheduleNotifChecks, getNotifPermission } from './engine/notifications.js'
 import { supabase, getProfile, ensureProfile, syncLocalProgress } from './lib/supabase.js'
+import { CelebrationOverlay, useCelebrations, checkMilestones } from './engine/celebrations.jsx'
+import { getBalance } from './engine/coinEconomy.js'
 
 // Dark mode hook
 function useTheme() {
@@ -124,7 +124,7 @@ function SplashScreen({ onDone }) {
 
 export default function App() {
   const location = useLocation()
-  const GAME_ROUTES = ['/game', '/crossword', '/coloring', '/puzzle', '/wordgame', '/trivia', '/adventure']
+  const GAME_ROUTES = ['/game', '/wordgame', '/trivia', '/pinpoint', '/flagstack']
   const isGamePage = GAME_ROUTES.includes(location.pathname)
   const isAdminPage = location.pathname === '/admin'
   const isDashboardPage = location.pathname === '/dashboard'
@@ -206,16 +206,43 @@ export default function App() {
     }
   }
 
+  const { celebrate, celebrationProps } = useCelebrations()
+
   // Process daily login XP
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
+    const prevXP = getXPData().totalXP
+    const prevLevel = getLevel(prevXP)
+    const prevLeague = getCurrentLeague(prevXP)
+
     const result = processDailyLogin()
     if (!result.alreadyLoggedIn) {
       setDailyToast(result)
       setTimeout(() => setDailyToast(null), 4000)
+
+      // Check milestones after XP update
+      const newXP = getXPData().totalXP
+      const newLevel = getLevel(newXP)
+      const coins = getBalance()
+      const milestone = checkMilestones({
+        level: newLevel, prevLevel,
+        streak: result.streakDays || 0,
+        coins,
+        league: getCurrentLeague(newXP), prevLeague,
+      })
+      if (milestone) {
+        setTimeout(() => {
+          celebrate(milestone.type, {
+            ...milestone.data,
+            title: getLevelTitle(newLevel),
+          })
+        }, 1500) // Show after daily toast
+      }
     }
     // Start notification scheduler
     if (getNotifPermission() === 'granted') scheduleNotifChecks()
+    // Preload question bank data in background
+    preloadQuestionBank()
   }, [])
   /* eslint-enable react-hooks/set-state-in-effect */  
 
@@ -238,13 +265,14 @@ export default function App() {
 
       {!isGamePage && !isStandalonePage && <Header theme={theme} toggleTheme={toggleTheme} session={session} profile={profile} />}
       {!isStandalonePage && <InstallPrompt />}
+      <CelebrationOverlay {...celebrationProps} />
       <main className={isGamePage ? 'app-main-full' : isStandalonePage ? '' : 'app-main'}>
         <PageTransition>
           <Routes>
             <Route path="/" element={<Landing session={session} profile={profile} />} />
             <Route path="/explore" element={<Explore />} />
             <Route path="/explore/:id" element={<ListingDetail />} />
-            <Route path="/play" element={<CategorySelector />} />
+            <Route path="/play" element={<CategorySelector session={session} />} />
             <Route path="/game" element={<GameScreen />} />
             <Route path="/results" element={<ResultsScreen />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
@@ -254,14 +282,11 @@ export default function App() {
             <Route path="/achievements" element={<Achievements />} />
             <Route path="/community" element={<Community session={session} profile={profile} />} />
             <Route path="/postcards" element={<PostCards />} />
-            <Route path="/puzzle" element={<PuzzleGame />} />
             <Route path="/wordgame" element={<WordGame />} />
-            <Route path="/crossword" element={<CrosswordGame />} />
-            <Route path="/coloring" element={<ColoringGame />} />
             <Route path="/trivia" element={<TriviaGame />} />
-            <Route path="/adventure" element={<AdventureGame />} />
+            <Route path="/pinpoint" element={<PinPointGame />} />
+            <Route path="/flagstack" element={<FlagStackGame />} />
             <Route path="/rewards" element={<Rewards session={session} profile={profile} />} />
-            <Route path="/story" element={<StoryMode />} />
             <Route path="/discovery" element={<Discovery />} />
             <Route path="/deals" element={<DealsPage />} />
             <Route path="/pass" element={<PassLanding />} />

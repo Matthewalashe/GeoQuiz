@@ -1,14 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import LevelSelect from './LevelSelect.jsx'
 import { CATEGORIES, REGIONS, getQuestionsByRegion } from '../data/questions.js'
 import {
-  MapRegular, CameraRegular, PuzzlePieceRegular, TextFontRegular,
-  DocumentEditRegular, ColorRegular, PaintBrushRegular, BrainCircuitRegular,
-  BookRegular, CompassNorthwestRegular, LocationRegular, TrophyRegular,
-  ImageRegular, TextFirstLineRegular, BookOpenRegular, EyeRegular,
-  ArrowSwapRegular, StarRegular, LightbulbRegular, KeyboardRegular,
-  SparkleRegular, TimerRegular, QuestionCircleRegular, HeartRegular,
-  CalendarLtrRegular, FlashRegular
+  regenerateLives, getWallet, getStreak, getGameProgress,
+  getGames, getCoinValue, loadGameConfig, buyLives,
+  processDailyLogin
+} from '../lib/gameService.js'
+import {
+  MapRegular, CameraRegular, TextFontRegular,
+  BrainCircuitRegular, BookRegular, LocationRegular, TrophyRegular,
+  ImageRegular, TextFirstLineRegular, BookOpenRegular,
+  TimerRegular, QuestionCircleRegular,
+  CalendarLtrRegular, FlashRegular, HeartPulseRegular,
+  TargetRegular, FlagRegular
 } from '@fluentui/react-icons'
 
 const QUESTION_COUNTS = [10, 15, 20, 25, 30]
@@ -37,6 +42,7 @@ const GAMES = [
     image: '/images/postcards/third-mainland-bridge.png',
     status: 'live',
     difficulty: 'medium',
+    engineSlug: 'map_quiz',
     steps: [
       { emoji: <LocationRegular />, title: 'Read the clue', desc: 'Each question describes a real Nigerian location.' },
       { emoji: <MapRegular />, title: 'Drop your pin', desc: 'Tap the map where you think it is.' },
@@ -53,25 +59,11 @@ const GAMES = [
     image: '/images/postcards/national-theatre.png',
     status: 'live',
     difficulty: 'easy',
+    engineSlug: 'postcards',
     steps: [
       { emoji: <ImageRegular />, title: 'See the postcard', desc: 'A photo of a Nigerian landmark appears.' },
       { emoji: <TextFontRegular />, title: 'Pick your answer', desc: 'Choose from 4 options — A, B, C or D.' },
       { emoji: <BookOpenRegular />, title: 'Learn a fact', desc: 'Get a fun fact after every answer!' },
-    ],
-  },
-  {
-    id: 'puzzle',
-    name: 'Puzzle',
-    tagline: 'Rearrange the image',
-    color: '#06b6d4',
-    icon: <PuzzlePieceRegular />,
-    image: '/images/postcards/zuma-rock.png',
-    status: 'live',
-    difficulty: 'easy',
-    steps: [
-      { emoji: <EyeRegular />, title: 'Memorize', desc: 'See the full image for 2.5 seconds.' },
-      { emoji: <ArrowSwapRegular />, title: 'Swap tiles', desc: 'Tap two tiles to swap. Rearrange the 3×3 grid.' },
-      { emoji: <StarRegular />, title: 'Earn stars', desc: 'Fewer moves = more stars. 3★ under 10 moves!' },
     ],
   },
   {
@@ -83,40 +75,11 @@ const GAMES = [
     image: '/images/postcards/badagry.png',
     status: 'live',
     difficulty: 'medium',
+    engineSlug: 'guessword',
     steps: [
       { emoji: <TextFontRegular />, title: 'Read the clue', desc: 'A hint about a Nigerian place, person or event.' },
       { emoji: <TextFirstLineRegular />, title: 'Tap letters', desc: 'Place scrambled letters in the right order.' },
       { emoji: <BookRegular />, title: 'Discover history', desc: 'Rich historical info + footnotes after each word!' },
-    ],
-  },
-  {
-    id: 'crossword',
-    name: 'Crossword',
-    tagline: 'Solve Nigerian trivia clues',
-    color: '#3b82f6',
-    icon: <DocumentEditRegular />,
-    image: '/images/postcards/lekki-ikoyi-bridge.png',
-    status: 'live',
-    difficulty: 'hard',
-    steps: [
-      { emoji: <LightbulbRegular />, title: 'Read the clue', desc: 'Tap a row or column to read the clue.' },
-      { emoji: <KeyboardRegular />, title: 'Type the word', desc: 'Fill in the blanks with Nigerian landmarks and culture.' },
-      { emoji: <SparkleRegular />, title: 'Complete puzzle', desc: 'Fill the entire grid to win XP!' },
-    ],
-  },
-  {
-    id: 'coloring',
-    name: 'Coloring',
-    tagline: 'Paint Nigerian landmarks',
-    color: '#ec4899',
-    icon: <ColorRegular />,
-    image: '/images/postcards/nike-art-gallery.png',
-    status: 'live',
-    difficulty: 'easy',
-    steps: [
-      { emoji: <ColorRegular />, title: 'Pick a color', desc: 'Select a vibrant color from your palette.' },
-      { emoji: <PaintBrushRegular />, title: 'Tap to paint', desc: 'Tap any section of the drawing to fill it in.' },
-      { emoji: <ImageRegular />, title: 'Finish artwork', desc: 'Complete your masterpiece to earn rewards.' },
     ],
   },
   {
@@ -128,6 +91,7 @@ const GAMES = [
     image: '/images/postcards/egungun-festival.png',
     status: 'live',
     difficulty: 'medium',
+    engineSlug: 'trivia',
     steps: [
       { emoji: <TimerRegular />, title: 'Beat the clock', desc: 'Answer questions before the timer runs out.' },
       { emoji: <QuestionCircleRegular />, title: 'Multiple choice', desc: 'Select the correct answer from 4 options.' },
@@ -135,28 +99,194 @@ const GAMES = [
     ],
   },
   {
-    id: 'adventure',
-    name: 'Adventure',
-    tagline: 'Survive a day in Lagos',
+    id: 'pinpoint',
+    name: 'PinPoint',
+    tagline: 'Drop a pin, score by distance',
+    color: '#ef4444',
+    icon: <TargetRegular />,
+    image: '/images/postcards/zuma-rock.png',
+    status: 'live',
+    difficulty: 'hard',
+    engineSlug: 'pinpoint',
+    steps: [
+      { emoji: <TargetRegular />, title: 'See the target', desc: 'A place name appears — no clues, just instinct.' },
+      { emoji: <MapRegular />, title: 'Drop your pin', desc: 'Tap anywhere on the map. Closer = more points.' },
+      { emoji: <TrophyRegular />, title: 'Share your card', desc: 'Get a shareable score card after each round.' },
+    ],
+  },
+  {
+    id: 'flagstack',
+    name: 'FlagStack',
+    tagline: 'Catch the falling flags',
     color: '#eab308',
-    icon: <CompassNorthwestRegular />,
+    icon: <FlagRegular />,
     image: '/images/postcards/makoko.png',
     status: 'live',
-    difficulty: 'medium',
+    difficulty: 'easy',
+    engineSlug: 'flagstack',
     steps: [
-      { emoji: <BookOpenRegular />, title: 'Read the story', desc: 'Navigate a text-based narrative set in Nigeria.' },
-      { emoji: <ArrowSwapRegular />, title: 'Make choices', desc: 'Your decisions affect the outcome.' },
-      { emoji: <HeartRegular />, title: 'Watch your health', desc: 'Reach the end without losing all your energy!' },
+      { emoji: <FlagRegular />, title: 'Flags fall', desc: 'Country flags fall from the top of the screen.' },
+      { emoji: <TargetRegular />, title: 'Tap the right one', desc: 'Tap the correct flag before it reaches the bottom.' },
+      { emoji: <FlashRegular />, title: 'Speed up', desc: 'Flags get faster as you progress. 3 strikes = game over!' },
     ],
   },
 ]
 
-export default function CategorySelector() {
+
+// ═══════════════════════════════════════════
+// LIVES DISPLAY — hearts row + regen timer
+// ═══════════════════════════════════════════
+function LivesBar({ lives, maxLives, secondsUntilNext, onBuyLives, buying }) {
+  const [countdown, setCountdown] = useState(secondsUntilNext || 0)
+
+  useEffect(() => {
+    setCountdown(secondsUntilNext || 0)
+  }, [secondsUntilNext])
+
+  useEffect(() => {
+    if (countdown <= 0 || lives >= maxLives) return
+    const t = setInterval(() => setCountdown(c => {
+      if (c <= 1) { clearInterval(t); return 0 }
+      return c - 1
+    }), 1000)
+    return () => clearInterval(t)
+  }, [countdown, lives, maxLives])
+
+  const mm = String(Math.floor(countdown / 60)).padStart(2, '0')
+  const ss = String(countdown % 60).padStart(2, '0')
+
+  return (
+    <div className="gj-lives-bar">
+      <div className="gj-hearts">
+        {Array.from({ length: maxLives }).map((_, i) => (
+          <span key={i} className={`gj-heart ${i < lives ? 'filled' : 'empty'}`}>
+            {i < lives ? '❤️' : '🤍'}
+          </span>
+        ))}
+      </div>
+      <div className="gj-lives-info">
+        <span className="gj-lives-count">{lives}/{maxLives}</span>
+        {lives < maxLives && countdown > 0 && (
+          <span className="gj-lives-timer">
+            <HeartPulseRegular fontSize={14} /> {mm}:{ss}
+          </span>
+        )}
+        {lives < maxLives && (
+          <button className="gj-buy-lives" onClick={onBuyLives} disabled={buying}>
+            {buying ? '...' : `🪙 Buy (${getCoinValue('purchase_lives_cost', 20)})`}
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+
+// ═══════════════════════════════════════════
+// OUT OF LIVES MODAL
+// ═══════════════════════════════════════════
+function OutOfLivesModal({ secondsUntilNext, coins, onBuyLives, buying, onClose }) {
+  const [countdown, setCountdown] = useState(secondsUntilNext || 0)
+  const cost = getCoinValue('purchase_lives_cost', 20)
+  const canAfford = coins >= cost
+
+  useEffect(() => {
+    setCountdown(secondsUntilNext || 0)
+  }, [secondsUntilNext])
+
+  useEffect(() => {
+    if (countdown <= 0) return
+    const t = setInterval(() => setCountdown(c => c <= 1 ? 0 : c - 1), 1000)
+    return () => clearInterval(t)
+  }, [countdown])
+
+  const mm = String(Math.floor(countdown / 60)).padStart(2, '0')
+  const ss = String(countdown % 60).padStart(2, '0')
+
+  return (
+    <div className="gj-modal-overlay" onClick={onClose}>
+      <div className="gj-modal" onClick={e => e.stopPropagation()}>
+        <div className="gj-modal-hearts">
+          {'🤍 🤍 🤍 🤍 🤍'}
+        </div>
+        <h2 className="gj-modal-title">Out of Lives!</h2>
+        <p className="gj-modal-desc">
+          You've used all your lives. Wait for them to regenerate or use coins to refill instantly.
+        </p>
+
+        {countdown > 0 && (
+          <div className="gj-modal-timer">
+            <span className="gj-modal-timer-label">Next life in</span>
+            <span className="gj-modal-timer-value">{mm}:{ss}</span>
+          </div>
+        )}
+
+        <div className="gj-modal-actions">
+          <button
+            className={`gj-modal-btn primary ${!canAfford ? 'disabled' : ''}`}
+            onClick={onBuyLives}
+            disabled={buying || !canAfford}
+          >
+            {buying ? 'Refilling...' : `🪙 Refill All Lives — ${cost} coins`}
+          </button>
+          {!canAfford && (
+            <span className="gj-modal-hint">You have {coins} coins — need {cost}</span>
+          )}
+
+          <button className="gj-modal-btn secondary" disabled>
+            📺 Watch an Ad (Coming Soon)
+          </button>
+        </div>
+
+        <button className="gj-modal-close" onClick={onClose}>Back to Games</button>
+      </div>
+    </div>
+  )
+}
+
+
+// ═══════════════════════════════════════════
+// GAME JOURNEY — progress cards per game
+// ═══════════════════════════════════════════
+function GameJourney({ progress, games }) {
+  if (!progress || progress.length === 0) return null
+
+  return (
+    <div className="gj-progress-grid">
+      {progress.map(p => {
+        const game = games.find(g => g.engineSlug === p.game_type) || GAMES.find(g => g.engineSlug === p.game_type)
+        const pct = Math.min(100, Math.round((p.highest_level_reached / 50) * 100))
+        return (
+          <div key={p.game_type} className="gj-progress-card">
+            <div className="gj-prog-icon" style={{ color: game?.color || '#888' }}>
+              {game?.icon || '🎮'}
+            </div>
+            <div className="gj-prog-info">
+              <span className="gj-prog-name">{game?.name || p.game_type}</span>
+              <div className="gj-prog-bar-track">
+                <div className="gj-prog-bar-fill" style={{ width: `${pct}%`, background: game?.color || '#888' }} />
+              </div>
+              <span className="gj-prog-detail">
+                Level {p.highest_level_reached} · {p.total_coins_earned_here} 🪙
+              </span>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+
+// ═══════════════════════════════════════════
+// MAIN COMPONENT
+// ═══════════════════════════════════════════
+export default function CategorySelector({ session }) {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const preselected = searchParams.get('cat')
 
-  // View state: 'hub' | 'quiz-setup' | 'postcards-info' | 'puzzle-info' | 'wordgame-info'
+  // View state: 'hub' | 'quiz-setup' | 'postcards-info' | etc.
   const [view, setView] = useState('hub')
 
   // Quiz config
@@ -166,7 +296,46 @@ export default function CategorySelector() {
   const [timer, setTimer] = useState(0)
   const [region, setRegion] = useState('lagos')
 
+  // Game engine state
+  const [wallet, setWallet] = useState(null)
+  const [livesData, setLivesData] = useState(null)
+  const [streak, setStreak] = useState(null)
+  const [progress, setProgress] = useState([])
+  const [showOutOfLives, setShowOutOfLives] = useState(false)
+  const [buyingLives, setBuyingLives] = useState(false)
+  const [dailyResult, setDailyResult] = useState(null)
+
+  const userId = session?.user?.id
   const available = getQuestionsByRegion(region, selectedCats, difficulty)
+
+  // Load game data on mount
+  const loadGameData = useCallback(async () => {
+    if (!userId) return
+    try {
+      await loadGameConfig()
+      const [w, l, s, p, dr] = await Promise.all([
+        getWallet(userId),
+        regenerateLives(userId),
+        getStreak(userId),
+        getGameProgress(userId),
+        processDailyLogin(userId),
+      ])
+      setWallet(w)
+      setLivesData(l)
+      setStreak(s)
+      setProgress(p)
+      setDailyResult(dr)
+      // If daily login awarded coins, refresh wallet
+      if (dr?.daily_coins?.awarded) {
+        const refreshed = await getWallet(userId)
+        setWallet(refreshed)
+      }
+    } catch (e) {
+      console.error('loadGameData:', e)
+    }
+  }, [userId])
+
+  useEffect(() => { loadGameData() }, [loadGameData])
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
@@ -176,25 +345,81 @@ export default function CategorySelector() {
 
   function toggleCat(id) { setSelectedCats(p => p.includes(id) ? p.filter(c => c !== id) : [...p, id]) }
 
+  function handlePlayClick(gameId) {
+    // Check lives before starting
+    if (livesData && livesData.lives <= 0) {
+      setShowOutOfLives(true)
+      return
+    }
+    const game = GAMES.find(g => g.id === gameId)
+    // Engine-enabled games go to level select
+    if (game?.engineSlug && userId) {
+      setView(`levels-${gameId}`)
+    } else if (gameId === 'quiz') {
+      setView('quiz-setup')
+    } else {
+      setView(`${gameId}-info`)
+    }
+  }
+
+  async function handleBuyLives() {
+    if (!userId) return
+    setBuyingLives(true)
+    try {
+      const result = await buyLives(userId)
+      if (result?.success) {
+        setLivesData({ lives: result.lives, max_lives: livesData?.max_lives || 5, seconds_until_next: 0 })
+        setWallet(w => w ? { ...w, coins: result.new_balance } : w)
+        setShowOutOfLives(false)
+      }
+    } catch (e) { console.error('buyLives:', e) }
+    setBuyingLives(false)
+  }
+
   function startGame() {
+    if (livesData && livesData.lives <= 0) { setShowOutOfLives(true); return }
     if (available.length < 5) { alert('Not enough questions.'); return }
     navigate('/game', { state: { categories: selectedCats, difficulty, count: Math.min(questionCount, available.length), timer, region } })
   }
 
   function startDaily() {
+    if (livesData && livesData.lives <= 0) { setShowOutOfLives(true); return }
     const today = new Date().toISOString().slice(0, 10)
     const seed = today.split('-').reduce((a, b) => a * 31 + parseInt(b), 0)
     navigate('/game', { state: { categories: [], difficulty: 'all', count: 10, timer: 45, daily: true, seed } })
   }
 
   function startBlitz() {
+    if (livesData && livesData.lives <= 0) { setShowOutOfLives(true); return }
     const pool = getQuestionsByRegion(region, [], 'all')
     navigate('/game', { state: { categories: [], difficulty: 'all', count: Math.min(30, pool.length), timer: 10, region, mode: 'blitz', totalTimer: 300 } })
   }
 
-  function handleCardClick(gameId) {
-    if (gameId === 'quiz') setView('quiz-setup')
-    else setView(`${gameId}-info`)
+  function navigateToGame(gameId) {
+    if (livesData && livesData.lives <= 0) { setShowOutOfLives(true); return }
+    navigate(`/${gameId}`)
+  }
+
+  // ══════════════════════════════════════════
+  // LEVEL SELECT (engine-enabled games)
+  // ══════════════════════════════════════════
+  if (view.startsWith('levels-')) {
+    const gameId = view.replace('levels-', '')
+    const game = GAMES.find(g => g.id === gameId)
+    if (!game) { setView('hub'); return null }
+    return (
+      <LevelSelect
+        session={session}
+        gameSlug={game.engineSlug}
+        gameName={game.name}
+        gameColor={game.color}
+        gameIcon={game.icon}
+        onStartLevel={(config) => {
+          // Navigate to the game with level config
+          navigate(`/${gameId}`, { state: { levelConfig: config } })
+        }}
+      />
+    )
   }
 
   // ══════════════════════════════════════════
@@ -203,7 +428,6 @@ export default function CategorySelector() {
   if (view.endsWith('-info')) {
     const gameId = view.replace('-info', '')
     const game = GAMES.find(g => g.id === gameId)
-    const route = `/${gameId}`
     return (
       <section className="play-page">
         <button className="gh-back" onClick={() => setView('hub')}>← All Games</button>
@@ -229,7 +453,7 @@ export default function CategorySelector() {
           ))}
         </div>
 
-        <button className="gi-play-btn" style={{ background: game.color }} onClick={() => navigate(route)}>
+        <button className="gi-play-btn" style={{ background: game.color }} onClick={() => navigateToGame(gameId)}>
           Play {game.name} →
         </button>
       </section>
@@ -331,21 +555,85 @@ export default function CategorySelector() {
   // ══════════════════════════════════════════
   // GAME HUB (default)
   // ══════════════════════════════════════════
+  const lives = livesData?.lives ?? 5
+  const maxLives = livesData?.max_lives ?? 5
+  const secsNext = livesData?.seconds_until_next ?? 0
+
   return (
     <section className="play-page">
+      {/* ── Game Journey Dashboard ── */}
+      {userId && (
+        <div className="gj-dashboard">
+          {/* Stats row */}
+          <div className="gj-stats-row">
+            <div className="gj-stat">
+              <span className="gj-stat-icon">🪙</span>
+              <div className="gj-stat-info">
+                <span className="gj-stat-value">{wallet?.coins ?? 0}</span>
+                <span className="gj-stat-label">Coins</span>
+              </div>
+            </div>
+            <div className="gj-stat">
+              <span className="gj-stat-icon">🔥</span>
+              <div className="gj-stat-info">
+                <span className="gj-stat-value">{streak?.current_streak ?? 0}</span>
+                <span className="gj-stat-label">Day Streak</span>
+              </div>
+            </div>
+            <div className="gj-stat">
+              <span className="gj-stat-icon">⭐</span>
+              <div className="gj-stat-info">
+                <span className="gj-stat-value">{wallet?.lifetime_coins ?? 0}</span>
+                <span className="gj-stat-label">All-time</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Lives bar */}
+          <LivesBar
+            lives={lives}
+            maxLives={maxLives}
+            secondsUntilNext={secsNext}
+            onBuyLives={handleBuyLives}
+            buying={buyingLives}
+          />
+
+          {/* Daily login celebration */}
+          {dailyResult && !dailyResult.already_logged_in && dailyResult.daily_coins?.awarded && (
+            <div className="gj-daily-toast">
+              <span>🎉 Daily login! +{dailyResult.daily_coins.amount} coins</span>
+              {dailyResult.milestone && (
+                <span className="gj-daily-streak"> · 🔥 {dailyResult.milestone === '7_day' ? '7-day' : dailyResult.milestone === '30_day' ? '30-day' : '100-day'} streak bonus!</span>
+              )}
+            </div>
+          )}
+
+          {/* Game progress */}
+          {progress.length > 0 && (
+            <>
+              <h3 className="gj-section-label">Your Progress</h3>
+              <GameJourney progress={progress} games={GAMES} />
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ── Game Hub Header ── */}
       <div className="gh-header">
         <h1 className="gh-title">Choose Your Game</h1>
         <p className="gh-subtitle">{GAMES.length} ways to explore Nigeria</p>
       </div>
 
+      {/* ── Game Cards Grid ── */}
       <div className="gh-grid">
         {GAMES.map(game => {
           const isComingSoon = game.status === 'coming_soon'
+          const prog = progress.find(p => p.game_type === game.engineSlug)
           return (
             <button
               key={game.id}
               className={`gh-card ${isComingSoon ? 'game-card-coming-soon' : ''}`}
-              onClick={() => !isComingSoon && handleCardClick(game.id)}
+              onClick={() => !isComingSoon && handlePlayClick(game.id)}
               style={isComingSoon ? { cursor: 'default' } : {}}
             >
               {isComingSoon && (
@@ -367,17 +655,38 @@ export default function CategorySelector() {
               <div className="gh-card-body">
                 <h3 className="gh-card-name">{game.name}</h3>
                 <p className="gh-card-tag">{game.tagline}</p>
-                <div className="gh-card-steps">
-                  {game.steps.map((s, i) => (
-                    <span key={i} className="gh-card-step">{s.emoji}</span>
-                  ))}
-                </div>
+                {/* Show level progress if user has played this game */}
+                {prog ? (
+                  <div className="gh-card-progress">
+                    <div className="gh-card-prog-bar">
+                      <div className="gh-card-prog-fill" style={{ width: `${Math.min(100, (prog.highest_level_reached / 50) * 100)}%`, background: game.color }} />
+                    </div>
+                    <span className="gh-card-prog-text">Lvl {prog.highest_level_reached} · {prog.total_coins_earned_here} 🪙</span>
+                  </div>
+                ) : (
+                  <div className="gh-card-steps">
+                    {game.steps.map((s, i) => (
+                      <span key={i} className="gh-card-step">{s.emoji}</span>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="gh-card-accent" style={{ background: game.color }} />
             </button>
           )
         })}
       </div>
+
+      {/* ── Out of Lives Modal ── */}
+      {showOutOfLives && (
+        <OutOfLivesModal
+          secondsUntilNext={secsNext}
+          coins={wallet?.coins ?? 0}
+          onBuyLives={handleBuyLives}
+          buying={buyingLives}
+          onClose={() => setShowOutOfLives(false)}
+        />
+      )}
     </section>
   )
 }
