@@ -65,6 +65,8 @@ import ListingDetail from './components/ListingDetail.jsx'
 import PassLanding from './components/PassLanding.jsx'
 import ListBusiness from './components/ListBusiness.jsx'
 import ListBusinessLanding from './components/ListBusinessLanding.jsx'
+import Handymen from './components/Handymen.jsx'
+import Notifications from './components/Notifications.jsx'
 import InstallPrompt from './components/InstallPrompt.jsx'
 import PageTransition from './components/PageTransition.jsx'
 import Auth from './components/Auth.jsx'
@@ -265,6 +267,8 @@ export default function App() {
             <Route path="/pass" element={<PassLanding />} />
             <Route path="/list-your-business" element={<ListBusinessLanding />} />
             <Route path="/list-your-business/form" element={<ListBusiness />} />
+            <Route path="/handymen" element={<Handymen />} />
+            <Route path="/notifications" element={<Notifications session={session} />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/admin" element={<AdminDashboard session={session} profile={profile} />} />
           </Routes>

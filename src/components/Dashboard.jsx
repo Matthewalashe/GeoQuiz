@@ -6,10 +6,12 @@ import {
   DAILY_REWARDS, getRewardsData, claimDailyReward, canClaimToday,
 } from '../engine/xp.js'
 import {
-  signOut, updateProfile, uploadProfileImage, uploadBusinessFile, getFavorites,
+  signOut, updateProfile, uploadProfileImage, getFavorites,
   toggleFavorite, supabase
 } from '../lib/supabase.js'
 import { getExplorationPercent, getCheckIns } from '../engine/exploration.js'
+import ListBusiness from './ListBusiness.jsx'
+import { ProfileImg, nameGradient, initial } from './Header.jsx'
 import {
   EditRegular, FireRegular, GamesRegular, TargetRegular, LocationRegular,
   MapRegular, TrophyRegular, CloudRegular, GiftRegular, CheckmarkCircleRegular,
@@ -20,11 +22,7 @@ import {
   ShieldCheckmarkRegular, StarRegular, DeleteRegular
 } from '@fluentui/react-icons'
 
-const AVATARS = [
-  '🎭','🗿','👑','🐚','⚡','🔱','🛡️','🦅','🌀','🌍','🪘','🏺','🌴','🔥','🐆','🐘',
-  '🧭','🗺️','🏆','💎','🚀','⭐','🎯','🌟','🏅','🎮',
-  '🦁','🐊','🦈','🐉','🌙','🛰️','🎓','🎲','🧩','🎪','🐺','🦊','🐯','🌊',
-]
+
 
 const JOURNEY_STOPS = [
   { level: 1,  name: 'Tafawa Balewa Sq.', color: '#00ff88' },
@@ -110,6 +108,13 @@ export default function Dashboard({ session: sessionProp, profile: profileProp }
 
   useEffect(() => { if (profileProp) setProfile(profileProp) }, [profileProp])
 
+  // Listen for external tab navigation (from menu drawer)
+  useEffect(() => {
+    function handleTabSwitch(e) { if (e.detail) setActive(e.detail) }
+    window.addEventListener('dashboard-tab', handleTabSwitch)
+    return () => window.removeEventListener('dashboard-tab', handleTabSwitch)
+  }, [])
+
   // PWA: When user returns from browser (after OAuth), re-check session
   useEffect(() => {
     if (!supabase) return
@@ -164,9 +169,8 @@ export default function Dashboard({ session: sessionProp, profile: profileProp }
   const displayLevel = getLevel(displayXP)
   const displayTitle = getLevelTitle(displayLevel)
   const displayPlayerName = profile ? (profile.username || profile.full_name || session.user?.email?.split('@')[0] || 'Explorer') : 'Explorer'
-  const displayAvatar = profile ? (profile.avatar_url || '🧭') : '🧭'
+  const displayAvatar = profile?.avatar_url || null
   const league = getCurrentLeague(displayXP)
-  const isImageAvatar = displayAvatar && displayAvatar.startsWith('http')
 
   function handleNav(id) {
     setActive(id)
@@ -190,10 +194,7 @@ export default function Dashboard({ session: sessionProp, profile: profileProp }
         {/* Profile mini card */}
         <div className="user-sidebar-profile" onClick={() => handleNav('profile')}>
           <div className="user-sidebar-avatar">
-            {isImageAvatar
-              ? <img src={displayAvatar} alt="Avatar" />
-              : <span>{displayAvatar}</span>
-            }
+            <ProfileImg profile={profile} size={40} />
           </div>
           <div className="user-sidebar-info">
             <div className="user-sidebar-name">{displayPlayerName}</div>
@@ -338,9 +339,6 @@ function ProfileSection({ profile, session, onRefresh }) {
   })
   const [savingPrefs, setSavingPrefs] = useState(false)
 
-  const isImageAvatar = profile?.avatar_url?.startsWith('http')
-  const displayAvatar = profile?.avatar_url || '🧭'
-
   async function handleSaveProfile() {
     setSaving(true)
     try {
@@ -381,17 +379,7 @@ function ProfileSection({ profile, session, onRefresh }) {
     setUploading(false)
   }
 
-  async function pickEmoji(emoji) {
-    try {
-      await updateProfile(session.user.id, { avatar_url: emoji })
-      localStorage.setItem('geoquiz_avatar', emoji)
-      setShowAvatarPicker(false)
-      onRefresh()
-      setToast({ msg: 'Avatar updated!', type: 'success' })
-    } catch (e) {
-      setToast({ msg: e.message, type: 'error' })
-    }
-  }
+  async function pickEmoji() { /* removed — emoji avatars killed */ }
 
   async function savePreferences() {
     setSavingPrefs(true)
@@ -410,10 +398,7 @@ function ProfileSection({ profile, session, onRefresh }) {
     <div className="user-section">
       <div className="user-profile-card">
         <div className="user-avatar-large" onClick={() => setShowAvatarPicker(!showAvatarPicker)}>
-          {isImageAvatar
-            ? <img src={displayAvatar} alt="Avatar" />
-            : <span className="user-avatar-emoji">{displayAvatar}</span>
-          }
+          <ProfileImg profile={profile} size={90} />
           <div className="user-avatar-edit-badge"><CameraRegular fontSize={16} /></div>
         </div>
         <div className="user-profile-name-area">
@@ -468,22 +453,19 @@ function ProfileSection({ profile, session, onRefresh }) {
       {showAvatarPicker && (
         <div className="user-avatar-picker-card">
           <div className="user-avatar-picker-header">
-            <h3>Choose Avatar</h3>
+            <h3>Update Profile Photo</h3>
             <button onClick={() => setShowAvatarPicker(false)}><DismissRegular /></button>
           </div>
           <div className="user-avatar-upload-section">
+            <div style={{ display: 'flex', justifyContent: 'center', margin: '0.5rem 0 1rem' }}>
+              <ProfileImg profile={profile} size={80} />
+            </div>
             <button className="user-upload-photo-btn" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
               <ImageRegular fontSize={20} />
-              {uploading ? 'Uploading...' : 'Upload Photo'}
+              {uploading ? 'Uploading...' : 'Upload New Photo'}
             </button>
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
             <p className="user-upload-hint">JPG, PNG or WebP, max 5MB</p>
-          </div>
-          <div className="user-avatar-divider"><span>or pick an emoji</span></div>
-          <div className="user-emoji-grid">
-            {AVATARS.map(a => (
-              <button key={a} className={`user-emoji-opt ${a === displayAvatar ? 'selected' : ''}`} onClick={() => pickEmoji(a)}>{a}</button>
-            ))}
           </div>
         </div>
       )}
@@ -719,219 +701,10 @@ function SavedSection({ session }) {
 }
 
 // ─── BECOME A SELLER ─────────────────────────────────────
-function SellerSection({ session }) {
-  const [step, setStep] = useState('onboarding')
-  const [form, setForm] = useState({ name: '', category: '', subcategory: '', area: '', address: '', phone: '', whatsapp: '', website: '', instagram: '', hours: '', description: '' })
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState('')
-  const [uploadProgress, setUploadProgress] = useState('')
-  const CATS = ['restaurant','hotel','attraction','nightlife','park','culture','experience','shopping','event','heritage','market','beach','art']
-  function update(field, value) { setForm(prev => ({ ...prev, [field]: value })) }
-
-  // Logo state
-  const [logoFile, setLogoFile] = useState(null)
-  const [logoPreview, setLogoPreview] = useState(null)
-  const logoInputRef = useRef(null)
-
-  // Photos state (up to 5)
-  const [photoFiles, setPhotoFiles] = useState([])
-  const [photoPreviews, setPhotoPreviews] = useState([])
-  const photoInputRef = useRef(null)
-
-  function handleLogoSelect(e) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    if (file.size > 5 * 1024 * 1024) { setError('Logo must be under 5MB'); return }
-    if (!file.type.startsWith('image/')) { setError('Please upload an image file'); return }
-    if (logoPreview) URL.revokeObjectURL(logoPreview)
-    setLogoFile(file)
-    setLogoPreview(URL.createObjectURL(file))
-    setError('')
-  }
-  function removeLogo() {
-    if (logoPreview) URL.revokeObjectURL(logoPreview)
-    setLogoFile(null)
-    setLogoPreview(null)
-    if (logoInputRef.current) logoInputRef.current.value = ''
-  }
-  function handlePhotosSelect(e) {
-    const files = Array.from(e.target.files || [])
-    if (photoFiles.length + files.length > 5) { setError('Maximum 5 photos allowed'); return }
-    const valid = files.filter(f => {
-      if (f.size > 5 * 1024 * 1024) { setError('Each photo must be under 5MB'); return false }
-      if (!f.type.startsWith('image/')) { setError('Only image files allowed'); return false }
-      return true
-    })
-    setPhotoFiles(prev => [...prev, ...valid])
-    setPhotoPreviews(prev => [...prev, ...valid.map(f => URL.createObjectURL(f))])
-    setError('')
-    if (photoInputRef.current) photoInputRef.current.value = ''
-  }
-  function removePhoto(idx) {
-    URL.revokeObjectURL(photoPreviews[idx])
-    setPhotoFiles(prev => prev.filter((_, i) => i !== idx))
-    setPhotoPreviews(prev => prev.filter((_, i) => i !== idx))
-  }
-
-  async function handleSubmit(e) {
-    e.preventDefault()
-    setSubmitting(true)
-    setError('')
-    setUploadProgress('')
-    try {
-      let logoUrl = ''
-      let photoUrls = []
-
-      if (logoFile) {
-        setUploadProgress('Uploading logo...')
-        try { logoUrl = await uploadBusinessFile(logoFile, 'logo') } catch (ue) { console.warn('Logo upload failed:', ue.message) }
-      }
-      if (photoFiles.length > 0) {
-        for (let i = 0; i < photoFiles.length; i++) {
-          setUploadProgress(`Uploading photo ${i + 1} of ${photoFiles.length}...`)
-          try { photoUrls.push(await uploadBusinessFile(photoFiles[i], 'photo')) } catch (ue) { console.warn(`Photo ${i+1} upload failed:`, ue.message) }
-        }
-      }
-
-      setUploadProgress('Submitting listing...')
-      const { error: err } = await supabase.from('business_listings').insert([{
-        ...form,
-        logo_url: logoUrl || null,
-        photos: photoUrls.length > 0 ? photoUrls : null,
-        status: 'pending',
-        submitted_by: session?.user?.id
-      }])
-      if (err) throw err
-      setStep('submitted')
-    } catch (e) {
-      console.error('Listing submission error:', e)
-      setError(e.message || 'Something went wrong. Please try again.')
-    }
-    setSubmitting(false)
-    setUploadProgress('')
-  }
-
-  function resetForm() {
-    setForm({ name: '', category: '', subcategory: '', area: '', address: '', phone: '', whatsapp: '', website: '', instagram: '', hours: '', description: '' })
-    removeLogo()
-    setPhotoFiles([])
-    setPhotoPreviews([])
-  }
-
-  if (step === 'onboarding') {
-    return (
-      <div className="user-section">
-        <div className="seller-onboarding">
-          <div className="seller-hero-card">
-            <div className="seller-hero-emoji">🏪</div>
-            <h2>List Your Business on Wanda</h2>
-            <p>Reach thousands of explorers discovering Lagos every day.</p>
-          </div>
-          <div className="seller-benefits-grid">
-            <div className="seller-benefit"><div className="seller-benefit-icon">📍</div><h4>Get Discovered</h4><p>Your business appears on our interactive map and Explore feed.</p></div>
-            <div className="seller-benefit"><div className="seller-benefit-icon">🎯</div><h4>Targeted Audience</h4><p>Connect with users actively looking for experiences in your area.</p></div>
-            <div className="seller-benefit"><div className="seller-benefit-icon">🤝</div><h4>Deals & Partnerships</h4><p>Run exclusive deals and gamified promotions to drive foot traffic.</p></div>
-            <div className="seller-benefit"><div className="seller-benefit-icon">📊</div><h4>Free to Start</h4><p>List your business for free during our early access period.</p></div>
-          </div>
-          <div className="seller-steps-card">
-            <h3>How it Works</h3>
-            <div className="seller-steps">
-              <div className="seller-step"><span className="seller-step-num">1</span><div><strong>Submit your listing</strong><p>Fill out your business details and upload photos.</p></div></div>
-              <div className="seller-step"><span className="seller-step-num">2</span><div><strong>We review & approve</strong><p>Our team reviews within 24-48 hours.</p></div></div>
-              <div className="seller-step"><span className="seller-step-num">3</span><div><strong>Go live!</strong><p>Once approved, your listing appears instantly.</p></div></div>
-            </div>
-          </div>
-          <button className="btn btn-primary btn-lg" onClick={() => setStep('form')} style={{ width: '100%', marginTop: '1.5rem' }}>Get Started — List My Business</button>
-        </div>
-      </div>
-    )
-  }
-
-  if (step === 'submitted') {
-    return (
-      <div className="user-section">
-        <div className="user-empty-state" style={{ paddingTop: '3rem' }}>
-          <div className="user-empty-icon">🎉</div>
-          <h3>Listing Submitted!</h3>
-          <p>We'll review your submission and get back to you within 24-48 hours.</p>
-          <button className="btn btn-outline" onClick={() => { setStep('onboarding'); resetForm() }}>Submit Another</button>
-        </div>
-      </div>
-    )
-  }
-
+function SellerSection() {
   return (
     <div className="user-section">
-      <div className="seller-form-header">
-        <button className="btn btn-outline btn-sm" onClick={() => setStep('onboarding')}><ArrowLeftRegular fontSize={14} /> Back</button>
-        <h3>List Your Business</h3>
-      </div>
-      {error && <div className="auth-alert auth-alert-error">{error}</div>}
-      <form className="seller-form" onSubmit={handleSubmit}>
-        <div className="seller-form-grid">
-          <div className="seller-field full"><label>Business Name *</label><input required value={form.name} onChange={e => update('name', e.target.value)} placeholder="e.g. Nok by Alara" /></div>
-          <div className="seller-field"><label>Category *</label><select required value={form.category} onChange={e => update('category', e.target.value)}><option value="">Select...</option>{CATS.map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}</select></div>
-          <div className="seller-field"><label>Subcategory</label><input value={form.subcategory} onChange={e => update('subcategory', e.target.value)} placeholder="e.g. Fine Dining" /></div>
-          <div className="seller-field"><label>Area *</label><input required value={form.area} onChange={e => update('area', e.target.value)} placeholder="e.g. Victoria Island" /></div>
-          <div className="seller-field"><label>Address</label><input value={form.address} onChange={e => update('address', e.target.value)} placeholder="123 Adeola Odeku St" /></div>
-          <div className="seller-field"><label>Phone</label><input type="tel" value={form.phone} onChange={e => update('phone', e.target.value)} placeholder="+234..." /></div>
-          <div className="seller-field"><label>WhatsApp</label><input type="tel" value={form.whatsapp} onChange={e => update('whatsapp', e.target.value)} placeholder="+234..." /></div>
-          <div className="seller-field"><label>Website</label><input type="url" value={form.website} onChange={e => update('website', e.target.value)} placeholder="https://..." /></div>
-          <div className="seller-field"><label>Instagram</label><input value={form.instagram} onChange={e => update('instagram', e.target.value)} placeholder="@handle" /></div>
-          <div className="seller-field"><label>Hours</label><input value={form.hours} onChange={e => update('hours', e.target.value)} placeholder="Mon-Sat: 9am-10pm" /></div>
-          <div className="seller-field full"><label>Description</label><textarea rows={4} value={form.description} onChange={e => update('description', e.target.value)} placeholder="Tell us about your business..." /></div>
-        </div>
-
-        {/* Logo & Photo Upload */}
-        <div className="seller-upload-section">
-          <h4 style={{ fontFamily: 'var(--font-head)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Logo & Photos</h4>
-          <div style={{ marginBottom: '0.75rem' }}>
-            <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.3rem', fontWeight: 500 }}>Business Logo</label>
-            <div className="lb-upload-zone" onClick={() => !logoPreview && logoInputRef.current?.click()} style={{ padding: '0.75rem', minHeight: 'auto' }}>
-              {logoPreview ? (
-                <div className="lb-logo-preview">
-                  <img src={logoPreview} alt="Logo" />
-                  <button type="button" className="lb-remove-btn" onClick={e => { e.stopPropagation(); removeLogo() }}>✕</button>
-                </div>
-              ) : (
-                <div className="lb-upload-placeholder" style={{ padding: '0.5rem' }}>
-                  <span className="lb-upload-icon">🏷️</span>
-                  <span>Upload logo</span>
-                  <span className="lb-upload-hint">JPG, PNG or WebP · Max 5MB</span>
-                </div>
-              )}
-              <input ref={logoInputRef} type="file" accept="image/*" onChange={handleLogoSelect} style={{ display: 'none' }} />
-            </div>
-          </div>
-          <div>
-            <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.3rem', fontWeight: 500 }}>Business Photos <span style={{ opacity: 0.6 }}>(up to 5)</span></label>
-            <div className="lb-photos-grid">
-              {photoPreviews.map((preview, i) => (
-                <div key={i} className="lb-photo-thumb">
-                  <img src={preview} alt={`Photo ${i + 1}`} />
-                  <button type="button" className="lb-remove-btn" onClick={() => removePhoto(i)}>✕</button>
-                </div>
-              ))}
-              {photoFiles.length < 5 && (
-                <div className="lb-photo-add" onClick={() => photoInputRef.current?.click()}>
-                  <span className="lb-photo-add-icon">📸</span>
-                  <span className="lb-photo-add-label">Add</span>
-                </div>
-              )}
-              <input ref={photoInputRef} type="file" accept="image/*" multiple onChange={handlePhotosSelect} style={{ display: 'none' }} />
-            </div>
-          </div>
-        </div>
-
-        {uploadProgress && (
-          <div className="lb-progress">
-            <div className="lb-spinner-small" />
-            <span>{uploadProgress}</span>
-          </div>
-        )}
-
-        <button type="submit" className="btn btn-primary btn-lg" disabled={submitting} style={{ width: '100%', marginTop: '1.5rem' }}>{submitting ? 'Submitting...' : 'Submit Listing for Review'}</button>
-      </form>
+      <ListBusiness embedded={true} />
     </div>
   )
 }

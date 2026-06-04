@@ -237,6 +237,10 @@ export default function Landing({ session, profile }) {
             <span className="home-cat-label">{c.label}</span>
           </Link>
         ))}
+        <Link to="/handymen" className="home-cat-card" style={{ '--cat-accent': '#22c55e' }}>
+          <div className="home-cat-icon">🔧</div>
+          <span className="home-cat-label">Handymen</span>
+        </Link>
       </div>
 
       {/* ── TODAY'S CHALLENGE ── */}
@@ -362,12 +366,19 @@ export default function Landing({ session, profile }) {
         </div>
       </div>
 
-      {/* ── LIST BUSINESS CTA ── */}
+      {/* ── LIST BUSINESS / HANDYMAN CTA ── */}
       <div className="home-section-container" style={{ paddingBottom: '2rem' }}>
         <Link to="/list-your-business" className="home-business-cta">
           <div>
-            <strong>Own a business?</strong>
-            <span>List it on Wanda for free</span>
+            <strong>Own a business or offer a trade?</strong>
+            <span>List on Wanda for free</span>
+          </div>
+          <ChevronRightRegular fontSize={20} />
+        </Link>
+        <Link to="/handymen" className="home-business-cta" style={{ marginTop: '0.5rem', background: 'linear-gradient(135deg, rgba(34,197,94,0.1) 0%, rgba(16,185,129,0.05) 100%)', borderColor: 'rgba(34,197,94,0.3)' }}>
+          <div>
+            <strong>🔧 Find a Handyman</strong>
+            <span>Plumbers, electricians, mechanics & more</span>
           </div>
           <ChevronRightRegular fontSize={20} />
         </Link>

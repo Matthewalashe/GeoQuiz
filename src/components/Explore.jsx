@@ -216,6 +216,11 @@ export default function Explore() {
         ))}
       </div>
 
+      {/* Handyman quick link */}
+      <Link to="/handymen" className="ex-handyman-link">
+        <span>🔧</span> Find a Handyman / Artisan
+      </Link>
+
       {/* Results count */}
       <div className="ex-results-meta">
         <span>{filtered.length} {filtered.length === 1 ? 'place' : 'places'}{nearMe ? ' near you' : ''}</span>

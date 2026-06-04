@@ -531,6 +531,13 @@ export async function adminFetch(table, filters = {}) {
       const mapped = { ...d }
       if ('photos' in mapped) mapped.photos = parseStringArray(mapped.photos)
       if ('tags' in mapped) mapped.tags = parseStringArray(mapped.tags)
+      // For cms_discovery: ensure 'photos' is populated from 'images' if empty
+      if (table === 'cms_discovery') {
+        if ('images' in mapped) mapped.images = parseStringArray(mapped.images)
+        if ((!mapped.photos || mapped.photos.length === 0) && mapped.images && mapped.images.length > 0) {
+          mapped.photos = mapped.images
+        }
+      }
       return mapped
     })
   }

@@ -1,75 +1,242 @@
-import { Link, useLocation } from 'react-router-dom'
-import { getXPData, getLevel, getLevelProgress, getLevelTitle } from '../engine/xp.js'
+import { useState, useEffect, useRef } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { getXPData, getLevel, getLevelProgress, getLevelTitle, getCurrentLeague } from '../engine/xp.js'
+import { signOut, isAdmin } from '../lib/supabase.js'
+import { getUnreadCount, subscribeToNotifications } from '../lib/push.js'
 
 import {
-  HomeRegular,
-  CompassNorthwestRegular,
-  PlayCircleRegular,
-  TrophyRegular,
-  PersonRegular,
-  WeatherSunnyRegular,
-  WeatherMoonRegular,
-  SettingsRegular
+  HomeRegular, CompassNorthwestRegular, PlayCircleRegular,
+  TicketDiagonalRegular, AlertRegular,
+  WeatherSunnyRegular, WeatherMoonRegular,
+  SettingsRegular, MapRegular, HeartRegular, StoreMicrosoftRegular,
+  GiftRegular, PersonRegular, TrophyRegular, SignOutRegular,
+  PeopleRegular, NavigationRegular, DismissRegular,
+  ShieldCheckmarkRegular, WrenchRegular, StarRegular,
+  DataBarVerticalRegular, LocationRegular,
 } from '@fluentui/react-icons'
 
-import { isAdmin } from '../lib/supabase.js'
+/** Generate a consistent gradient from a string (username) */
+function nameGradient(name) {
+  let hash = 0
+  for (let i = 0; i < (name || '').length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  const h1 = Math.abs(hash) % 360
+  const h2 = (h1 + 40) % 360
+  return `linear-gradient(135deg, hsl(${h1},70%,55%), hsl(${h2},80%,45%))`
+}
 
-export default function Header({ theme, toggleTheme, session, profile }) {
+/** Get first letter of name, uppercase */
+function initial(name) {
+  return (name || '?').charAt(0).toUpperCase()
+}
+
+/** Profile image or first-letter fallback */
+function ProfileImg({ profile, size = 36, className = '' }) {
+  const url = profile?.avatar_url
+  const isImage = url && url.startsWith('http')
+  const name = profile?.username || profile?.full_name || profile?.email || '?'
+  if (isImage) {
+    return <img src={url} alt="" className={`pi-img ${className}`} style={{ width: size, height: size }} />
+  }
+  return (
+    <div className={`pi-initial ${className}`} style={{ width: size, height: size, background: nameGradient(name) }}>
+      {initial(name)}
+    </div>
+  )
+}
+
+const MENU_ITEMS = [
+  { to: '/dashboard', label: 'Dashboard', icon: <DataBarVerticalRegular />, section: 'main' },
+  { to: '/dashboard', label: 'Profile & Settings', icon: <PersonRegular />, hash: 'profile', section: 'main' },
+  { to: '/dashboard', label: 'Game Journey', icon: <MapRegular />, hash: 'journey', section: 'main' },
+  { to: '/dashboard', label: 'Saved Places', icon: <HeartRegular />, hash: 'saved', section: 'main' },
+  { to: '/list-your-business', label: 'Become a Seller', icon: <StoreMicrosoftRegular />, section: 'discover' },
+  { to: '/discovery', label: 'Discovery', icon: <CompassNorthwestRegular />, section: 'discover' },
+  { to: '/deals', label: 'Deals', icon: <GiftRegular />, section: 'discover' },
+  { to: '/handymen', label: 'Handymen & Artisans', icon: <WrenchRegular />, section: 'discover' },
+  { to: '/community', label: 'Community', icon: <PeopleRegular />, section: 'discover' },
+  { to: '/leaderboard', label: 'Leaderboard', icon: <TrophyRegular />, section: 'discover' },
+  { to: '/rewards', label: 'Rewards', icon: <StarRegular />, section: 'discover' },
+]
+
+export default function Header({ theme, toggleTheme, session, profile, unreadNotifs = 0 }) {
   const { pathname } = useLocation()
+  const navigate = useNavigate()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [localUnread, setLocalUnread] = useState(unreadNotifs)
+  const drawerRef = useRef(null)
+
   const xp = getXPData()
-  
-  // Use profile data if logged in, otherwise fallback to local XP
   const displayXP = profile ? profile.total_xp : xp.totalXP
   const level = getLevel(displayXP)
   const progress = getLevelProgress(displayXP)
   const title = getLevelTitle(level)
   const admin = isAdmin(profile)
+  const streak = profile?.streak_days || xp.streakDays || 0
 
-  // Check if avatar is an image URL or emoji
-  const avatarUrl = profile?.avatar_url || title.emoji
-  const isImageAvatar = avatarUrl?.startsWith('http')
+  // Fetch unread count on mount
+  useEffect(() => {
+    if (session?.user?.id) {
+      getUnreadCount().then(c => setLocalUnread(c))
+    }
+  }, [session?.user?.id, pathname])
+
+  // Real-time notification subscription
+  useEffect(() => {
+    if (!session?.user?.id) return
+    const channel = subscribeToNotifications(session.user.id, () => {
+      setLocalUnread(prev => prev + 1)
+    })
+    return () => { if (channel) channel.unsubscribe() }
+  }, [session?.user?.id])
+
+  // Sync prop
+  useEffect(() => { setLocalUnread(unreadNotifs) }, [unreadNotifs])
+
+  // Close drawer on route change
+  useEffect(() => { setMenuOpen(false) }, [pathname])
+
+  // Close drawer on ESC
+  useEffect(() => {
+    if (!menuOpen) return
+    const handler = (e) => { if (e.key === 'Escape') setMenuOpen(false) }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [menuOpen])
+
+  function handleMenuNav(item) {
+    setMenuOpen(false)
+    if (item.hash) {
+      navigate(item.to)
+      // Set active tab after navigation via custom event
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('dashboard-tab', { detail: item.hash }))
+      }, 100)
+    } else {
+      navigate(item.to)
+    }
+  }
+
+  async function handleSignOut() {
+    setMenuOpen(false)
+    await signOut()
+    navigate('/')
+  }
+
+  const displayName = profile?.username || profile?.full_name || 'Explorer'
 
   return (
     <>
-      {/* Desktop top header */}
+      {/* ═══ TOP HEADER ═══ */}
       <header className="header">
-        <Link to="/" className="header-logo">
-          <img src="/wanda-logo.png" alt="Wanda" className="header-logo-img" />
-        </Link>
+        {/* Left: Profile avatar / menu btn (logged in) or Logo (logged out) */}
+        {session ? (
+          <button className="header-menu-btn" onClick={() => setMenuOpen(true)} aria-label="Menu">
+            <ProfileImg profile={profile} size={32} />
+          </button>
+        ) : (
+          <Link to="/" className="header-logo">
+            <img src="/wanda-logo.png" alt="Wanda" className="header-logo-img" />
+          </Link>
+        )}
 
+        {/* Center: Logo (logged in) or nothing */}
+        {session && (
+          <Link to="/" className="header-logo header-logo-center">
+            <img src="/wanda-logo.png" alt="Wanda" className="header-logo-img" />
+          </Link>
+        )}
+
+        {/* Desktop nav links */}
         <nav className="header-nav desktop-nav">
           <Link to="/" className={pathname === '/' ? 'active' : ''}>Home</Link>
           <Link to="/explore" className={pathname.startsWith('/explore') ? 'active' : ''}>Explore</Link>
           <Link to="/play" className={pathname === '/play' ? 'active' : ''}>Games</Link>
-          <Link to="/leaderboard" className={pathname === '/leaderboard' ? 'active' : ''}>Leaderboard</Link>
           <Link to="/pass" className={pathname === '/pass' ? 'active' : ''}>Pass</Link>
+          <Link to="/deals" className={pathname === '/deals' ? 'active' : ''}>Deals</Link>
           <Link to="/list-your-business" className={pathname === '/list-your-business' ? 'active' : ''}>List Business</Link>
           {admin && <Link to="/admin" className={pathname === '/admin' ? 'active' : ''} style={{ color: '#a78bfa', display: 'flex', alignItems: 'center', gap: '0.2rem' }}><SettingsRegular fontSize={16} /> CMS</Link>}
         </nav>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle dark mode" title={theme === 'dark' ? 'Switch to light' : 'Switch to dark'}>
-            {theme === 'dark' ? <WeatherSunnyRegular fontSize={20} /> : <WeatherMoonRegular fontSize={20} />}
+        {/* Right: theme + XP */}
+        <div className="header-right">
+          <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle dark mode" title={theme === 'dark' ? 'Light mode' : 'Dark mode'}>
+            {theme === 'dark' ? <WeatherSunnyRegular fontSize={18} /> : <WeatherMoonRegular fontSize={18} />}
           </button>
           {session ? (
             <Link to="/dashboard" className="xp-badge" title={`${title.title} — ${displayXP} XP`}>
-              {isImageAvatar
-                ? <img src={avatarUrl} alt="Avatar" className="xp-badge-avatar" />
-                : <span className="xp-level">{avatarUrl} Lv.{level}</span>
-              }
+              <span className="xp-level">Lv.{level}</span>
               <div className="xp-bar-mini">
                 <div className="xp-bar-fill" style={{ width: `${progress * 100}%` }} />
               </div>
             </Link>
           ) : (
-            <Link to="/auth" className="xp-badge" title="Sign in" style={{ fontSize: '0.8rem', fontWeight: 600, textDecoration: 'none' }}>
-              Sign In
-            </Link>
+            <Link to="/auth" className="header-signin">Sign In</Link>
           )}
         </div>
       </header>
 
-      {/* Mobile bottom tab bar — 5 tabs: Home, Explore, Play, Leaderboard, Profile */}
+      {/* ═══ SLIDE-OUT MENU DRAWER ═══ */}
+      {menuOpen && <div className="menu-overlay" onClick={() => setMenuOpen(false)} />}
+      <div className={`menu-drawer ${menuOpen ? 'open' : ''}`} ref={drawerRef}>
+        <button className="menu-close" onClick={() => setMenuOpen(false)}><DismissRegular fontSize={20} /></button>
+
+        {/* Profile card */}
+        <div className="menu-profile" onClick={() => handleMenuNav({ to: '/dashboard' })}>
+          <ProfileImg profile={profile} size={48} className="menu-avatar" />
+          <div className="menu-profile-info">
+            <div className="menu-name">{displayName}</div>
+            <div className="menu-meta">
+              Level {level} · {streak > 0 ? `🔥 ${streak}-day streak` : title.title}
+            </div>
+            <div className="menu-xp-bar">
+              <div className="menu-xp-fill" style={{ width: `${progress * 100}%` }} />
+            </div>
+          </div>
+        </div>
+
+        {/* Nav sections */}
+        <div className="menu-section">
+          {MENU_ITEMS.filter(i => i.section === 'main').map(item => (
+            <button key={item.label} className={`menu-item ${pathname === item.to ? 'active' : ''}`} onClick={() => handleMenuNav(item)}>
+              <span className="menu-item-icon">{item.icon}</span>
+              {item.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="menu-divider" />
+
+        <div className="menu-section">
+          {MENU_ITEMS.filter(i => i.section === 'discover').map(item => (
+            <button key={item.label} className={`menu-item ${pathname === item.to ? 'active' : ''}`} onClick={() => handleMenuNav(item)}>
+              <span className="menu-item-icon">{item.icon}</span>
+              {item.label}
+            </button>
+          ))}
+        </div>
+
+        {admin && (
+          <>
+            <div className="menu-divider" />
+            <div className="menu-section">
+              <button className={`menu-item ${pathname === '/admin' ? 'active' : ''}`} onClick={() => handleMenuNav({ to: '/admin' })}>
+                <span className="menu-item-icon"><SettingsRegular /></span>
+                CMS Admin
+              </button>
+            </div>
+          </>
+        )}
+
+        <div className="menu-divider" />
+        <div className="menu-section">
+          <button className="menu-item menu-signout" onClick={handleSignOut}>
+            <span className="menu-item-icon"><SignOutRegular /></span>
+            Sign Out
+          </button>
+        </div>
+      </div>
+
+      {/* ═══ MOBILE BOTTOM TAB BAR — 5 flat tabs ═══ */}
       <nav className="mobile-tab-bar">
         <Link to="/" className={`tab-item ${pathname === '/' ? 'active' : ''}`}>
           <span className="tab-icon"><HomeRegular fontSize={22} /></span>
@@ -79,27 +246,25 @@ export default function Header({ theme, toggleTheme, session, profile }) {
           <span className="tab-icon"><CompassNorthwestRegular fontSize={22} /></span>
           <span className="tab-label">Explore</span>
         </Link>
-
-        <Link to="/play" className="tab-center-btn" aria-label="Games">
-          <span className="tab-center-icon">
-            <PlayCircleRegular fontSize={22} style={{ color: '#fff' }} />
-          </span>
+        <Link to="/play" className={`tab-item ${pathname === '/play' ? 'active' : ''}`}>
+          <span className="tab-icon"><PlayCircleRegular fontSize={22} /></span>
+          <span className="tab-label">Games</span>
         </Link>
-
-        <Link to="/leaderboard" className={`tab-item ${pathname === '/leaderboard' ? 'active' : ''}`}>
-          <span className="tab-icon"><TrophyRegular fontSize={22} /></span>
-          <span className="tab-label">Ranks</span>
+        <Link to="/pass" className={`tab-item ${pathname === '/pass' ? 'active' : ''}`}>
+          <span className="tab-icon"><TicketDiagonalRegular fontSize={22} /></span>
+          <span className="tab-label">Pass</span>
         </Link>
-        <Link to={session ? "/dashboard" : "/auth"} className={`tab-item ${pathname === '/dashboard' || pathname === '/auth' ? 'active' : ''}`}>
-          <span className="tab-icon">
-            {session && isImageAvatar
-              ? <img src={avatarUrl} alt="" className="tab-avatar-img" />
-              : <PersonRegular fontSize={22} />
-            }
+        <Link to="/notifications" className={`tab-item ${pathname === '/notifications' ? 'active' : ''}`}>
+          <span className="tab-icon tab-notif-wrap">
+            <AlertRegular fontSize={22} />
+            {localUnread > 0 && <span className="tab-notif-badge">{localUnread > 9 ? '9+' : localUnread}</span>}
           </span>
-          <span className="tab-label">{session ? 'Profile' : 'Login'}</span>
+          <span className="tab-label">Alerts</span>
         </Link>
       </nav>
     </>
   )
 }
+
+// Export ProfileImg for reuse
+export { ProfileImg, nameGradient, initial }

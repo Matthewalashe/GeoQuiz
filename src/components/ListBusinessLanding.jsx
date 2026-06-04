@@ -143,9 +143,20 @@ export default function ListBusinessLanding() {
       {/* Categories */}
       <div className="lyb-section">
         <h2 className="lyb-h2">Who can list?</h2>
-        <p className="lyb-section-sub">We welcome businesses across all categories:</p>
+        <p className="lyb-section-sub">We welcome businesses and tradespeople across all categories:</p>
+
+        {/* Handyman highlight */}
+        <div className="lyb-handyman-highlight" style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.12) 0%, rgba(16,185,129,0.06) 100%)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: '12px', padding: '1.25rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          <div style={{ fontSize: '2rem' }}>🔧</div>
+          <div style={{ flex: 1, minWidth: '200px' }}>
+            <h3 style={{ margin: '0 0 0.25rem', fontSize: '1rem' }}>Handymen & Artisans</h3>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Plumbers, electricians, carpenters, mechanics, tailors and 13 more trades can now list for free.</p>
+          </div>
+          <Link to="/list-your-business/form?type=handyman" className="lyb-cta-btn" style={{ padding: '0.6rem 1.25rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>List as Handyman →</Link>
+        </div>
+
         <div className="lyb-categories">
-          {['🍽️ Restaurants', '🏨 Hotels', '🎭 Attractions', '🌊 Beaches', '🏛️ Heritage sites', '🛍️ Shopping', '🌙 Nightlife', '🎨 Art galleries', '🏪 Markets', '🌿 Parks', '💪 Fitness', '☕ Cafés', '💇 Salons', '🔧 Artisans', '🏗️ Services', '📸 Photography', '👗 Fashion', '🏥 Healthcare', '📚 Education', '🚚 Logistics'].map(cat => (
+          {['🔧 Handymen & Artisans', '🍽️ Restaurants', '🏨 Hotels', '🎭 Attractions', '🌊 Beaches', '🏛️ Heritage sites', '🛍️ Shopping', '🌙 Nightlife', '🎨 Art galleries', '🏪 Markets', '🌿 Parks', '💪 Fitness', '☕ Cafés', '💇 Salons', '🏗️ Services', '📸 Photography', '👗 Fashion', '🏥 Healthcare', '📚 Education', '🚚 Logistics'].map(cat => (
             <span key={cat} className="lyb-cat-chip">{cat}</span>
           ))}
         </div>

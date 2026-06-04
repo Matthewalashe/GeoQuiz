@@ -27,7 +27,7 @@ const FIELD_DEFS = {
   cms_listings: [
     { key: 'id', label: 'Slug ID', type: 'text', required: true, placeholder: 'e.g. nok-vi' },
     { key: 'name', label: 'Name', type: 'text', required: true },
-    { key: 'category', label: 'Category', type: 'select', options: ['restaurant','hotel','attraction','nightlife','park','culture','experience','shopping'] },
+    { key: 'category', label: 'Category', type: 'select', options: ['restaurant','hotel','attraction','nightlife','park','culture','experience','shopping','event','heritage','market','beach','art'] },
     { key: 'subcategory', label: 'Subcategory', type: 'text' },
     { key: 'area', label: 'Area', type: 'text', placeholder: 'e.g. Victoria Island' },
     { key: 'price_min', label: 'Price From (₦)', type: 'number', placeholder: 'e.g. 3000' },
@@ -77,7 +77,7 @@ const FIELD_DEFS = {
   cms_discovery: [
     { key: 'id', label: 'POI ID', type: 'text', required: true },
     { key: 'name', label: 'Name', type: 'text', required: true },
-    { key: 'category', label: 'Category', type: 'select', options: ['food','nightlife','bars','beaches','parks','cinema','art','fitness','shopping','hotels','coworking','sports','kids','transport','wifi'] },
+    { key: 'category', label: 'Category', type: 'select', options: ['food','nightlife','bars','beaches','parks','cinema','art','fitness','shopping','hotels','coworking','sports','kids','transport','wifi','handymen','services'] },
     { key: 'lat', label: 'Latitude', type: 'number', step: '0.000001' },
     { key: 'lng', label: 'Longitude', type: 'number', step: '0.000001' },
     { key: 'area', label: 'Area', type: 'text' },
@@ -164,6 +164,10 @@ function CrudSection({ table, session, profile }) {
     if (Array.isArray(formData.tags)) {
       formData.tags = formData.tags.join(', ')
     }
+    // For discovery: map 'images' column → 'photos' for the form UI
+    if (table === 'cms_discovery' && !formData.photos && formData.images) {
+      formData.photos = Array.isArray(formData.images) ? formData.images : []
+    }
     setForm(formData)
     setModal(row)
   }
@@ -190,13 +194,30 @@ function CrudSection({ table, session, profile }) {
       if (record.price_min) record.price_min = parseInt(record.price_min, 10) || null
       if (record.price_max) record.price_max = parseInt(record.price_max, 10) || null
 
-      await adminUpsert(table, record)
+      // For discovery: sync photos → images column too
+      if (table === 'cms_discovery' && record.photos) {
+        record.images = record.photos
+      }
+
+      // Strip fields not defined in FIELD_DEFS for this table to avoid
+      // "column not found in schema cache" errors from unknown fields.
+      const knownKeys = new Set((FIELD_DEFS[table] || []).map(f => f.key))
+      // Always allow these system fields
+      ;['created_by','updated_by','created_at','updated_at','photos','images','tags'].forEach(k => knownKeys.add(k))
+      const cleanRecord = {}
+      for (const [k, v] of Object.entries(record)) {
+        if (knownKeys.has(k)) cleanRecord[k] = v
+      }
+
+      await adminUpsert(table, cleanRecord)
       setToast({ msg: 'Saved successfully', type: 'success' })
       setModal(null)
       load()
     } catch (e) {
       if (e.message?.includes('row-level security') || e.code === '42501' || e.message?.includes('relation') || e.code === '42P01') {
-        setToast({ msg: 'Database not ready: Please run migration-cms.sql in your Supabase SQL Editor.', type: 'error' })
+        setToast({ msg: 'Database not ready: Please run fix-cms-schema-alignment.sql in your Supabase SQL Editor.', type: 'error' })
+      } else if (e.message?.includes('schema cache') || e.message?.includes('column')) {
+        setToast({ msg: 'Schema mismatch: Please run fix-cms-schema-alignment.sql in Supabase.', type: 'error' })
       } else {
         setToast({ msg: e.message, type: 'error' })
       }
@@ -947,7 +968,22 @@ function SubmissionsSection({ session }) {
     setActioning(sub.id)
     try {
       if (!supabase) throw new Error('Supabase client not initialized')
+
+      // For handyman listings: just approve in business_listings (they are browsed from there)
+      if (sub.listing_type === 'handyman') {
+        const { error: updateError } = await supabase
+          .from('business_listings')
+          .update({ status: 'approved' })
+          .eq('id', sub.id)
+        if (updateError) throw updateError
+        clearCache()
+        setToast({ msg: `Handyman "${sub.name}" approved!`, type: 'success' })
+        loadSubmissions()
+        setActioning(null)
+        return
+      }
       
+      // For business listings: copy to cms_listings then approve
       // Auto-generate unique slug
       let slug = sub.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
       // Check if slug exists in cms_listings
@@ -972,7 +1008,7 @@ function SubmissionsSection({ session }) {
       const newListing = {
         id: slug,
         name: sub.name,
-        category: sub.category,
+        category: sub.category || 'shopping',
         subcategory: sub.subcategory || '',
         area: sub.area,
         address: sub.address || '',
@@ -1038,6 +1074,8 @@ function SubmissionsSection({ session }) {
       (s.name || '').toLowerCase().includes(query) ||
       (s.area || '').toLowerCase().includes(query) ||
       (s.category || '').toLowerCase().includes(query) ||
+      (s.trade || '').toLowerCase().includes(query) ||
+      (s.listing_type || '').toLowerCase().includes(query) ||
       (s.status || '').toLowerCase().includes(query)
   })
 
@@ -1065,9 +1103,9 @@ function SubmissionsSection({ session }) {
           <table className="admin-table">
             <thead>
               <tr>
-                <th>Business Name</th>
-                <th>Category</th>
-                <th>Area &amp; Address</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Area & Address</th>
                 <th>Contact info</th>
                 <th>Status</th>
                 <th>Submitted</th>
@@ -1092,8 +1130,18 @@ function SubmissionsSection({ session }) {
                     </div>
                   </td>
                   <td>
-                    <span className="admin-badge admin-badge-info">{sub.category}</span>
-                    {sub.subcategory && <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{sub.subcategory}</div>}
+                    {sub.listing_type === 'handyman' ? (
+                      <>
+                        <span className="admin-badge" style={{ background: 'rgba(34,197,94,0.15)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.3)' }}>🔧 Handyman</span>
+                        {sub.trade && <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.25rem' }}>{sub.trade}</div>}
+                        {sub.experience_years && <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{sub.experience_years}+ yrs</div>}
+                      </>
+                    ) : (
+                      <>
+                        <span className="admin-badge admin-badge-info">{sub.category || 'business'}</span>
+                        {sub.subcategory && <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{sub.subcategory}</div>}
+                      </>
+                    )}
                   </td>
                   <td>
                     <div>📍 <strong>{sub.area}</strong></div>
