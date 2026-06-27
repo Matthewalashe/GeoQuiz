@@ -49,7 +49,8 @@ export async function submitWaitlist({ name, email, role, message }) {
 // ---- Leaderboard ----
 export async function submitScore({ playerName, score, maxScore, questionCount, categories, difficulty, gameType = 'quiz' }) {
   if (!supabase) {
-    throw new Error('Database connection unavailable. Your score could not be saved.')
+    console.warn('Database connection unavailable for score save.')
+    return { success: false, offline: true }
   }
   // Core fields that must exist
   const coreRow = {
@@ -67,13 +68,28 @@ export async function submitScore({ playerName, score, maxScore, questionCount, 
   // Try with all fields first
   const { error } = await supabase.from('leaderboard').insert([fullRow])
   if (error) {
+    // RLS violation or permission error — don't crash, just warn
+    if (error.code === '42501' || error.message?.includes('row-level security')) {
+      console.warn('Leaderboard RLS policy blocked insert — run fix-rls-and-sync.sql in Supabase')
+      // Try core fields only as fallback
+      const { error: retryErr } = await supabase.from('leaderboard').insert([coreRow])
+      if (retryErr) {
+        console.warn('Leaderboard insert retry also failed:', retryErr.message)
+        return { success: false, rls: true }
+      }
+      return { success: true }
+    }
     // If column doesn't exist, retry with core fields only
     if (error.message?.includes('schema cache') || error.code === 'PGRST204') {
       const { error: retryErr } = await supabase.from('leaderboard').insert([coreRow])
-      if (retryErr) throw retryErr
+      if (retryErr) {
+        console.warn('Leaderboard core insert failed:', retryErr.message)
+        return { success: false }
+      }
       return { success: true }
     }
-    throw error
+    console.warn('Leaderboard insert error:', error.message)
+    return { success: false }
   }
   return { success: true }
 }
@@ -93,7 +109,7 @@ export async function fetchLeaderboard(limit = 30) {
   return (data || []).map(u => ({
     id: u.id,
     player_name: u.username || u.full_name || 'Explorer',
-    avatar: u.avatar_url || '🧭',
+    avatar: u.avatar_url || '',
     score: u.total_xp || 0,
     level: u.level || 1,
     streak: u.streak_days || 0,
@@ -117,7 +133,7 @@ export async function fetchLeaguePeers(minXP = 0, maxXP = 999999, limit = 20) {
   return (data || []).map(u => ({
     id: u.id,
     name: u.username || u.full_name || 'Explorer',
-    avatar: u.avatar_url || '🧭',
+    avatar: u.avatar_url || '',
     xp: u.total_xp || 0,
     level: u.level || 1,
     streak: u.streak_days || 0,

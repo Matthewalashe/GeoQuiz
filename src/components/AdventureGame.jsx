@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { CheckmarkCircleRegular, DismissCircleRegular, HeartPulseRegular } from '@fluentui/react-icons'
 import { playCorrect, playWrong, vibrate } from '../engine/audio.js'
 import { addXP } from '../engine/xp.js'
+import { calculateGameReward, addCoins } from '../engine/coinEconomy.js'
 import { autoSubmitScore } from '../engine/leaderboard.js'
 import { RewardsOverlay, useRewardSystem } from '../engine/rewards.jsx'
 import ResultCard from './ResultCard.jsx'
@@ -40,6 +41,11 @@ export default function AdventureGame() {
   const [showQuitModal, setShowQuitModal] = useState(false)
   const [pendingNav, setPendingNav] = useState(null)
 
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
+
   function startStory() {
     const story = STORIES[selectedStory]
     setNodeId(story.start)
@@ -68,11 +74,17 @@ export default function AdventureGame() {
       vibrate([50, 50, 50])
       const finalXP = xp + choice.xp + 100
       addXP('GAME_WIN', Math.ceil(finalXP / 100))
+      // Coin economy
+      try {
+        const pctScore = Math.round((finalXP / 500) * 100)
+        const coins = calculateGameReward(pctScore)
+        if (coins > 0) addCoins(coins, 'Adventure game reward')
+      } catch {}
       // Perfect health bonus
       if (newHealth >= 80) {
         setTimeout(() => openChest(50), 400)
       } else {
-        showStarBurst(health >= 60 ? 3 : 2)
+        showStarBurst(newHealth >= 60 ? 3 : 2)
       }
       // Submit to leaderboard
       const finalScore = xp + choice.xp + 100

@@ -1,16 +1,18 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { getXPData, getLevel, getLevelTitle, canClaimToday, getCurrentLeague } from '../engine/xp.js'
-import { CATEGORIES } from '../data/listings.jsx'
-import { getListings } from '../lib/cms.js'
+import { getXPData, getLevel, getLevelTitle, getCurrentLeague } from '../engine/xp.js'
+import { HOME_CATEGORIES } from '../data/listings.jsx'
+import { getListings, getConfig } from '../lib/cms.js'
+import { supabase } from '../lib/supabase.js'
 import {
-  ChevronRightRegular, ChevronLeftRegular, FireRegular, GiftRegular,
-  TicketDiagonalRegular, LocationRegular, StarRegular, PlayRegular,
-  MapRegular, NavigationRegular, PersonRegular,
-  ArrowRightRegular, TrophyRegular,
+  ChevronRightRegular, ChevronLeftRegular,
+  LocationRegular, StarRegular,
+  SearchRegular, ArrowRightRegular,
+  CompassNorthwestRegular, PeopleRegular, TagMultipleRegular,
+  ChatBubblesQuestionRegular, GamesRegular,
+  HomeRegular, WrenchRegular,
+  StoreMicrosoftRegular, CalendarStarRegular,
 } from '@fluentui/react-icons'
-
-const FEATURED_IDS = ['nike-art', 'bungalow-ikoyi', 'lekki-conservation', 'new-afrika-shrine']
 
 const PLAY_ROW = [
   { id: 'quiz', path: '/play?mode=daily', label: 'Map Quiz', emoji: '📍', color: '#00c853', desc: 'Pin locations on the map' },
@@ -21,52 +23,100 @@ const PLAY_ROW = [
   { id: 'word', path: '/wordgame', label: 'Word Game', emoji: '🔤', color: '#f59e0b', desc: 'Unscramble & learn' },
 ]
 
+/**
+ * Default hero slides — used when CMS config `hero_slides` is not set.
+ * Each slide: { title, subtitle, cta, link, img, emoji }
+ *   - title: card heading text
+ *   - subtitle: short description below the heading
+ *   - cta: button label
+ *   - link: where the CTA navigates (internal path or external URL)
+ *   - img: background image URL for the card
+ *   - emoji: (optional) decorative emoji shown on the card
+ *
+ * You can update these from the CMS Admin → Settings → hero_slides (JSON array).
+ * The `link` field supports internal routes (e.g. /explore) and full URLs.
+ */
+const DEFAULT_HERO_SLIDES = [
+  { title: 'Explore Places', subtitle: 'Attractions, restaurants, hotels & hidden gems', cta: 'Explore Now', link: '/explore', img: '/images/sites/nike-art_image_1.jpg', emoji: '🗺️' },
+  { title: 'Events & Experiences', subtitle: 'Tours, concerts, cultural experiences near you', cta: 'Browse Events', link: '/explore?category=experience', img: '/images/sites/freedom-park_image_1.jpg', emoji: '🎉' },
+  { title: 'Join Wanda App', subtitle: 'Save places, earn points & compete — for free', cta: 'Join Free', link: '/auth', img: '/images/sites/lekki-conservation_image_1.jpg', emoji: '🚀' },
+  { title: 'List Your Business', subtitle: 'Get discovered by thousands of users', cta: 'Get Started', link: '/list-your-business', img: '/images/sites/bungalow-ikoyi_image_1.jpg', emoji: '🏪' },
+  { title: 'Play & Win', subtitle: 'Quizzes, trivia games & daily rewards', cta: 'Play Now', link: '/play', img: '/images/sites/new-afrika-shrine_image_1.jpg', emoji: '🎮' },
+  { title: 'Find a Service', subtitle: 'Artisans, plumbers, electricians & more', cta: 'Find Now', link: '/handymen', img: '/images/sites/craft-gourmet_image_1.jpg', emoji: '🔧' },
+]
+
+/** Merged features + audiences for the unified "Wanda is for Everyone" section */
+const WANDA_VALUE = [
+  { id: 'discover', icon: <CompassNorthwestRegular fontSize={26} />, title: 'DISCOVER', desc: 'Explore top attractions, events, restaurants, hotels & hidden gems across Nigeria.', audience: 'Tourists & Explorers' },
+  { id: 'connect', icon: <PeopleRegular fontSize={26} />, title: 'CONNECT', desc: 'Find and connect with trusted artisans, handymen, businesses and service providers.', audience: 'Residents' },
+  { id: 'save', icon: <TagMultipleRegular fontSize={26} />, title: 'SAVE', desc: 'Unlock exclusive deals, offers and discounts from local businesses.', audience: 'Businesses' },
+  { id: 'engage', icon: <ChatBubblesQuestionRegular fontSize={26} />, title: 'ENGAGE', desc: 'Ask questions, share experiences and get recommendations from real people.', audience: 'Artisans & Handymen' },
+  { id: 'play', icon: <GamesRegular fontSize={26} />, title: 'PLAY & EARN', desc: 'Play quizzes and games, earn points and climb the leaderboard.', audience: 'Event Organizers' },
+]
+
+const AUDIENCE_ICONS = {
+  'Tourists & Explorers': <CompassNorthwestRegular fontSize={20} />,
+  'Residents': <HomeRegular fontSize={20} />,
+  'Businesses': <StoreMicrosoftRegular fontSize={20} />,
+  'Artisans & Handymen': <WrenchRegular fontSize={20} />,
+  'Event Organizers': <CalendarStarRegular fontSize={20} />,
+}
+
 export default function Landing({ session, profile }) {
   const navigate = useNavigate()
   const xp = getXPData()
   const level = getLevel(xp.totalXP)
   const title = getLevelTitle(level)
   const league = getCurrentLeague(xp.totalXP)
-  const streak = xp.streakDays || 0
-  const playerName = profile?.username || profile?.full_name || 'Explorer'
   const totalPoints = profile?.total_xp || xp.totalXP
 
   const [listings, setListings] = useState([])
+  const [heroSlides, setHeroSlides] = useState(DEFAULT_HERO_SLIDES)
 
   useEffect(() => {
     getListings()
       .then(({ data }) => setListings(data || []))
       .catch(console.error)
+
+    // Load hero slides from CMS config (if set)
+    getConfig('hero_slides')
+      .then(val => {
+        if (val && Array.isArray(val) && val.length > 0) {
+          setHeroSlides(val)
+        }
+      })
+      .catch(() => {}) // Silently fall back to defaults
+
+    // Load upcoming public events and add as hero slides
+    supabase?.from('events')
+      .select('*')
+      .eq('visibility', 'public')
+      .eq('status', 'published')
+      .gte('start_date', new Date().toISOString())
+      .order('start_date')
+      .limit(4)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          const eventSlides = data.map(ev => ({
+            title: ev.title,
+            subtitle: `${ev.category} · ${new Date(ev.start_date).toLocaleDateString('en-NG', { day: 'numeric', month: 'short' })}${ev.is_free ? ' · Free' : (ev.price ? ` · ₦${Number(ev.price).toLocaleString()}` : '')}`,
+            cta: 'RSVP Now',
+            link: `/pass/${ev.slug}`,
+            img: ev.image_url || '/images/sites/freedom-park_image_1.jpg',
+            emoji: '🎟️',
+          }))
+          setHeroSlides(prev => [...prev, ...eventSlides])
+        }
+      })
+      .catch(() => {})
   }, [])
 
-  const heroSlides = useMemo(() => {
-    const cmsFeatures = listings.filter(l => l.is_featured).sort((a, b) => (a.featured_order || 99) - (b.featured_order || 99))
-    if (cmsFeatures.length >= 2) {
-      return cmsFeatures.slice(0, 4).map(l => ({
-        id: l.id,
-        title: l.name,
-        sub: `${l.area} · ${l.category}`,
-        cta: 'Explore',
-        img: l.photos?.[0] || '/images/postcards/national-theatre.png',
-      }))
-    }
-    // Fallback: use any available listings if no featured ones
-    if (listings.length > 0) {
-      return listings.slice(0, 4).map(l => ({
-        id: l.id,
-        title: l.name,
-        sub: `${l.area} · ${l.category}`,
-        cta: 'Explore',
-        img: l.photos?.[0] || '/images/postcards/national-theatre.png',
-      }))
-    }
-    return []
+  // Popular listings (all, sorted by rating)
+  const popularListings = useMemo(() => {
+    return [...listings].sort((a, b) => b.rating - a.rating).slice(0, 10)
   }, [listings])
 
-  const featured = useMemo(() => {
-    return listings.filter(l => FEATURED_IDS.includes(l.id))
-  }, [listings])
-
+  // Top rated
   const topRated = useMemo(() => {
     return [...listings].sort((a, b) => b.rating - a.rating).slice(0, 8)
   }, [listings])
@@ -75,29 +125,13 @@ export default function Landing({ session, profile }) {
   const lastGame = useMemo(() => {
     const sessions = JSON.parse(localStorage.getItem('geoquiz_sessions') || '[]')
     if (sessions.length === 0) return null
-    const last = sessions[sessions.length - 1]
-    return last
+    return sessions[sessions.length - 1]
   }, [])
 
-  // ── Carousel state ──
+  // ── Hero Full-Screen Carousel state ──
   const [currentSlide, setCurrentSlide] = useState(0)
   const [paused, setPaused] = useState(false)
-  const [touchStart, setTouchStart] = useState(null)
-
-  function handleTouchStart(e) {
-    setTouchStart(e.touches[0].clientX)
-    setPaused(true)
-  }
-  function handleTouchEnd(e) {
-    if (touchStart === null) return
-    const diff = touchStart - e.changedTouches[0].clientX
-    if (Math.abs(diff) > 50) {
-      if (diff > 0) nextSlide()
-      else prevSlide()
-    }
-    setTouchStart(null)
-    setPaused(false)
-  }
+  const [touchStartX, setTouchStartX] = useState(null)
 
   const nextSlide = useCallback(() => {
     setCurrentSlide(p => (p + 1) % heroSlides.length)
@@ -107,18 +141,52 @@ export default function Landing({ session, profile }) {
     setCurrentSlide(p => (p - 1 + heroSlides.length) % heroSlides.length)
   }, [heroSlides.length])
 
+  // Auto-advance — pauses on hover/touch
   useEffect(() => {
-    if (paused) return
+    if (paused || heroSlides.length === 0) return
     const timer = setInterval(nextSlide, 5000)
     return () => clearInterval(timer)
-  }, [paused, nextSlide])
+  }, [paused, nextSlide, heroSlides.length])
+
+  function handleTouchStart(e) {
+    setTouchStartX(e.touches[0].clientX)
+    setPaused(true)
+  }
+  function handleTouchEnd(e) {
+    if (touchStartX === null) return
+    const diff = touchStartX - e.changedTouches[0].clientX
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) nextSlide()
+      else prevSlide()
+    }
+    setTouchStartX(null)
+    setPaused(false)
+  }
 
   const slide = heroSlides[currentSlide] || heroSlides[0]
+
+  /** Navigate hero CTA — supports internal paths and external URLs */
+  function handleHeroCTA(link) {
+    if (!link) return
+    if (link.startsWith('http')) {
+      window.open(link, '_blank', 'noopener')
+    } else {
+      navigate(link)
+    }
+  }
 
   return (
     <section className="home-page">
 
-      {/* ── IMMERSIVE HERO CAROUSEL ── */}
+      {/* ── SEARCH BAR ── */}
+      <div className="home-search-section">
+        <div className="home-search-bar-wrap" onClick={() => navigate('/explore')}>
+          <SearchRegular fontSize={20} className="home-search-icon" />
+          <span className="home-search-placeholder">Search places, services, deals...</span>
+        </div>
+      </div>
+
+      {/* ── HERO CAROUSEL (full-screen cards — CMS-managed via hero_slides config) ── */}
       <div
         className="hero-carousel"
         onMouseEnter={() => setPaused(true)}
@@ -128,7 +196,7 @@ export default function Landing({ session, profile }) {
       >
         {heroSlides.map((s, i) => (
           <div
-            key={s.id}
+            key={i}
             className={`hero-carousel-bg ${i === currentSlide ? 'active' : ''}`}
             style={{ backgroundImage: `url(${s.img})` }}
           />
@@ -136,22 +204,15 @@ export default function Landing({ session, profile }) {
 
         <div className="hero-carousel-overlay" />
 
-        {/* Greeting — personalized for logged-in users */}
-        <div className="hero-greeting-badge">
-          <span className="hero-greeting-avatar"><PersonRegular fontSize={16} /></span>
-          <span>Hey, {playerName}</span>
-          {streak > 0 && <span className="hero-streak-pill"><FireRegular fontSize={16} /> {streak} day{streak > 1 ? 's' : ''}</span>}
-        </div>
-
         {/* Content */}
         {slide && (
           <div className="hero-carousel-content" key={currentSlide}>
-            <span className="hero-carousel-label">FEATURED</span>
+            {slide.emoji && <span className="hero-carousel-emoji">{slide.emoji}</span>}
             <h1 className="hero-carousel-title">{slide.title}</h1>
-            <p className="hero-carousel-sub">{slide.sub}</p>
-            <Link to={`/explore/${slide.id}`} className="hero-carousel-cta">
+            <p className="hero-carousel-sub">{slide.subtitle}</p>
+            <button className="hero-carousel-cta" onClick={() => handleHeroCTA(slide.link)}>
               {slide.cta} <ArrowRightRegular fontSize={18} />
-            </Link>
+            </button>
           </div>
         )}
 
@@ -201,112 +262,44 @@ export default function Landing({ session, profile }) {
         </div>
       )}
 
-      {/* ── SIGN UP CTA (not logged in) ── */}
-      {!session && (
-        <div className="home-section-container">
-          <Link to="/auth" className="home-signup-cta">
-            <div className="home-signup-content">
-              <h3>Join Wanda — It's Free!</h3>
-              <p>Save scores, track streaks, compete on the leaderboard</p>
-            </div>
-            <span className="home-signup-arrow"><ArrowRightRegular fontSize={20} /></span>
-          </Link>
-        </div>
-      )}
-
-      {/* ── PLAY & EARN POINTS (#33) ── */}
+      {/* ── CATEGORIES GRID (4×2 from mockup) ── */}
       <div className="home-section-container">
         <div className="home-section-header">
-          <h2>Play & Earn <span className="section-subtitle">Points</span></h2>
-          {session && <span className="home-points-badge">⚡ {totalPoints.toLocaleString()} XP</span>}
-          {!session && <Link to="/play" className="see-all-btn">All Games <ChevronRightRegular fontSize={16} /></Link>}
+          <h2>Categories</h2>
+          <Link to="/explore" className="see-all-btn">See all <ChevronRightRegular fontSize={16} /></Link>
         </div>
-        <div className="home-play-scroller">
-          {PLAY_ROW.map(game => (
-            <Link key={game.id} to={game.path} className="home-play-card">
-              <div className="home-play-card-icon" style={{ background: game.color }}>{game.emoji}</div>
-              <strong>{game.label}</strong>
-              <span>{game.desc}</span>
+        <div className="home-categories-grid">
+          {HOME_CATEGORIES.map(cat => (
+            <Link key={cat.id} to={cat.path} className="home-cat-grid-item">
+              <div className="home-cat-grid-icon" style={{ '--cat-color': cat.color }}>
+                {cat.icon}
+              </div>
+              <span className="home-cat-grid-label">{cat.label}</span>
             </Link>
           ))}
         </div>
       </div>
 
-      {/* ── CONTINUE WHERE YOU LEFT OFF (#31) ── */}
-      {session && lastGame && (
-        <div className="home-section-container">
-          <button className="home-continue-card" onClick={() => navigate('/play?mode=daily')}>
-            <div className="home-continue-left">
-              <span className="home-continue-icon">🔄</span>
-              <div>
-                <strong>Continue Playing</strong>
-                <span>Last score: {lastGame.score}/{lastGame.max} pts</span>
-              </div>
-            </div>
-            <ChevronRightRegular fontSize={20} />
-          </button>
-        </div>
-      )}
-
-      {/* ── CATEGORY CHIPS ── */}
-      <div className="home-categories-scroll">
-        {CATEGORIES.filter(c => c.id !== 'all').slice(0, 8).map(c => (
-          <Link key={c.id} to={`/explore?category=${c.id}`} className="home-cat-card">
-            <div className="home-cat-icon">{c.icon}</div>
-            <span className="home-cat-label">{c.label}</span>
-          </Link>
-        ))}
-        <Link to="/handymen" className="home-cat-card" style={{ '--cat-accent': '#22c55e' }}>
-          <div className="home-cat-icon">🔧</div>
-          <span className="home-cat-label">Handymen</span>
-        </Link>
-      </div>
-
-      {/* ── TODAY'S CHALLENGE ── */}
-      <div className="home-section-container">
-        <button className="home-daily-immersive" onClick={() => navigate('/play?mode=daily')}>
-          <div className="home-daily-content">
-            <span className="home-daily-badge">TODAY'S CHALLENGE</span>
-            <h2>Test your Lagos knowledge</h2>
-            <p>Play daily, earn XP, climb the ranks</p>
-          </div>
-          <div className="home-daily-icon">
-            <PlayRegular fontSize={64} />
-          </div>
-        </button>
-      </div>
-
-      {/* Daily reward */}
-      {canClaimToday() && (
-        <div className="home-section-container">
-          <Link to="/rewards" className="home-reward-banner">
-            <div className="reward-content">
-              <GiftRegular fontSize={24} />
-              <span>Your daily reward is ready!</span>
-            </div>
-            <span className="home-reward-go">Claim <ChevronRightRegular fontSize={16} /></span>
-          </Link>
-        </div>
-      )}
-
-      {/* ── DISCOVER — Visual cards grid ── */}
+      {/* ── POPULAR LISTINGS ── */}
       <div className="home-section-container">
         <div className="home-section-header">
-          <h2>Discover <span className="section-subtitle">Lagos</span></h2>
+          <h2>Popular Listings</h2>
           <Link to="/explore" className="see-all-btn">See all <ChevronRightRegular fontSize={16} /></Link>
         </div>
-        <div className="home-featured-grid">
-          {featured.slice(0, 4).map(l => (
-            <Link key={l.id} to={`/explore/${l.id}`} className="home-visual-card">
-              <img
-                src={l.photos?.[0] || '/images/postcards/national-theatre.png'}
-                alt={l.name}
-                onError={e => { e.target.src = '/images/postcards/national-theatre.png' }}
-              />
-              <div className="card-gradient"></div>
-              <div className="card-info">
-                <h3>{l.name}</h3>
-                <p><LocationRegular fontSize={14} /> {l.area}</p>
+        <div className="home-popular-scroller">
+          {popularListings.map(l => (
+            <Link key={l.id} to={`/explore/${l.id}`} className="home-popular-card">
+              <div className="home-popular-img-wrap">
+                <img
+                  src={l.photos?.[0] || '/images/postcards/national-theatre.png'}
+                  alt={l.name}
+                  onError={e => { e.target.src = '/images/postcards/national-theatre.png' }}
+                />
+              </div>
+              <div className="home-popular-info">
+                <strong>{l.name}</strong>
+                <span className="home-popular-area"><LocationRegular fontSize={13} /> {l.area}</span>
+                <span className="home-popular-rating"><StarRegular fontSize={13} style={{ color: '#f59e0b' }} /> {l.rating}</span>
               </div>
             </Link>
           ))}
@@ -336,52 +329,56 @@ export default function Landing({ session, profile }) {
         </div>
       </div>
 
-      {/* ── WANDA PASS CTA (#36) ── */}
+      {/* ── PLAY & EARN POINTS ── */}
       <div className="home-section-container">
-        <div className="home-pass-card">
-          <div className="home-pass-gradient" />
-          <div className="home-pass-inner">
-            <TicketDiagonalRegular fontSize={36} style={{ color: '#fff', opacity: 0.9 }} />
-            <div className="home-pass-text">
-              <span className="home-pass-chip">COMING SOON</span>
-              <h3>Wanda Pass</h3>
-              <p>One pass, multiple attractions. Join the waitlist.</p>
-            </div>
-            <Link to="/pass" className="home-pass-cta-btn">Learn More →</Link>
-          </div>
+        <div className="home-section-header">
+          <h2>Play & Earn <span className="section-subtitle">Points</span></h2>
+          {session && <span className="home-points-badge">⚡ {totalPoints.toLocaleString()} XP</span>}
+          {!session && <Link to="/play" className="see-all-btn">All Games <ChevronRightRegular fontSize={16} /></Link>}
+        </div>
+        <div className="home-play-scroller">
+          {PLAY_ROW.map(game => (
+            <Link key={game.id} to={game.path} className="home-play-card">
+              <div className="home-play-card-icon" style={{ background: game.color }}>{game.emoji}</div>
+              <strong>{game.label}</strong>
+              <span>{game.desc}</span>
+            </Link>
+          ))}
         </div>
       </div>
 
-      {/* ── WHAT'S HAPPENING (replaces Feed #34) ── */}
-      <div className="home-section-container">
-        <div className="home-section-header">
-          <h2>What's Happening</h2>
+      {/* ── CONTINUE WHERE YOU LEFT OFF ── */}
+      {session && lastGame && (
+        <div className="home-section-container">
+          <button className="home-continue-card" onClick={() => navigate('/play?mode=daily')}>
+            <div className="home-continue-left">
+              <span className="home-continue-icon">🔄</span>
+              <div>
+                <strong>Continue Playing</strong>
+                <span>Last score: {lastGame.score}/{lastGame.max} pts</span>
+              </div>
+            </div>
+            <ChevronRightRegular fontSize={20} />
+          </button>
         </div>
-        <div className="home-whats-happening">
-          <div className="home-wh-item">
-            <span className="home-wh-icon">🏆</span>
-            <div>
-              <strong>Leaderboard updated</strong>
-              <span>New scores posted today</span>
+      )}
+
+      {/* ── WANDA IS FOR EVERYONE — Merged features + audiences ── */}
+      <div className="home-for-everyone">
+        <h2 className="home-fe-heading">WANDA IS FOR EVERYONE</h2>
+        <p className="home-fe-subheading">Discover, connect, save, engage & earn — all in one app</p>
+        <div className="home-fe-grid">
+          {WANDA_VALUE.map(item => (
+            <div key={item.id} className="home-fe-card">
+              <div className="home-fe-icon">{item.icon}</div>
+              <strong className="home-fe-title">{item.title}</strong>
+              <p className="home-fe-desc">{item.desc}</p>
+              <div className="home-fe-audience">
+                <span className="home-fe-audience-icon">{AUDIENCE_ICONS[item.audience]}</span>
+                <span>{item.audience}</span>
+              </div>
             </div>
-            <Link to="/leaderboard" className="home-wh-link">View →</Link>
-          </div>
-          <div className="home-wh-item">
-            <span className="home-wh-icon">🗺️</span>
-            <div>
-              <strong>New places added</strong>
-              <span>Explore fresh listings</span>
-            </div>
-            <Link to="/explore" className="home-wh-link">Explore →</Link>
-          </div>
-          <div className="home-wh-item">
-            <span className="home-wh-icon">🎮</span>
-            <div>
-              <strong>Daily challenge is live</strong>
-              <span>Can you beat yesterday's score?</span>
-            </div>
-            <Link to="/play?mode=daily" className="home-wh-link">Play →</Link>
-          </div>
+          ))}
         </div>
       </div>
 

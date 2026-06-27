@@ -225,6 +225,7 @@ export function awardGameXP(results, config) {
   data.xpHistory.push({ type: 'GAME_COMPLETE', amount: totalAwarded, date: new Date().toISOString() })
   if (data.xpHistory.length > 20) data.xpHistory = data.xpHistory.slice(-20)
   saveXPData(data)
+  debouncedSync()
 
   return {
     totalAwarded, correctXP: correctCount * XP_REWARDS.CORRECT_ANSWER,

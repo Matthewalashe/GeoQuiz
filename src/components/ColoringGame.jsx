@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CheckmarkCircleRegular, ArrowClockwiseRegular } from '@fluentui/react-icons'
 import { addXP } from '../engine/xp.js'
+import { calculateGameReward, addCoins } from '../engine/coinEconomy.js'
 import { autoSubmitScore } from '../engine/leaderboard.js'
 import ResultCard from './ResultCard.jsx'
 import { getColoringScenes } from '../lib/cms.js'
@@ -143,6 +144,12 @@ export default function ColoringGame() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [showQuitModal, setShowQuitModal] = useState(false)
   const [pendingNav, setPendingNav] = useState(null)
+  const [toast, setToast] = useState(null)
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
 
   function startScene() {
     const scene = SCENES[selectedScene]
@@ -170,11 +177,16 @@ export default function ColoringGame() {
     const scene = SCENES[selectedScene]
     const painted = Object.values(fills).filter(c => c !== '#ffffff').length
     if (painted < scene.minParts) {
-      alert(`Keep painting! Add color to at least ${scene.minParts} parts of the drawing.`)
+      setToast(`Keep painting! Add color to at least ${scene.minParts} parts of the drawing.`)
+      setTimeout(() => setToast(null), 3000)
       return
     }
     setWon(true)
     addXP('GAME_WIN')
+    try {
+      const coins = calculateGameReward(100)
+      if (coins > 0) addCoins(coins, 'Coloring game reward')
+    } catch {}
     autoSubmitScore({ gameType: 'coloring', score: 100, maxScore: 100, questionCount: 1 })
   }
 
@@ -239,6 +251,17 @@ export default function ColoringGame() {
   // ── GAMEPLAY ─────────────────────────────────────────────────────────────
   return (
     <div className="game-screen">
+      {toast && (
+        <div style={{
+          position: 'fixed', top: '1rem', left: '50%', transform: 'translateX(-50%)',
+          background: '#f59e0b', color: '#fff', padding: '0.6rem 1.4rem',
+          borderRadius: '0.75rem', fontWeight: 600, fontSize: '0.9rem',
+          zIndex: 9999, boxShadow: '0 4px 14px rgba(0,0,0,0.2)',
+          animation: 'fadeIn 0.2s ease'
+        }}>
+          {toast}
+        </div>
+      )}
       {showQuitModal && (
         <div className="quit-overlay" onClick={() => setShowQuitModal(false)}>
           <div className="quit-modal" onClick={e => e.stopPropagation()}>

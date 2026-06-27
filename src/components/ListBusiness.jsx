@@ -14,6 +14,7 @@ const CATS = [
   { value: 'shopping', label: 'Shopping / Retail', emoji: '🛍️' },
   { value: 'market', label: 'Market', emoji: '🏪' },
   { value: 'fashion', label: 'Fashion / Clothing', emoji: '👗' },
+  { value: 'arts-crafts', label: 'Arts & Crafts', emoji: '🧶' },
   // Tourism & Culture
   { value: 'attraction', label: 'Attraction / Landmark', emoji: '📍' },
   { value: 'park', label: 'Park / Nature', emoji: '🌿' },
@@ -30,6 +31,7 @@ const CATS = [
   { value: 'trader', label: 'Trader / Vendor', emoji: '📦' },
   { value: 'tailor', label: 'Tailor / Seamstress', emoji: '🧵' },
   { value: 'salon', label: 'Salon / Barber', emoji: '💇' },
+  { value: 'wigs', label: 'Wigs / Hair', emoji: '💇‍♀️' },
   { value: 'photography', label: 'Photography / Video', emoji: '📸' },
   { value: 'logistics', label: 'Logistics / Delivery', emoji: '🚚' },
   { value: 'transport', label: 'Transport / Driver', emoji: '🚗' },
@@ -45,6 +47,8 @@ const CATS = [
   { value: 'real-estate', label: 'Real Estate', emoji: '🏠' },
   { value: 'entertainment', label: 'Entertainment', emoji: '🎬' },
   { value: 'services', label: 'Other Services', emoji: '🛠️' },
+  // Custom
+  { value: '__custom__', label: 'Other (type your own)', emoji: '✏️' },
 ]
 
 // ─── Handyman trade categories ───
@@ -56,6 +60,7 @@ const TRADES = [
   { value: 'welder', label: 'Welder', emoji: '🔩' },
   { value: 'mechanic', label: 'Mechanic', emoji: '🔧' },
   { value: 'tailor', label: 'Tailor / Seamstress', emoji: '🧵' },
+  { value: 'wig-maker', label: 'Wig Maker / Hair', emoji: '💇‍♀️' },
   { value: 'bricklayer', label: 'Bricklayer / Mason', emoji: '🧱' },
   { value: 'tiler', label: 'Tiler', emoji: '🔲' },
   { value: 'ac-technician', label: 'AC / Refrigerator', emoji: '❄️' },
@@ -67,6 +72,8 @@ const TRADES = [
   { value: 'furniture-maker', label: 'Furniture Maker', emoji: '🪑' },
   { value: 'interior-decorator', label: 'POP / Interior', emoji: '🏠' },
   { value: 'pest-control', label: 'Pest Control', emoji: '🐛' },
+  { value: 'arts-crafts', label: 'Arts & Crafts', emoji: '🧶' },
+  { value: '__custom__', label: 'Other (type your own)', emoji: '✏️' },
 ]
 
 const PRICE_OPTIONS = [
@@ -100,6 +107,13 @@ export default function ListBusiness({ embedded = false }) {
   const [step, setStep] = useState(0)
   const [animDir, setAnimDir] = useState('next') // 'next' | 'prev'
 
+  // ── Edit mode ──
+  const editId = searchParams.get('edit') || null
+  const isEditMode = Boolean(editId)
+  const [editLoading, setEditLoading] = useState(isEditMode)
+  const [existingLogoUrl, setExistingLogoUrl] = useState(null)
+  const [existingPhotoUrls, setExistingPhotoUrls] = useState([])
+
   // Listing type: 'business' or 'handyman'
   const [listingType, setListingType] = useState(() => searchParams.get('type') || 'business')
   const STEPS = listingType === 'handyman' ? HANDYMAN_STEPS : BUSINESS_STEPS
@@ -112,6 +126,10 @@ export default function ListBusiness({ embedded = false }) {
     // Handyman fields
     trade: '', experienceYears: '', serviceAreas: [''],
   })
+
+  // Custom category/trade input for when user picks "Other"
+  const [customCategory, setCustomCategory] = useState('')
+  const [customTrade, setCustomTrade] = useState('')
 
   // Logo state
   const [logoFile, setLogoFile] = useState(null)
@@ -142,11 +160,89 @@ export default function ListBusiness({ embedded = false }) {
     return () => subscription.unsubscribe()
   }, [])
 
+  // ─── Fetch existing listing for edit mode ───
+  useEffect(() => {
+    if (!editId || !supabase || !session) return
+    async function fetchListing() {
+      setEditLoading(true)
+      try {
+        const { data, error: fetchErr } = await supabase
+          .from('business_listings')
+          .select('*')
+          .eq('id', editId)
+          .single()
+        if (fetchErr) throw fetchErr
+        // Ownership check
+        if (data.submitted_by !== session.user.id) {
+          setError('You can only edit your own listings.')
+          setEditLoading(false)
+          return
+        }
+        // Parse arrays
+        let photos = data.photos || []
+        if (typeof photos === 'string') try { photos = JSON.parse(photos) } catch { photos = [] }
+        let products = data.products || ['']
+        if (typeof products === 'string') try { products = JSON.parse(products) } catch { products = [''] }
+        if (!Array.isArray(products) || products.length === 0) products = ['']
+        let serviceAreas = data.service_areas || ['']
+        if (typeof serviceAreas === 'string') try { serviceAreas = JSON.parse(serviceAreas) } catch { serviceAreas = [''] }
+        if (!Array.isArray(serviceAreas) || serviceAreas.length === 0) serviceAreas = ['']
+
+        // Set listing type
+        setListingType(data.listing_type || 'business')
+
+        // Check if category is custom (not in CATS list)
+        const isCustomCat = data.category && !CATS.find(c => c.value === data.category) && data.category !== 'handyman'
+        if (isCustomCat) {
+          setCustomCategory(data.category)
+        }
+        const isCustomTrade = data.trade && !TRADES.find(t => t.value === data.trade)
+        if (isCustomTrade) {
+          setCustomTrade(data.trade)
+        }
+
+        setForm({
+          name: data.name || '',
+          category: isCustomCat ? '__custom__' : (data.category || ''),
+          subcategory: data.subcategory || '',
+          area: data.area || '',
+          address: data.address || '',
+          phone: data.phone || '',
+          whatsapp: data.whatsapp || '',
+          website: data.website || '',
+          instagram: data.instagram || '',
+          hours: data.hours || '',
+          priceRange: data.price_range || '',
+          description: data.description || '',
+          products,
+          trade: isCustomTrade ? '__custom__' : (data.trade || ''),
+          experienceYears: data.experience_years ? String(data.experience_years) : '',
+          serviceAreas,
+        })
+
+        // Set existing media previews
+        if (data.logo_url) {
+          setExistingLogoUrl(data.logo_url)
+          setLogoPreview(data.logo_url)
+        }
+        if (photos.length > 0) {
+          setExistingPhotoUrls(photos)
+          setPhotoPreviews(photos)
+        }
+      } catch (err) {
+        setError(err.message || 'Failed to load listing for editing.')
+      }
+      setEditLoading(false)
+    }
+    fetchListing()
+  }, [editId, session])
+
   // Cleanup blob URLs
   useEffect(() => {
     return () => {
-      if (logoPreview) URL.revokeObjectURL(logoPreview)
-      photoPreviews.forEach(p => URL.revokeObjectURL(p))
+      // Only revoke blob URLs, not existing remote URLs
+      if (logoPreview && logoPreview.startsWith('blob:')) URL.revokeObjectURL(logoPreview)
+      photoPreviews.forEach(p => { if (p.startsWith('blob:')) URL.revokeObjectURL(p) })
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -263,16 +359,19 @@ export default function ListBusiness({ embedded = false }) {
     setUploadProgress('')
 
     try {
-      let logoUrl = ''
-      let photoUrls = []
-
+      // Upload new logo if changed
+      let logoUrl = isEditMode ? existingLogoUrl : ''
       if (logoFile) {
         setUploadProgress('Uploading logo...')
         try { logoUrl = await uploadBusinessFile(logoFile, 'logo') }
         catch (e) { console.warn('Logo upload failed:', e.message) }
       }
 
+      // Upload new photos if changed
+      let photoUrls = isEditMode ? [...existingPhotoUrls] : []
       if (photoFiles.length > 0) {
+        // In edit mode with new files, replace all photos
+        if (isEditMode) photoUrls = []
         for (let i = 0; i < photoFiles.length; i++) {
           setUploadProgress(`Uploading photo ${i + 1} of ${photoFiles.length}...`)
           try { photoUrls.push(await uploadBusinessFile(photoFiles[i], 'photo')) }
@@ -280,15 +379,15 @@ export default function ListBusiness({ embedded = false }) {
         }
       }
 
-      setUploadProgress('Submitting listing...')
+      setUploadProgress(isEditMode ? 'Saving changes...' : 'Submitting listing...')
 
       const products = form.products.map(p => p.trim()).filter(Boolean)
       const serviceAreas = form.serviceAreas.map(a => a.trim()).filter(Boolean)
 
-      const insertData = {
+      const rowData = {
         listing_type: listingType,
         name: form.name.trim(),
-        category: listingType === 'handyman' ? 'handyman' : form.category,
+        category: listingType === 'handyman' ? 'handyman' : (form.category === '__custom__' ? customCategory.trim() : form.category),
         subcategory: form.subcategory.trim() || null,
         area: form.area.trim(),
         address: form.address.trim() || null,
@@ -303,18 +402,28 @@ export default function ListBusiness({ embedded = false }) {
         photos: photoUrls.length > 0 ? photoUrls : null,
         products: products.length > 0 ? products : null,
         // Handyman-specific fields
-        trade: listingType === 'handyman' ? form.trade : null,
+        trade: listingType === 'handyman' ? (form.trade === '__custom__' ? customTrade.trim() : form.trade) : null,
         experience_years: listingType === 'handyman' && form.experienceYears ? parseInt(form.experienceYears, 10) : null,
         service_areas: serviceAreas.length > 0 ? serviceAreas : null,
-        status: 'pending',
-        submitted_by: session?.user?.id || null,
       }
 
-      const { error: insertError } = await supabase
-        .from('business_listings')
-        .insert([insertData])
-
-      if (insertError) throw new Error(insertError.message || 'Failed to submit.')
+      if (isEditMode) {
+        // Update existing listing (keep status as-is)
+        const { error: updateError } = await supabase
+          .from('business_listings')
+          .update(rowData)
+          .eq('id', editId)
+          .eq('submitted_by', session?.user?.id) // ownership guard
+        if (updateError) throw new Error(updateError.message || 'Failed to update.')
+      } else {
+        // Insert new listing
+        rowData.status = 'pending'
+        rowData.submitted_by = session?.user?.id || null
+        const { error: insertError } = await supabase
+          .from('business_listings')
+          .insert([rowData])
+        if (insertError) throw new Error(insertError.message || 'Failed to submit.')
+      }
 
       setDone(true)
     } catch (err) {
@@ -329,18 +438,39 @@ export default function ListBusiness({ embedded = false }) {
     return (
       <section className="lb-form-page">
         <div className="lb-success">
-          <span className="lb-success-icon">🎉</span>
-          <h2>Listing submitted!</h2>
-          <p>We'll review your business and add it to Wanda within 24-48 hours.</p>
+          <span className="lb-success-icon">{isEditMode ? '✅' : '🎉'}</span>
+          <h2>{isEditMode ? 'Listing updated!' : 'Listing submitted!'}</h2>
+          <p>{isEditMode
+            ? "Your changes have been saved. They're live now!"
+            : "We'll review your business and add it to Wanda within 24-48 hours."
+          }</p>
           <div className="lb-success-actions">
-            <Link to="/explore" className="lb-back-link">Browse directory →</Link>
-            <button className="lb-another-btn" onClick={() => {
-              setDone(false); setStep(0)
-              setForm({ name: '', category: '', subcategory: '', area: '', address: '', phone: '', whatsapp: '', website: '', instagram: '', hours: '', priceRange: '', description: '', products: [''], trade: '', experienceYears: '', serviceAreas: [''] })
-              setListingType('business')
-              removeLogo(); setPhotoFiles([]); setPhotoPreviews([])
-            }}>Submit another listing</button>
+            {isEditMode && editId ? (
+              <Link to={`/business/${editId}`} className="lb-back-link">View my listing →</Link>
+            ) : (
+              <Link to="/explore" className="lb-back-link">Browse directory →</Link>
+            )}
+            {!isEditMode && (
+              <button className="lb-another-btn" onClick={() => {
+                setDone(false); setStep(0)
+                setForm({ name: '', category: '', subcategory: '', area: '', address: '', phone: '', whatsapp: '', website: '', instagram: '', hours: '', priceRange: '', description: '', products: [''], trade: '', experienceYears: '', serviceAreas: [''] })
+                setListingType('business')
+                removeLogo(); setPhotoFiles([]); setPhotoPreviews([])
+              }}>Submit another listing</button>
+            )}
           </div>
+        </div>
+      </section>
+    )
+  }
+
+  // ═══ EDIT LOADING ═══
+  if (editLoading) {
+    return (
+      <section className="lb-form-page">
+        <div className="lb-auth-prompt">
+          <div className="lb-spinner" />
+          <p style={{ color: 'var(--text-secondary)' }}>Loading your listing...</p>
         </div>
       </section>
     )
@@ -410,7 +540,7 @@ export default function ListBusiness({ embedded = false }) {
       <div className={`lb-step-content lb-anim-${animDir}`} key={`${listingType}-${step}`}>
         <div className="lb-step-header">
           <span className="lb-step-emoji">{STEPS[step].emoji}</span>
-          <h2 className="lb-step-title">{STEPS[step].title}</h2>
+          <h2 className="lb-step-title">{isEditMode ? `Edit: ${STEPS[step].title}` : STEPS[step].title}</h2>
           <p className="lb-step-desc">{STEPS[step].desc}</p>
         </div>
 
@@ -450,11 +580,16 @@ export default function ListBusiness({ embedded = false }) {
                     {CATS.map(c => (
                       <button key={c.value} type="button"
                         className={`lb-cat-chip ${form.category === c.value ? 'selected' : ''}`}
-                        onClick={() => update('category', c.value)}>
+                        onClick={() => { update('category', c.value); if (c.value !== '__custom__') setCustomCategory('') }}>
                         <span>{c.emoji}</span> {c.label}
                       </button>
                     ))}
                   </div>
+                  {form.category === '__custom__' && (
+                    <input type="text" value={customCategory} onChange={e => setCustomCategory(e.target.value)}
+                      placeholder="Type your category, e.g. Wigs, Cake Baker, Pet Store..."
+                      style={{ marginTop: '0.5rem' }} />
+                  )}
                 </label>
 
                 <label className="lb-label">
@@ -474,11 +609,16 @@ export default function ListBusiness({ embedded = false }) {
                     {TRADES.map(t => (
                       <button key={t.value} type="button"
                         className={`lb-cat-chip ${form.trade === t.value ? 'selected' : ''}`}
-                        onClick={() => update('trade', t.value)}>
+                        onClick={() => { update('trade', t.value); if (t.value !== '__custom__') setCustomTrade('') }}>
                         <span>{t.emoji}</span> {t.label}
                       </button>
                     ))}
                   </div>
+                  {form.trade === '__custom__' && (
+                    <input type="text" value={customTrade} onChange={e => setCustomTrade(e.target.value)}
+                      placeholder="Type your trade, e.g. Wig Maker, Cake Baker, DJ..."
+                      style={{ marginTop: '0.5rem' }} />
+                  )}
                 </label>
 
                 <label className="lb-label">
@@ -758,7 +898,7 @@ export default function ListBusiness({ embedded = false }) {
           </button>
         ) : (
           <button type="button" className="lb-submit" onClick={handleSubmit} disabled={submitting}>
-            {submitting ? 'Submitting...' : 'Submit Listing ✨'}
+            {submitting ? (isEditMode ? 'Saving...' : 'Submitting...') : (isEditMode ? 'Save Changes ✨' : 'Submit Listing ✨')}
           </button>
         )}
       </div>

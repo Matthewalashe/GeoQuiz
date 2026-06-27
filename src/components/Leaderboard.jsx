@@ -1,15 +1,15 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { fetchLeaderboard, supabase } from '../lib/supabase.js'
-import { getLevel, getLevelTitle, getCurrentLeague } from '../engine/xp.js'
+import { getCurrentLeague } from '../engine/xp.js'
+import { ProfileImg } from './Header.jsx'
 
-// ── Avatar helper ──
-function AvatarImg({ src, size = 32 }) {
-  if (!src) return <span style={{ fontSize: size * 0.7 }}>🧭</span>
-  if (src.startsWith('http')) {
-    return <img src={src} alt="" style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.1)' }} onError={e => { e.target.outerHTML = '🧭' }} />
-  }
-  return <span style={{ fontSize: size * 0.7 }}>{src}</span>
+// ── Format large numbers (e.g. 1.2K, 15.4K) ──
+function formatXP(n) {
+  if (n >= 100000) return (n / 1000).toFixed(0) + 'K'
+  if (n >= 10000) return (n / 1000).toFixed(1) + 'K'
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'K'
+  return n.toLocaleString()
 }
 
 // ── GAME FILTERS ──
@@ -63,7 +63,7 @@ export default function Leaderboard({ isEmbedded = false }) {
 
   useEffect(() => { loadLeaderboard() }, [])
 
-  // Filter entries
+  // Filter entries by time and game
   const filtered = useMemo(() => {
     const now = Date.now()
     return entries.filter(e => {
@@ -75,9 +75,11 @@ export default function Leaderboard({ isEmbedded = false }) {
         const created = new Date(e.created_at).getTime()
         if (now - created > 90 * 24 * 60 * 60 * 1000) return false
       }
+      // Game filter — currently leaderboard data is XP-based from profiles
+      // Game-specific filtering will work once per-game scores are tracked
       return true
     }).slice(0, 30)
-  }, [entries, timeFilter])
+  }, [entries, timeFilter, gameFilter])
 
   // Find current user's position
   const myEntry = useMemo(() => {
@@ -107,11 +109,11 @@ export default function Leaderboard({ isEmbedded = false }) {
             <span className="lb2-my-label">Your Rank</span>
           </div>
           <div className="lb2-my-info">
-            <AvatarImg src={myEntry.avatar} size={36} />
+            <ProfileImg profile={{ avatar_url: myEntry.avatar, username: myEntry.player_name }} size={36} />
             <div>
               <div className="lb2-my-name">{myEntry.player_name}</div>
               <div className="lb2-my-stats">
-                {myEntry.score.toLocaleString()} XP · Lv.{myEntry.level} · 🔥{myEntry.streak || 0}
+                {formatXP(myEntry.score)} XP · Lv.{myEntry.level} · 🔥{myEntry.streak || 0}
               </div>
             </div>
           </div>
@@ -183,10 +185,12 @@ export default function Leaderboard({ isEmbedded = false }) {
                 const league = getCurrentLeague(e.score)
                 return (
                   <div key={e.id || idx} className={`lb-podium-item lb-pos-${idx + 1} ${isMe ? 'lb-is-me' : ''}`}>
-                    <div className="lb-podium-avatar"><AvatarImg src={e.avatar} size={idx === 0 ? 52 : 42} /></div>
+                    <div className="lb-podium-avatar">
+                      <ProfileImg profile={{ avatar_url: e.avatar, username: e.player_name }} size={idx === 0 ? 52 : 42} />
+                    </div>
                     <div className="lb-podium-medal">{podiumEmoji}</div>
                     <div className="lb-podium-name">{e.player_name}{isMe ? ' (You)' : ''}</div>
-                    <div className="lb-podium-score">{e.score.toLocaleString()}</div>
+                    <div className="lb-podium-score">{formatXP(e.score)}</div>
                     <div className="lb-podium-pct">{league.emoji} Lv.{e.level}</div>
                   </div>
                 )
@@ -210,13 +214,15 @@ export default function Leaderboard({ isEmbedded = false }) {
                 <div key={entry.id || rank} className={`lb-table-row ${isMe ? 'lb-row-me' : ''}`}>
                   <span className="lb-col-rank">{rank}</span>
                   <span className="lb-col-player">
-                    <span className="lb-row-avatar"><AvatarImg src={entry.avatar} size={28} /></span>
+                    <span className="lb-row-avatar">
+                      <ProfileImg profile={{ avatar_url: entry.avatar, username: entry.player_name }} size={28} />
+                    </span>
                     <span>
                       <span className="lb-row-name">{entry.player_name}{isMe ? ' (You)' : ''}</span>
                       <span className="lb-row-meta">{league.emoji} · 🔥 {entry.streak || 0}d</span>
                     </span>
                   </span>
-                  <span className="lb-col-score">{entry.score.toLocaleString()}</span>
+                  <span className="lb-col-score">{formatXP(entry.score)}</span>
                   <span className="lb-col-pct">{entry.level}</span>
                 </div>
               )

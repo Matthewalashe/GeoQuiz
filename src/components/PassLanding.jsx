@@ -1,6 +1,7 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { submitWaitlist } from '../lib/supabase.js'
+import { useState, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { submitWaitlist, supabase } from '../lib/supabase.js'
+import { CalendarRegular, AddRegular } from '@fluentui/react-icons'
 
 const PASS_TYPES = [
   {
@@ -38,12 +39,29 @@ const ATTRACTIONS = [
 ]
 
 export default function PassLanding() {
+  const navigate = useNavigate()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [interest, setInterest] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
+  const [events, setEvents] = useState([])
+
+  useEffect(() => {
+    supabase?.from('events')
+      .select('*')
+      .eq('visibility', 'public')
+      .eq('status', 'published')
+      .gte('start_date', new Date().toISOString())
+      .order('start_date')
+      .limit(12)
+      .then(({ data }) => setEvents(data || []))
+  }, [])
+
+  function formatEventDate(d) {
+    return new Date(d).toLocaleDateString('en-NG', { day: 'numeric', month: 'short' })
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -68,6 +86,43 @@ export default function PassLanding() {
 
   return (
     <section className="pass-page">
+      {/* Create Custom Pass CTA */}
+      <div className="pass-section">
+        <button className="pl-create-cta" onClick={() => navigate('/pass/create')}>
+          <AddRegular fontSize={20} /> Create Custom Pass
+        </button>
+      </div>
+
+      {/* Public Events */}
+      {events.length > 0 && (
+        <div className="pass-section pl-events-section">
+          <h2><CalendarRegular fontSize={20} /> Upcoming Events</h2>
+          <div className="pl-events-grid">
+            {events.map(ev => (
+              <Link to={`/pass/${ev.slug}`} key={ev.id} className="pl-event-card">
+                {ev.image_url ? (
+                  <img src={ev.image_url} alt={ev.title} className="pl-event-img" loading="lazy" />
+                ) : (
+                  <div className="pl-event-img" style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '2.5rem', color: 'rgba(255,255,255,0.3)'
+                  }}>🎉</div>
+                )}
+                <div className="pl-event-info">
+                  <span className="pl-event-cat">{ev.category}</span>
+                  <h3 className="pl-event-title">{ev.title}</h3>
+                  <div className="pl-event-meta">
+                    <span>📅 {formatEventDate(ev.start_date)}</span>
+                    <span>{ev.is_free ? '🎉 Free' : `₦${Number(ev.price).toLocaleString()}`}</span>
+                    {ev.venue_name && <span>📍 {ev.venue_name}</span>}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Hero */}
       <div className="pass-hero">
         <span className="pass-badge">COMING SOON</span>

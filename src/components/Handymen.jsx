@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
 import { SearchRegular, CallRegular, ChatRegular, ArrowRightRegular } from '@fluentui/react-icons'
 
-const TRADES = [
+const KNOWN_TRADES = [
   { value: 'all', label: 'All Trades', emoji: '🔍' },
   { value: 'plumber', label: 'Plumber', emoji: '🔧' },
   { value: 'electrician', label: 'Electrician', emoji: '⚡' },
@@ -12,6 +12,7 @@ const TRADES = [
   { value: 'welder', label: 'Welder', emoji: '🔩' },
   { value: 'mechanic', label: 'Mechanic', emoji: '🔧' },
   { value: 'tailor', label: 'Tailor / Seamstress', emoji: '🧵' },
+  { value: 'wig-maker', label: 'Wig Maker / Hair', emoji: '💇‍♀️' },
   { value: 'bricklayer', label: 'Bricklayer / Mason', emoji: '🧱' },
   { value: 'tiler', label: 'Tiler', emoji: '🔲' },
   { value: 'ac-technician', label: 'AC / Refrigerator', emoji: '❄️' },
@@ -23,6 +24,7 @@ const TRADES = [
   { value: 'furniture-maker', label: 'Furniture Maker', emoji: '🪑' },
   { value: 'interior-decorator', label: 'POP / Interior', emoji: '🏠' },
   { value: 'pest-control', label: 'Pest Control', emoji: '🐛' },
+  { value: 'arts-crafts', label: 'Arts & Crafts', emoji: '🧶' },
 ]
 
 function formatWhatsApp(number) {
@@ -83,7 +85,14 @@ export default function Handymen() {
     return results
   }, [listings, search, trade])
 
-  const getTradeObj = (val) => TRADES.find(t => t.value === val) || null
+  // Dynamically add custom trades from data that aren't in the known list
+  const knownValues = new Set(KNOWN_TRADES.map(t => t.value))
+  const customTradesFromData = [...new Set(listings.map(l => l.trade).filter(t => t && !knownValues.has(t)))]
+  const TRADES = [
+    ...KNOWN_TRADES,
+    ...customTradesFromData.map(t => ({ value: t, label: t.charAt(0).toUpperCase() + t.slice(1).replace(/-/g, ' '), emoji: '🛠️' })),
+  ]
+  const getTradeObj = (val) => TRADES.find(t => t.value === val) || (val ? { value: val, label: val, emoji: '🛠️' } : null)
 
   return (
     <section className="hm-page">
@@ -177,28 +186,40 @@ export default function Handymen() {
 
             return (
               <div key={person.id} className="hm-card">
-                {/* Avatar / Photo */}
-                <div className="hm-card-avatar">
-                  {hasPhoto ? (
-                    <img src={photoSrc} alt={person.name} onError={e => { e.target.style.display = 'none' }} />
-                  ) : (
-                    <span className="hm-card-avatar-emoji">{tradeInfo?.emoji || '🔧'}</span>
-                  )}
-                </div>
+                {/* Photo banner — show uploaded work photos */}
+                {person.photos?.length > 0 && (
+                  <Link to={`/business/${person.id}`} className="hm-card-banner">
+                    <img src={Array.isArray(person.photos) ? person.photos[0] : person.photos} alt={`${person.name} work`}
+                      onError={e => { e.target.parentElement.style.display = 'none' }} />
+                  </Link>
+                )}
 
-                {/* Info */}
-                <div className="hm-card-info">
-                  <h3 className="hm-card-name">{person.name}</h3>
-                  {tradeInfo && (
-                    <span className="hm-card-trade">{tradeInfo.emoji} {tradeInfo.label}</span>
-                  )}
-                  <span className="hm-card-area">📍 {person.area}</span>
-                  {person.experience_years && (
-                    <span className="hm-card-exp">🛠️ {person.experience_years}+ years</span>
-                  )}
-                  {person.service_areas?.length > 0 && (
-                    <span className="hm-card-areas">Serves: {person.service_areas.join(', ')}</span>
-                  )}
+                <div className="hm-card-main">
+                  {/* Avatar / Photo */}
+                  <Link to={`/business/${person.id}`} className="hm-card-avatar">
+                    {hasPhoto ? (
+                      <img src={photoSrc} alt={person.name} onError={e => { e.target.style.display = 'none' }} />
+                    ) : (
+                      <span className="hm-card-avatar-emoji">{tradeInfo?.emoji || '🔧'}</span>
+                    )}
+                  </Link>
+
+                  {/* Info */}
+                  <div className="hm-card-info">
+                    <Link to={`/business/${person.id}`} className="hm-card-name-link">
+                      <h3 className="hm-card-name">{person.name}</h3>
+                    </Link>
+                    {tradeInfo && (
+                      <span className="hm-card-trade">{tradeInfo.emoji} {tradeInfo.label}</span>
+                    )}
+                    <span className="hm-card-area">📍 {person.area}</span>
+                    {person.experience_years && (
+                      <span className="hm-card-exp">🛠️ {person.experience_years}+ years</span>
+                    )}
+                    {person.service_areas?.length > 0 && (
+                      <span className="hm-card-areas">Serves: {person.service_areas.join(', ')}</span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Actions */}
@@ -219,9 +240,9 @@ export default function Handymen() {
                       <ChatRegular fontSize={16} /> WhatsApp
                     </a>
                   )}
-                  {!hasPhone && !hasWhatsapp && (
-                    <span className="hm-card-no-contact">Contact via listing</span>
-                  )}
+                  <Link to={`/business/${person.id}`} className="hm-action-btn hm-action-view">
+                    View Profile →
+                  </Link>
                 </div>
               </div>
             )

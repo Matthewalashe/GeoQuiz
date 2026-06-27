@@ -1,9 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getWordGame } from '../lib/cms.js'
+import { getWordsForLevel, getDifficultyForLevel, getAllLocalWords } from '../data/wordBank.js'
 import { playCorrect, playWrong, playPinDrop, vibrate } from '../engine/audio.js'
+import { addXP } from '../engine/xp.js'
+import { calculateGameReward, addCoins } from '../engine/coinEconomy.js'
 import { autoSubmitScore } from '../engine/leaderboard.js'
+import { completeLevel } from '../lib/gameService.js'
+import { supabase } from '../lib/supabase.js'
 import ResultCard from './ResultCard.jsx'
+import GameContinueModal from './GameContinueModal.jsx'
 
 function shuffle(arr) {
   const a = [...arr]
@@ -22,40 +28,133 @@ function scrambleWord(word) {
   return scrambled
 }
 
+// ── Level difficulty scaling ──
+function getLevelConfig(level) {
+  const hints = Math.max(3 - Math.floor((level - 1) / 3), 1)
+  const wordsPerRound = 8
+  const passThreshold = Math.min(4 + Math.floor((level - 1) / 2), 8)
+  const difficulty = getDifficultyForLevel(level)
+  return { hints, wordsPerRound, passThreshold, difficulty }
+}
+
+// ── LocalStorage for dedup (tracks ALL word IDs ever used) ──
+const USED_KEY = 'wanda_word_used_ids'
+const LEVEL_KEY = 'wanda_word_level'
+
+function getUsedWordIds() {
+  try { return JSON.parse(localStorage.getItem(USED_KEY) || '[]') } catch { return [] }
+}
+function addUsedWordIds(ids) {
+  const merged = [...new Set([...getUsedWordIds(), ...ids])]
+  localStorage.setItem(USED_KEY, JSON.stringify(merged))
+}
+function getStoredLevel() {
+  return parseInt(localStorage.getItem(LEVEL_KEY) || '1', 10)
+}
+function setStoredLevel(level) {
+  localStorage.setItem(LEVEL_KEY, String(level))
+}
+
 export default function WordGame() {
   const navigate = useNavigate()
-  const [allWords, setAllWords] = useState([])
+  const [cmsWords, setCmsWords] = useState([])
   const [cmsLoading, setCmsLoading] = useState(true)
   const [cmsError, setCmsError] = useState(null)
+
+  // Level progression
+  const [level, setLevel] = useState(() => getStoredLevel())
+  const levelConfig = getLevelConfig(level)
+
+  // Build the word pool for current level: local bank + CMS, deduped
+  function pickWordsForLevel(lvl, cmsPool = []) {
+    const usedIds = getUsedWordIds()
+    const config = getLevelConfig(lvl)
+
+    // 1. Get words from the local bank for this difficulty
+    const localWords = getWordsForLevel(lvl, config.wordsPerRound, usedIds)
+
+    // 2. Also try CMS words — normalize to uppercase + add fallback fields
+    const normalizedCms = cmsPool.map(w => ({
+      ...w,
+      id: w.id || w.word,
+      word: (w.word || '').toUpperCase(),
+      clue: w.clue || w.description || '',
+      category: w.category || 'General',
+      description: w.description || '',
+      history: w.history || [],
+      footnotes: w.footnotes || [],
+    }))
+    const freshCms = normalizedCms.filter(w => !usedIds.includes(w.id))
+
+    // 3. Combine: prioritise local bank (difficulty-matched), fill gaps with CMS
+    let combined = [...localWords]
+    if (combined.length < config.wordsPerRound) {
+      const needed = config.wordsPerRound - combined.length
+      const cmsIds = new Set(combined.map(w => w.id))
+      const extras = freshCms.filter(w => !cmsIds.has(w.id || w.word)).slice(0, needed)
+      combined = [...combined, ...extras]
+    }
+
+    // 4. If still short (extremely unlikely with 100+ words), pull from any unused
+    if (combined.length < config.wordsPerRound) {
+      const allLocal = getAllLocalWords().filter(w => !usedIds.includes(w.id))
+      const existingIds = new Set(combined.map(w => w.id))
+      const backfill = allLocal.filter(w => !existingIds.has(w.id))
+      combined = [...combined, ...shuffle(backfill)].slice(0, config.wordsPerRound)
+    }
+
+    return shuffle(combined).slice(0, config.wordsPerRound)
+  }
 
   function loadWords() {
     setCmsLoading(true); setCmsError(null)
     getWordGame().then(({ data, error }) => {
-      if (error) { setCmsError(error); setCmsLoading(false); return }
-      setAllWords(data)
-      // Init first round
-      const solved = JSON.parse(localStorage.getItem('wanda_solved_words') || '[]')
-      const unsolved = data.filter(w => !solved.includes(w.word))
-      const pool = unsolved.length >= 8 ? unsolved : data
-      setWords(shuffle(pool).slice(0, 8))
+      // CMS errors are non-fatal — we have the local bank
+      if (!error && data) setCmsWords(data)
+      // Pick words for current level
+      const picked = pickWordsForLevel(level, data || [])
+      if (picked.length === 0) {
+        setCmsError('No words available. Please try again.')
+        setCmsLoading(false)
+        return
+      }
+      setWords(picked)
+      setCmsLoading(false)
+    }).catch(() => {
+      // Network error — use local bank only
+      const picked = pickWordsForLevel(level, [])
+      setWords(picked)
       setCmsLoading(false)
     })
   }
-  useEffect(() => { loadWords() }, [])
+  useEffect(() => { loadWords() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const [words, setWords] = useState([])
   const [idx, setIdx] = useState(0)
   const [scrambled, setScrambled] = useState([])
   const [placed, setPlaced] = useState([])
-  const [phase, setPhase] = useState('playing') // playing | solved | info | done
+  const [phase, setPhase] = useState('playing') // playing | solved | info | done | continue
   const [score, setScore] = useState(0)
   const [results, setResults] = useState([])
-  const [hints, setHints] = useState(3)
+  const [hints, setHints] = useState(() => getLevelConfig(getStoredLevel()).hints)
   const [attempts, setAttempts] = useState(0)
   const [showInfo, setShowInfo] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [showQuitModal, setShowQuitModal] = useState(false)
   const [pendingNav, setPendingNav] = useState(null)
+  const [showResultCard, setShowResultCard] = useState(false)
+  const [earnedXP, setEarnedXP] = useState(0)
+  const [earnedCoins, setEarnedCoins] = useState(0)
+
+  // Lock body scroll while game is mounted (except during info view)
+  useEffect(() => {
+    if (showInfo) {
+      document.body.style.overflow = 'auto'
+    } else {
+      document.body.style.overflow = 'hidden'
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [showInfo])
 
   const w = words[idx]
 
@@ -76,7 +175,6 @@ export default function WordGame() {
     if (phase !== 'playing') return
     playPinDrop()
 
-    // If clicking from placed → return to scrambled
     if (fromIdx !== undefined && placed[fromIdx]) {
       const returned = placed[fromIdx]
       setPlaced(prev => { const n = [...prev]; n[fromIdx] = null; return n })
@@ -84,7 +182,6 @@ export default function WordGame() {
       return
     }
 
-    // Place tile in first empty slot
     const emptyIdx = placed.indexOf(null)
     if (emptyIdx === -1) return
 
@@ -92,20 +189,22 @@ export default function WordGame() {
     setPlaced(prev => {
       const n = [...prev]
       n[emptyIdx] = tile
-      // Check if all slots filled
       if (n.every(t => t !== null)) {
         const attempt = n.map(t => t.letter).join('')
         if (attempt === w.word) {
-          // Correct!
           setTimeout(() => {
             playCorrect(); vibrate([80])
             const pts = Math.max(100 - attempts * 20, 20)
             setScore(prev => prev + pts)
             setResults(prev => [...prev, { word: w, pts, attempts: attempts + 1 }])
+            // Award XP per correct answer
+            try {
+              const xpResult = addXP('CORRECT_ANSWER')
+              setEarnedXP(prev => prev + (xpResult?.xpAdded || 10))
+            } catch {}
             setPhase('solved')
           }, 200)
         } else {
-          // Wrong — shake and return all
           setAttempts(prev => prev + 1)
           playWrong(); vibrate([30, 50, 30])
           setTimeout(() => {
@@ -121,15 +220,12 @@ export default function WordGame() {
 
   function useHint() {
     if (hints <= 0 || phase !== 'playing') return
-    // Find first empty or wrong slot and fill with correct letter
     const currentPlaced = [...placed]
     for (let i = 0; i < w.word.length; i++) {
       if (!currentPlaced[i] || currentPlaced[i].letter !== w.word[i]) {
-        // Return existing tile if any
         if (currentPlaced[i]) {
           setScrambled(prev => [...prev, currentPlaced[i]])
         }
-        // Find correct tile in scrambled
         const correctLetter = w.word[i]
         const tile = scrambled.find(t => t.letter === correctLetter)
         if (tile) {
@@ -138,7 +234,6 @@ export default function WordGame() {
           setPlaced([...currentPlaced])
           setHints(prev => prev - 1)
           playPinDrop()
-          // Check if solved
           if (currentPlaced.every((t, j) => t && t.letter === w.word[j])) {
             setTimeout(() => {
               playCorrect(); vibrate([80])
@@ -155,20 +250,90 @@ export default function WordGame() {
   }
 
   function showDetails() { setShowInfo(true); setPhase('info') }
+  function backToGame() { setShowInfo(false); setPhase('solved') }
 
   function next() {
     if (idx + 1 >= words.length) {
-      setPhase('done')
+      // Round complete — show continue modal
       const maxPts = words.length * 100
-      autoSubmitScore({ gameType: 'word', score, maxScore: maxPts, questionCount: words.length })
-      // Track solved words
-      const solved = JSON.parse(localStorage.getItem('wanda_solved_words') || '[]')
-      const newSolved = [...new Set([...solved, ...results.filter(r => r.pts > 0).map(r => r.word.word)])]
-      if (newSolved.length >= allWords.length) localStorage.setItem('wanda_solved_words', '[]')
-      else localStorage.setItem('wanda_solved_words', JSON.stringify(newSolved))
+      // Award completion XP
+      try {
+        const xpResult = addXP('WORD_COMPLETE')
+        setEarnedXP(prev => prev + (xpResult?.xpAdded || 70))
+      } catch {}
+      // Award coins based on score
+      try {
+        const coins = calculateGameReward(score, maxPts)
+        if (coins > 0) {
+          addCoins(coins, 'Word Game reward')
+          setEarnedCoins(coins)
+        }
+      } catch {}
+      autoSubmitScore({ gameType: 'guessword', score, maxScore: maxPts, questionCount: words.length })
+      // Track used word IDs so they NEVER repeat
+      addUsedWordIds(words.map(w => w.id || w.word))
+      setPhase('continue')
       return
     }
     setIdx(prev => prev + 1)
+  }
+
+  // ── Continue modal handlers ──
+  const correctCount = results.filter(r => r.pts > 0).length
+  const passed = correctCount >= levelConfig.passThreshold
+
+  async function syncLevelToDb(lvl, didPass) {
+    // Sync with Supabase so LevelSelect shows correct progress
+    try {
+      if (!supabase) return
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user?.id) return
+      await completeLevel(
+        session.user.id,
+        'guessword',     // gameType slug matching game_config
+        lvl,
+        correctCount,
+        words.length,
+        results.map(r => ({
+          question_id: r.word?.id || r.word?.word,
+          was_correct: r.pts > 0
+        }))
+      )
+    } catch (e) {
+      console.warn('Level sync failed (non-fatal):', e.message)
+    }
+  }
+
+  function handleContinue() {
+    // Passed → unlock next level
+    const nextLevel = level + 1
+    setStoredLevel(nextLevel)
+    setLevel(nextLevel)
+    // Sync to DB
+    syncLevelToDb(level, true)
+    // Reset game state for next level
+    const nextConfig = getLevelConfig(nextLevel)
+    const picked = pickWordsForLevel(nextLevel, cmsWords)
+    setWords(picked)
+    setIdx(0); setScore(0); setResults([]); setHints(nextConfig.hints)
+    setEarnedXP(0); setEarnedCoins(0)
+    setPhase('playing')
+    setShowResultCard(false)
+  }
+
+  function handleReplay() {
+    // Failed → replay same level with fresh words
+    syncLevelToDb(level, false)
+    const picked = pickWordsForLevel(level, cmsWords)
+    setWords(picked)
+    setIdx(0); setScore(0); setResults([]); setHints(levelConfig.hints)
+    setEarnedXP(0); setEarnedCoins(0)
+    setPhase('playing')
+    setShowResultCard(false)
+  }
+
+  function handleCancel() {
+    navigate('/play')
   }
 
   if (cmsLoading) return <div className="game-lobby"><div className="lb-empty">Loading word game...</div></div>
@@ -184,8 +349,30 @@ export default function WordGame() {
   )
   if (words.length === 0) return null
 
-  // Final results
-  if (phase === 'done') {
+  // ── Continue Modal (pass/fail gateway) ──
+  if (phase === 'continue' && !showResultCard) {
+    return (
+      <GameContinueModal
+        passed={passed}
+        level={level}
+        score={score}
+        maxScore={words.length * 100}
+        correctCount={correctCount}
+        totalQuestions={words.length}
+        passThreshold={levelConfig.passThreshold}
+        gameTitle="Guess the Word"
+        gameEmoji="🔤"
+        xpEarned={earnedXP}
+        coinsEarned={earnedCoins}
+        onContinue={handleContinue}
+        onReplay={handleReplay}
+        onCancel={handleCancel}
+      />
+    )
+  }
+
+  // ── Final results ──
+  if (phase === 'done' || showResultCard) {
     return (
       <section className="wg-results">
         <ResultCard
@@ -198,8 +385,12 @@ export default function WordGame() {
           gameEmoji="🔤"
           gameType="word"
           onPlayAgain={() => {
-            setIdx(0); setScore(0); setResults([]); setHints(3)
+            const picked = pickWordsForLevel(level, cmsWords)
+            setWords(picked)
+            setIdx(0); setScore(0); setResults([]); setHints(levelConfig.hints)
+            setEarnedXP(0); setEarnedCoins(0)
             setPhase('playing')
+            setShowResultCard(false)
           }}
         >
           <div className="wg-results-list">
@@ -220,6 +411,9 @@ export default function WordGame() {
   if (showInfo) {
     return (
       <section className="wg-info">
+        <button className="wg-info-back" onClick={backToGame}>
+          ← Back to Game
+        </button>
         <div className="wg-info-card">
           {w.image && <img src={w.image} alt={w.word} className="wg-info-img" />}
           <div className="wg-info-badge">{w.category}</div>
@@ -236,7 +430,7 @@ export default function WordGame() {
             ))}
           </div>
 
-          {w.footnotes && (
+          {w.footnotes && w.footnotes.length > 0 && (
             <div className="wg-footnotes">
               <h5>Sources</h5>
               {w.footnotes.map((f, i) => (
@@ -292,6 +486,7 @@ export default function WordGame() {
       <div className="game-hud" style={{ borderImage: 'none', borderColor: 'var(--border)' }}>
         <div className="hud-left">
           <span className="hud-counter">🔤 {idx + 1}/{words.length}</span>
+          <span className="wg-level-pill">Lv.{level}</span>
         </div>
         <div className="hud-right">
           <span className="hud-score">{score} pts</span>
@@ -339,9 +534,25 @@ export default function WordGame() {
         <button className="wg-hint-btn" onClick={useHint} disabled={hints <= 0 || phase !== 'playing'}>
           💡 Hint ({hints})
         </button>
+        {attempts >= 3 && phase === 'playing' && (
+          <button className="wg-reveal-btn" onClick={() => {
+            const correctTiles = w.word.split('').map((ch, i) => ({ id: `r-${i}`, letter: ch }))
+            setPlaced(correctTiles)
+            setScrambled([])
+            setPhase('revealed')
+            setResults(prev => [...prev, { word: w, pts: 0, attempts, revealed: true }])
+            playWrong()
+          }}>
+            Show Answer
+          </button>
+        )}
         <button className="wg-skip-btn" onClick={() => {
+          const correctTiles = w.word.split('').map((ch, i) => ({ id: `r-${i}`, letter: ch }))
+          setPlaced(correctTiles)
+          setScrambled([])
+          setPhase('skipped')
           setResults(prev => [...prev, { word: w, pts: 0, attempts, skipped: true }])
-          next()
+          playWrong()
         }}>
           Skip →
         </button>
@@ -353,9 +564,32 @@ export default function WordGame() {
           <div className="wg-solved-text">
             <span className="wg-solved-check">✓</span> Correct!
           </div>
-          <button className="wg-details-btn" onClick={showDetails}>
-            Learn More →
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button className="wg-details-btn" onClick={showDetails} style={{ background: 'transparent', border: '2px solid var(--primary)', color: 'var(--primary)' }}>
+              Learn More →
+            </button>
+            <button className="wg-details-btn" onClick={next} style={{ background: 'var(--primary)', color: '#fff' }}>
+              {idx + 1 >= words.length ? 'Results' : 'Next'} →
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Skipped / Revealed state */}
+      {(phase === 'skipped' || phase === 'revealed') && (
+        <div className="wg-solved-bar" style={{ background: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.3)' }}>
+          <div className="wg-solved-text" style={{ color: '#ef4444' }}>
+            <span className="wg-solved-check" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' }}>✗</span>
+            Answer: <strong style={{ marginLeft: '0.3rem' }}>{w.word}</strong>
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button className="wg-details-btn" onClick={showDetails}>
+              Learn More →
+            </button>
+            <button className="wg-details-btn" onClick={next} style={{ background: 'var(--primary)', color: '#fff' }}>
+              {idx + 1 >= words.length ? 'Results' : 'Next'} →
+            </button>
+          </div>
         </div>
       )}
       </div>

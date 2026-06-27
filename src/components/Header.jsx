@@ -11,7 +11,7 @@ import {
   SettingsRegular, MapRegular, HeartRegular, StoreMicrosoftRegular,
   GiftRegular, PersonRegular, TrophyRegular, SignOutRegular,
   PeopleRegular, NavigationRegular, DismissRegular,
-  WrenchRegular, StarRegular, DataBarVerticalRegular,
+  WrenchRegular, StarRegular, DataBarVerticalRegular, ShareRegular,
 } from '@fluentui/react-icons'
 
 /** Generate a consistent gradient from a string (username) */
@@ -55,6 +55,7 @@ const MENU_ITEMS = [
   { to: '/community', label: 'Community', icon: <PeopleRegular />, section: 'discover' },
   { to: '/leaderboard', label: 'Leaderboard', icon: <TrophyRegular />, section: 'discover' },
   { to: '/rewards', label: 'Rewards', icon: <StarRegular />, section: 'discover' },
+  { to: '/flyer', label: 'Share Flyer', icon: <ShareRegular />, section: 'discover' },
 ]
 
 export default function Header({ theme, toggleTheme, session, profile, unreadNotifs = 0 }) {
@@ -143,11 +144,11 @@ export default function Header({ theme, toggleTheme, session, profile, unreadNot
           {admin && <Link to="/admin" className={pathname === '/admin' ? 'active' : ''} style={{ color: '#a78bfa', display: 'flex', alignItems: 'center', gap: '0.2rem' }}><SettingsRegular fontSize={16} /> CMS</Link>}
         </nav>
 
-        {/* Right: Menu button only */}
+        {/* Right: Profile picture (opens drawer) or Sign In */}
         <div className="header-right">
           {session ? (
-            <button className="header-menu-btn" onClick={() => setMenuOpen(true)} aria-label="Menu">
-              <NavigationRegular fontSize={22} />
+            <button className="header-menu-btn header-profile-btn" onClick={() => setMenuOpen(true)} aria-label="Profile menu">
+              <ProfileImg profile={profile} size={34} />
             </button>
           ) : (
             <Link to="/auth" className="header-signin">Sign In</Link>
@@ -158,7 +159,7 @@ export default function Header({ theme, toggleTheme, session, profile, unreadNot
       {/* ═══ SLIDE-OUT MENU DRAWER ═══ */}
       {menuOpen && <div className="menu-overlay" onClick={() => setMenuOpen(false)} />}
       <div className={`menu-drawer ${menuOpen ? 'open' : ''}`} ref={drawerRef}>
-        <button className="menu-close" onClick={() => setMenuOpen(false)}><DismissRegular fontSize={20} /></button>
+        <button className="menu-close" onClick={() => setMenuOpen(false)}><DismissRegular fontSize={24} /></button>
 
         {/* Profile card */}
         <div className="menu-profile" onClick={() => handleMenuNav({ to: '/dashboard' })}>
@@ -182,7 +183,7 @@ export default function Header({ theme, toggleTheme, session, profile, unreadNot
             <span className="menu-level-title">{title.emoji} {title.title}</span>
           </Link>
           <button className="menu-theme-btn" onClick={toggleTheme} aria-label="Toggle theme">
-            {theme === 'dark' ? <WeatherSunnyRegular fontSize={18} /> : <WeatherMoonRegular fontSize={18} />}
+            {theme === 'dark' ? <WeatherSunnyRegular fontSize={22} /> : <WeatherMoonRegular fontSize={22} />}
             <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
           </button>
         </div>
@@ -234,24 +235,24 @@ export default function Header({ theme, toggleTheme, session, profile, unreadNot
       {/* ═══ MOBILE BOTTOM TAB BAR — 5 flat tabs ═══ */}
       <nav className="mobile-tab-bar">
         <Link to="/" className={`tab-item ${pathname === '/' ? 'active' : ''}`}>
-          <span className="tab-icon"><HomeRegular fontSize={22} /></span>
+          <span className="tab-icon"><HomeRegular fontSize={26} /></span>
           <span className="tab-label">Home</span>
         </Link>
         <Link to="/explore" className={`tab-item ${pathname.startsWith('/explore') ? 'active' : ''}`}>
-          <span className="tab-icon"><CompassNorthwestRegular fontSize={22} /></span>
+          <span className="tab-icon"><CompassNorthwestRegular fontSize={26} /></span>
           <span className="tab-label">Explore</span>
         </Link>
         <Link to="/play" className={`tab-item ${pathname === '/play' ? 'active' : ''}`}>
-          <span className="tab-icon"><PlayCircleRegular fontSize={22} /></span>
+          <span className="tab-icon"><PlayCircleRegular fontSize={26} /></span>
           <span className="tab-label">Games</span>
         </Link>
         <Link to="/pass" className={`tab-item ${pathname === '/pass' ? 'active' : ''}`}>
-          <span className="tab-icon"><TicketDiagonalRegular fontSize={22} /></span>
+          <span className="tab-icon"><TicketDiagonalRegular fontSize={26} /></span>
           <span className="tab-label">Pass</span>
         </Link>
         <Link to="/notifications" className={`tab-item ${pathname === '/notifications' ? 'active' : ''}`}>
           <span className="tab-icon tab-notif-wrap">
-            <AlertRegular fontSize={22} />
+            <AlertRegular fontSize={26} />
             {localUnread > 0 && <span className="tab-notif-badge">{localUnread > 9 ? '9+' : localUnread}</span>}
           </span>
           <span className="tab-label">Alerts</span>

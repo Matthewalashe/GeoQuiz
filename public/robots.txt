@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /auth
+Disallow: /notifications
+Disallow: /dashboard
+Disallow: /pass/create
+Disallow: /results
+Disallow: /game
+Disallow: /quiz
+
+Sitemap: https://visitnaija.online/sitemap.xml

@@ -9,7 +9,8 @@ import {
   DismissCircleRegular, MailInboxRegular, WrenchRegular, PeopleRegular,
   PersonRegular, ShieldCheckmarkRegular, EditRegular,
   CoinMultipleRegular, StoreMicrosoftRegular, PlayCircleRegular,
-  ArrowSortRegular, BookQuestionMarkRegular, CalendarRegular
+  ArrowSortRegular, BookQuestionMarkRegular, CalendarRegular,
+  ImageRegular, TextFontRegular, GlobeRegular
 } from '@fluentui/react-icons'
 
 // Section configs
@@ -20,7 +21,10 @@ const SECTIONS = [
   { id: 'sponsors', label: 'Sponsors', icon: <DiamondRegular />, table: 'cms_sponsors' },
   { id: 'discovery', label: 'Discovery', icon: <MapRegular />, table: 'cms_discovery' },
   { id: 'questions', label: 'Questions', icon: <QuestionRegular />, table: 'cms_questions' },
-  { id: 'submissions', label: 'Submissions', icon: <MailInboxRegular /> },
+  { id: 'wordgame', label: 'Word Game', icon: <TextFontRegular />, table: 'cms_wordgame' },
+  { id: 'submissions', label: 'Submissions', icon: <MailInboxRegular />, },
+  { id: 'hero_page', label: 'Hero Page', icon: <ImageRegular /> },
+  { id: 'seo_og', label: 'SEO / OG Images', icon: <GlobeRegular /> },
   { id: 'users', label: 'Users', icon: <PeopleRegular /> },
   { id: 'settings', label: 'Settings', icon: <SettingsRegular /> },
   // ─── Game Engine Config ───
@@ -113,6 +117,17 @@ const FIELD_DEFS = {
     { key: 'fun_fact', label: 'Fun Fact', type: 'textarea', full: true },
     { key: 'status', label: 'Status', type: 'select', options: ['draft','published','archived'] },
   ],
+  cms_wordgame: [
+    { key: 'word_id', label: 'Word ID', type: 'text', required: true, placeholder: 'e.g. w-101' },
+    { key: 'word', label: 'Word', type: 'text', required: true, placeholder: 'e.g. LAGOS' },
+    { key: 'clue', label: 'Clue', type: 'text', required: true, full: true, placeholder: 'A hint to help players guess' },
+    { key: 'category', label: 'Category', type: 'select', options: ['Place','Person','Culture','Food','Nature','History','Language','Sport','Music','Art'] },
+    { key: 'image', label: 'Image URL', type: 'text', full: true },
+    { key: 'description', label: 'Description', type: 'textarea', required: true, full: true },
+    { key: 'history', label: 'History Notes (JSON array)', type: 'textarea', full: true, placeholder: '["Fact 1", "Fact 2", "Fact 3"]' },
+    { key: 'footnotes', label: 'Footnotes (JSON array)', type: 'textarea', full: true, placeholder: '["Source 1", "Source 2"]' },
+    { key: 'sort_order', label: 'Sort Order', type: 'number' },
+  ],
 }
 
 const TABLE_COLS = {
@@ -121,6 +136,7 @@ const TABLE_COLS = {
   cms_sponsors: ['brand','tier','active','status'],
   cms_discovery: ['name','category','area','rating','sponsored','status'],
   cms_questions: ['question','category','difficulty','region','status'],
+  cms_wordgame: ['word','clue','category','sort_order'],
 }
 
 function Toast({ msg, type, onClose }) {
@@ -465,7 +481,7 @@ function Overview() {
 
   useEffect(() => {
     async function load() {
-      const tables = ['cms_listings','cms_deals','cms_sponsors','cms_discovery','cms_questions']
+      const tables = ['cms_listings','cms_deals','cms_sponsors','cms_discovery','cms_questions','cms_wordgame']
       const s = {}
       for (const t of tables) {
         try { s[t] = (await adminFetch(t)).length } catch { s[t] = 0 }
@@ -480,7 +496,7 @@ function Overview() {
     load()
   }, [])
 
-  const totalContent = (stats.cms_listings || 0) + (stats.cms_deals || 0) + (stats.cms_sponsors || 0) + (stats.cms_discovery || 0) + (stats.cms_questions || 0)
+  const totalContent = (stats.cms_listings || 0) + (stats.cms_deals || 0) + (stats.cms_sponsors || 0) + (stats.cms_discovery || 0) + (stats.cms_questions || 0) + (stats.cms_wordgame || 0)
 
   return (
     <>
@@ -491,6 +507,7 @@ function Overview() {
         <div className="admin-stat-card"><div className="stat-icon"><DiamondRegular /></div><div className="stat-value">{stats.cms_sponsors || 0}</div><div className="stat-label">Sponsors</div></div>
         <div className="admin-stat-card"><div className="stat-icon"><MapRegular /></div><div className="stat-value">{stats.cms_discovery || 0}</div><div className="stat-label">Discovery</div></div>
         <div className="admin-stat-card"><div className="stat-icon"><QuestionRegular /></div><div className="stat-value">{stats.cms_questions || 0}</div><div className="stat-label">Questions</div></div>
+        <div className="admin-stat-card"><div className="stat-icon"><TextFontRegular /></div><div className="stat-value">{stats.cms_wordgame || 0}</div><div className="stat-label">Word Game</div></div>
         <div className="admin-stat-card"><div className="stat-icon"><PeopleRegular /></div><div className="stat-value">{userCount}</div><div className="stat-label">Users</div></div>
       </div>
 
@@ -517,6 +534,14 @@ const SETTINGS_DEFAULTS = {
   site_tagline: 'Experience Nigeria',
   contact_email: '',
   features: '{"deals":true,"discovery":true,"community":true,"explore":true}',
+  hero_slides: JSON.stringify([
+    { title: 'Explore Places', subtitle: 'Attractions, restaurants, hotels & hidden gems', cta: 'Explore Now', link: '/explore', img: '/images/sites/nike-art_image_1.jpg', emoji: '🗺️' },
+    { title: 'Events & Experiences', subtitle: 'Tours, concerts, cultural experiences near you', cta: 'Browse Events', link: '/explore?category=experience', img: '/images/sites/freedom-park_image_1.jpg', emoji: '🎉' },
+    { title: 'Join Wanda App', subtitle: 'Save places, earn points & compete — for free', cta: 'Join Free', link: '/auth', img: '/images/sites/lekki-conservation_image_1.jpg', emoji: '🚀' },
+    { title: 'List Your Business', subtitle: 'Get discovered by thousands of users', cta: 'Get Started', link: '/list-your-business', img: '/images/sites/bungalow-ikoyi_image_1.jpg', emoji: '🏪' },
+    { title: 'Play & Win', subtitle: 'Quizzes, trivia games & daily rewards', cta: 'Play Now', link: '/play', img: '/images/sites/new-afrika-shrine_image_1.jpg', emoji: '🎮' },
+    { title: 'Find a Service', subtitle: 'Artisans, plumbers, electricians & more', cta: 'Find Now', link: '/handymen', img: '/images/sites/craft-gourmet_image_1.jpg', emoji: '🔧' },
+  ], null, 2),
 }
 
 const SETTINGS_DESCRIPTIONS = {
@@ -524,6 +549,7 @@ const SETTINGS_DESCRIPTIONS = {
   site_tagline: 'A short tagline or subtitle shown alongside the site name.',
   contact_email: 'Primary contact email for admin notifications and support.',
   features: 'JSON object toggling platform features on/off (deals, discovery, community, explore).',
+  hero_slides: 'JSON array of homepage hero carousel cards. Each card: { title, subtitle, cta, link, img, emoji }. "link" is where the card navigates (internal path like /explore or external URL). "img" is the background image. "emoji" is optional decorative icon.',
 }
 
 function SettingsSection({ session }) {
@@ -598,6 +624,167 @@ function SettingsSection({ session }) {
             {saving ? 'Saving...' : 'Save Settings'}
           </button>
         </div>
+      </div>
+      {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
+    </>
+  )
+}
+
+// ─── HERO PAGE SECTION (visual carousel editor) ─────────────
+const HERO_DEFAULT_SLIDES = [
+  { title: 'Explore Places', subtitle: 'Attractions, restaurants, hotels & hidden gems', cta: 'Explore Now', link: '/explore', img: '/images/sites/nike-art_image_1.jpg', emoji: '🗺️' },
+  { title: 'Events & Experiences', subtitle: 'Tours, concerts, cultural experiences near you', cta: 'Browse Events', link: '/explore?category=experience', img: '/images/sites/freedom-park_image_1.jpg', emoji: '🎉' },
+  { title: 'Join Wanda App', subtitle: 'Save places, earn points & compete — for free', cta: 'Join Free', link: '/auth', img: '/images/sites/lekki-conservation_image_1.jpg', emoji: '🚀' },
+  { title: 'List Your Business', subtitle: 'Get discovered by thousands of users', cta: 'Get Started', link: '/list-your-business', img: '/images/sites/bungalow-ikoyi_image_1.jpg', emoji: '🏪' },
+  { title: 'Play & Win', subtitle: 'Quizzes, trivia games & daily rewards', cta: 'Play Now', link: '/play', img: '/images/sites/new-afrika-shrine_image_1.jpg', emoji: '🎮' },
+  { title: 'Find a Service', subtitle: 'Artisans, plumbers, electricians & more', cta: 'Find Now', link: '/handymen', img: '/images/sites/craft-gourmet_image_1.jpg', emoji: '🔧' },
+]
+
+function HeroPageSection({ session }) {
+  const [slides, setSlides] = useState([])
+  const [editing, setEditing] = useState(null)
+  const [form, setForm] = useState({ title: '', subtitle: '', cta: '', link: '', img: '', emoji: '' })
+  const [saving, setSaving] = useState(false)
+  const [toast, setToast] = useState(null)
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const { adminFetch: af } = await import('../../lib/cms.js')
+        const rows = await af('cms_config')
+        const heroRow = rows.find(r => r.key === 'hero_slides')
+        if (heroRow?.value && Array.isArray(heroRow.value)) {
+          setSlides(heroRow.value)
+        } else if (heroRow?.value && typeof heroRow.value === 'string') {
+          try { setSlides(JSON.parse(heroRow.value)) } catch { setSlides(HERO_DEFAULT_SLIDES) }
+        } else {
+          setSlides(HERO_DEFAULT_SLIDES)
+        }
+      } catch {
+        setSlides(HERO_DEFAULT_SLIDES)
+      }
+    }
+    load()
+  }, [])
+
+  async function saveSlides(updated) {
+    setSaving(true)
+    try {
+      const { adminUpdateConfig } = await import('../../lib/cms.js')
+      await adminUpdateConfig('hero_slides', updated, session.user.id)
+      setSlides(updated)
+      setToast({ msg: 'Hero slides saved!', type: 'success' })
+    } catch (e) {
+      setToast({ msg: e.message || 'Failed to save', type: 'error' })
+    }
+    setSaving(false)
+  }
+
+  function openEdit(idx) { setForm({ ...slides[idx] }); setEditing(idx) }
+  function openNew() { setForm({ title: '', subtitle: '', cta: 'Learn More', link: '/', img: '', emoji: '✨' }); setEditing('new') }
+  function handleSave() {
+    if (!form.title.trim()) return
+    const updated = [...slides]
+    if (editing === 'new') updated.push({ ...form })
+    else updated[editing] = { ...form }
+    setEditing(null)
+    saveSlides(updated)
+  }
+  function handleDelete(idx) { saveSlides(slides.filter((_, i) => i !== idx)) }
+  function moveSlide(idx, dir) {
+    const updated = [...slides]
+    const t = idx + dir
+    if (t < 0 || t >= updated.length) return
+    ;[updated[idx], updated[t]] = [updated[t], updated[idx]]
+    saveSlides(updated)
+  }
+
+  const cs = { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '0.75rem', padding: '1rem', display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '0.75rem' }
+  const is = { width: 80, height: 50, objectFit: 'cover', borderRadius: '0.5rem', background: 'rgba(255,255,255,0.06)', flexShrink: 0 }
+
+  return (
+    <>
+      <div className="admin-table-wrap" style={{ padding: '1.5rem' }}>
+        <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'rgba(200,150,62,0.08)', borderRadius: '0.75rem', border: '1px solid rgba(200,150,62,0.2)' }}>
+          <h3 style={{ color: '#fff', fontSize: '0.95rem', marginBottom: '0.5rem' }}>🖼️ Hero Carousel</h3>
+          <p style={{ color: '#94a3b8', fontSize: '0.8rem', margin: 0, lineHeight: 1.6 }}>
+            Manage the homepage hero carousel slides. Each slide has a title, subtitle, CTA button, link, background image, and emoji.
+            Changes take effect immediately on the homepage.
+          </p>
+        </div>
+
+        {slides.map((slide, i) => (
+          <div key={i} style={cs}>
+            {slide.img ? <img src={slide.img} alt="" style={is} /> : <div style={{ ...is, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>{slide.emoji || '🖼️'}</div>}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 600, color: '#fff', fontSize: '0.85rem' }}>{slide.emoji} {slide.title}</div>
+              <div style={{ color: '#94a3b8', fontSize: '0.75rem', marginTop: '0.2rem' }}>{slide.subtitle}</div>
+              <div style={{ color: '#64748b', fontSize: '0.7rem', marginTop: '0.2rem' }}>CTA: &quot;{slide.cta}&quot; → {slide.link}</div>
+            </div>
+            <div style={{ display: 'flex', gap: '0.3rem', flexShrink: 0 }}>
+              <button onClick={() => moveSlide(i, -1)} disabled={i === 0} style={{ background: 'none', border: 'none', color: i === 0 ? '#334155' : '#94a3b8', cursor: 'pointer', fontSize: '1rem' }} title="Move up">▲</button>
+              <button onClick={() => moveSlide(i, 1)} disabled={i === slides.length - 1} style={{ background: 'none', border: 'none', color: i === slides.length - 1 ? '#334155' : '#94a3b8', cursor: 'pointer', fontSize: '1rem' }} title="Move down">▼</button>
+              <button onClick={() => openEdit(i)} style={{ background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.3)', color: '#38bdf8', borderRadius: '0.4rem', padding: '0.3rem 0.6rem', cursor: 'pointer', fontSize: '0.7rem' }}>Edit</button>
+              <button onClick={() => handleDelete(i)} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', borderRadius: '0.4rem', padding: '0.3rem 0.6rem', cursor: 'pointer', fontSize: '0.7rem' }}>Delete</button>
+            </div>
+          </div>
+        ))}
+
+        <button onClick={openNew} className="admin-btn admin-btn-primary" style={{ marginTop: '1rem' }}>+ Add Slide</button>
+
+        {editing !== null && (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setEditing(null)}>
+            <div style={{ background: '#1e293b', borderRadius: '1rem', padding: '1.5rem', width: '90%', maxWidth: 480, maxHeight: '80vh', overflow: 'auto' }} onClick={e => e.stopPropagation()}>
+              <h3 style={{ color: '#fff', marginBottom: '1rem' }}>{editing === 'new' ? '➕ New Slide' : '✏️ Edit Slide'}</h3>
+              {['title', 'subtitle', 'cta', 'link', 'emoji'].map(field => (
+                <div key={field} style={{ marginBottom: '0.75rem' }}>
+                  <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.75rem', marginBottom: '0.3rem', textTransform: 'capitalize' }}>{field === 'cta' ? 'CTA Button Text' : field}</label>
+                  <input
+                    type="text"
+                    value={form[field] || ''}
+                    onChange={e => setForm(prev => ({ ...prev, [field]: e.target.value }))}
+                    style={{ width: '100%', padding: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.5rem', color: '#fff', fontSize: '0.85rem', boxSizing: 'border-box' }}
+                    placeholder={field === 'link' ? '/explore or https://...' : ''}
+                  />
+                </div>
+              ))}
+              {/* Image field with upload */}
+              <div style={{ marginBottom: '0.75rem' }}>
+                <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.75rem', marginBottom: '0.3rem' }}>Image</label>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <input
+                    type="text"
+                    value={form.img || ''}
+                    onChange={e => setForm(prev => ({ ...prev, img: e.target.value }))}
+                    style={{ flex: 1, padding: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.5rem', color: '#fff', fontSize: '0.85rem', boxSizing: 'border-box' }}
+                    placeholder="/images/sites/my-image.jpg or paste URL"
+                  />
+                  <label style={{ padding: '0.5rem 0.75rem', background: 'rgba(200,150,62,0.15)', border: '1px solid rgba(200,150,62,0.3)', borderRadius: '0.5rem', color: '#C8963E', cursor: 'pointer', fontSize: '0.8rem', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    📷 Upload
+                    <input type="file" accept="image/*" hidden onChange={async e => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      try {
+                        setSaving(true)
+                        const { uploadFile: uf } = await import('../../lib/cms.js')
+                        const url = await uf(file, 'hero')
+                        if (url) setForm(prev => ({ ...prev, img: url }))
+                      } catch (err) {
+                        setToast({ msg: 'Upload failed: ' + (err.message || ''), type: 'error' })
+                      }
+                      setSaving(false)
+                    }} />
+                  </label>
+                </div>
+              </div>
+              {form.img && <img src={form.img} alt="Preview" style={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: '0.5rem', marginBottom: '0.75rem' }} />}
+              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                <button onClick={() => setEditing(null)} style={{ padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.5rem', color: '#94a3b8', cursor: 'pointer' }}>Cancel</button>
+                <button onClick={handleSave} disabled={saving} className="admin-btn admin-btn-primary">{saving ? 'Saving...' : editing === 'new' ? 'Add Slide' : 'Save Changes'}</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
     </>
@@ -1216,6 +1403,175 @@ function SubmissionsSection({ session }) {
   )
 }
 
+// ─── SEO / OG IMAGE MANAGEMENT ──────────────────────────────────────
+// Stores OG image URLs per route in cms_config under the key 'seo_og_images'.
+// The OG images are referenced by the SEO.jsx component and served to crawlers
+// via the Vercel serverless function (api/og.js) and Cloudflare middleware.
+
+const SEO_ROUTES = [
+  { path: '/', label: 'Home', key: 'home' },
+  { path: '/explore', label: 'Explore', key: 'explore' },
+  { path: '/play', label: 'Play Games', key: 'play' },
+  { path: '/pass', label: 'Wanda Pass', key: 'pass' },
+  { path: '/list-your-business', label: 'List Your Business', key: 'listBusiness' },
+  { path: '/handymen', label: 'Handymen', key: 'handymen' },
+  { path: '/about', label: 'About', key: 'about' },
+  { path: '/leaderboard', label: 'Leaderboard', key: 'leaderboard' },
+  { path: '/community', label: 'Community', key: 'community' },
+  { path: '/deals', label: 'Deals', key: 'deals' },
+  { path: '/discovery', label: 'Discovery', key: 'discovery' },
+  { path: '/rewards', label: 'Rewards', key: 'rewards' },
+  { path: '/wordgame', label: 'Word Game', key: 'wordGame' },
+  { path: '/trivia', label: 'Trivia', key: 'trivia' },
+  { path: '/challenge', label: 'Challenge', key: 'challenge' },
+]
+
+const DEFAULT_OG_IMAGES = {
+  home: '/og/og-home.png',
+  explore: '/og/og-explore.png',
+  play: '/og/og-play.png',
+  pass: '/og/og-pass.png',
+  listBusiness: '/og/og-list-business.png',
+  handymen: '/og/og-handymen.png',
+  about: '/og/og-home.png',
+  leaderboard: '/og/og-play.png',
+  community: '/og/og-home.png',
+  deals: '/og/og-explore.png',
+  discovery: '/og/og-explore.png',
+  rewards: '/og/og-play.png',
+  wordGame: '/og/og-play.png',
+  trivia: '/og/og-play.png',
+  challenge: '/og/og-play.png',
+}
+
+function SEOSection({ session }) {
+  const [images, setImages] = useState({ ...DEFAULT_OG_IMAGES })
+  const [saving, setSaving] = useState(false)
+  const [toast, setToast] = useState(null)
+  const [uploading, setUploading] = useState(null) // which route key is uploading
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const { getConfig } = await import('../../lib/cms.js')
+        const saved = await getConfig('seo_og_images')
+        if (saved && typeof saved === 'object') {
+          setImages(prev => ({ ...prev, ...saved }))
+        }
+      } catch { /* use defaults */ }
+    }
+    load()
+  }, [])
+
+  async function save() {
+    setSaving(true)
+    try {
+      const { adminUpdateConfig } = await import('../../lib/cms.js')
+      await adminUpdateConfig('seo_og_images', images, session.user.id)
+      setToast({ msg: 'OG images saved! Deploy to apply.', type: 'success' })
+    } catch (e) {
+      setToast({ msg: e.message, type: 'error' })
+    }
+    setSaving(false)
+  }
+
+  async function handleUpload(routeKey, e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(routeKey)
+    try {
+      const { uploadFile } = await import('../../lib/cms.js')
+      const url = await uploadFile(file, 'og')
+      setImages(prev => ({ ...prev, [routeKey]: url }))
+      setToast({ msg: 'Image uploaded', type: 'success' })
+    } catch (err) {
+      setToast({ msg: 'Upload failed: ' + err.message, type: 'error' })
+    }
+    setUploading(null)
+  }
+
+  const cardStyle = {
+    background: 'rgba(255,255,255,0.04)',
+    border: '1px solid rgba(255,255,255,0.08)',
+    borderRadius: '0.75rem',
+    padding: '1rem',
+    marginBottom: '0.75rem',
+  }
+  const imgPreview = {
+    width: '100%',
+    maxWidth: 300,
+    aspectRatio: '1200/630',
+    objectFit: 'cover',
+    borderRadius: '0.5rem',
+    background: 'rgba(255,255,255,0.06)',
+  }
+
+  return (
+    <>
+      <div className="admin-table-wrap" style={{ padding: '1.5rem' }}>
+        <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'rgba(14,165,233,0.06)', borderRadius: '0.75rem', border: '1px solid rgba(14,165,233,0.15)' }}>
+          <h3 style={{ color: '#fff', fontSize: '0.95rem', marginBottom: '0.5rem' }}>🌐 SEO / Open Graph Images</h3>
+          <p style={{ color: '#94a3b8', fontSize: '0.8rem', margin: 0, lineHeight: 1.6 }}>
+            Manage the OG (Open Graph) images shown when links are shared on WhatsApp, Facebook, Twitter, and other social platforms.
+            Recommended size: <strong style={{ color: '#fff' }}>1200×630 pixels</strong>. Upload or paste a URL for each route.
+            Changes are saved to the database. Re-deploy to apply to the edge middleware.
+          </p>
+        </div>
+
+        {SEO_ROUTES.map(route => (
+          <div key={route.key} style={cardStyle}>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+              {/* Preview */}
+              <div style={{ flexShrink: 0 }}>
+                {images[route.key] ? (
+                  <img
+                    src={images[route.key].startsWith('http') ? images[route.key] : `https://visitnaija.online${images[route.key]}`}
+                    alt={`OG for ${route.label}`}
+                    style={imgPreview}
+                    onError={e => { e.target.style.display = 'none' }}
+                  />
+                ) : (
+                  <div style={{ ...imgPreview, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontSize: '0.8rem' }}>No image</div>
+                )}
+              </div>
+              {/* Info & Controls */}
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <div style={{ fontWeight: 600, color: '#fff', fontSize: '0.9rem', marginBottom: '0.25rem' }}>{route.label}</div>
+                <div style={{ color: '#64748b', fontSize: '0.75rem', marginBottom: '0.75rem' }}>Route: {route.path}</div>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+                  <input
+                    type="text"
+                    value={images[route.key] || ''}
+                    onChange={e => setImages(prev => ({ ...prev, [route.key]: e.target.value }))}
+                    placeholder="/og/og-home.png or paste full URL"
+                    style={{ flex: 1, minWidth: 180, padding: '0.45rem 0.6rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.5rem', color: '#fff', fontSize: '0.8rem', boxSizing: 'border-box' }}
+                  />
+                  <label style={{ padding: '0.45rem 0.75rem', background: 'rgba(200,150,62,0.15)', border: '1px solid rgba(200,150,62,0.3)', borderRadius: '0.5rem', color: '#C8963E', cursor: 'pointer', fontSize: '0.8rem', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    📷 Upload
+                    <input type="file" accept="image/*" hidden onChange={e => handleUpload(route.key, e)} />
+                  </label>
+                  {uploading === route.key && <span style={{ color: '#94a3b8', fontSize: '0.75rem', alignSelf: 'center' }}>Uploading...</span>}
+                </div>
+                <button
+                  onClick={() => setImages(prev => ({ ...prev, [route.key]: DEFAULT_OG_IMAGES[route.key] || '' }))}
+                  style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '0.7rem', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+                >Reset to default</button>
+              </div>
+            </div>
+          </div>
+        ))}
+
+        <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+          <button className="admin-btn admin-btn-primary" onClick={save} disabled={saving}>
+            {saving ? 'Saving...' : 'Save OG Images'}
+          </button>
+        </div>
+      </div>
+      {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
+    </>
+  )
+}
+
 export default function AdminDashboard({ session, profile }) {
   const [active, setActive] = useState('overview')
   const userRole = profile?.role || 'user'
@@ -1267,7 +1623,9 @@ export default function AdminDashboard({ session, profile }) {
           {active === 'overview' && <Overview />}
           {active === 'users' && <UsersSection session={session} profile={profile} />}
           {active === 'settings' && <SettingsSection session={session} />}
+          {active === 'hero_page' && <HeroPageSection session={session} />}
           {active === 'submissions' && <SubmissionsSection session={session} />}
+          {active === 'seo_og' && <SEOSection session={session} />}
           {section?.table && <CrudSection table={section.table} session={session} profile={profile} />}
           {section?.gameTable && <GameConfigSection table={section.gameTable} session={session} />}
         </main>
@@ -1385,7 +1743,12 @@ function GameConfigSection({ table, session }) {
       if (error) throw error
       setRows(data || [])
     } catch (e) {
-      setToast({ msg: 'Load failed: ' + e.message, type: 'error' })
+      const msg = e.message || ''
+      if (msg.includes('relation') || e.code === '42P01' || msg.includes('does not exist')) {
+        setToast({ msg: `Table "${table}" does not exist in your database yet. Create it in Supabase SQL Editor or run the game engine migration.`, type: 'error' })
+      } else {
+        setToast({ msg: 'Load failed: ' + msg, type: 'error' })
+      }
     }
     setLoading(false)
   }, [table, pk])

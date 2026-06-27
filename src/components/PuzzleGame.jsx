@@ -12,6 +12,7 @@ function shuffleArr(arr) {
 }
 import { playCorrect, playPinDrop, vibrate } from '../engine/audio.js'
 import { addXP } from '../engine/xp.js'
+import { calculateGameReward, addCoins } from '../engine/coinEconomy.js'
 import { autoSubmitScore } from '../engine/leaderboard.js'
 import ResultCard from './ResultCard.jsx'
 
@@ -65,6 +66,12 @@ export default function PuzzleGame() {
   const [imgLoaded, setImgLoaded] = useState(false)
   const intervalRef = useRef(null)
 
+  // Lock body scroll while game is mounted
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
+
   const puzzle = puzzles[puzzleIdx]
   const [showReveal, setShowReveal] = useState(false)
 
@@ -105,12 +112,19 @@ export default function PuzzleGame() {
       if (isSolved(newTiles)) {
         clearInterval(intervalRef.current)
         playCorrect(); vibrate([100])
-        const stars = moves < 10 ? 3 : moves < 20 ? 2 : 1
+        const actualMoves = moves + 1
+        const stars = actualMoves < 10 ? 3 : actualMoves < 20 ? 2 : 1
         const timeBonus = timer < 30 ? 50 : timer < 60 ? 25 : 0
         const pts = stars * 100 + timeBonus
         setScore(prev => prev + pts)
         addXP('PUZZLE_COMPLETE')
-        setResults(prev => [...prev, { puzzle, moves: moves + 1, time: timer, stars, timeBonus }])
+        try {
+          const finalScore = score + pts
+          const pct = Math.round((finalScore / (puzzles.length * 300)) * 100)
+          const coins = calculateGameReward(pct)
+          if (coins > 0) addCoins(coins, 'Puzzle game reward')
+        } catch {}
+        setResults(prev => [...prev, { puzzle, moves: actualMoves, time: timer, stars, timeBonus }])
         setPhase('solved')
         setShowReveal(false)
       }
@@ -120,8 +134,8 @@ export default function PuzzleGame() {
   function nextPuzzle() {
     if (puzzleIdx + 1 >= puzzles.length) {
       setPhase('allDone')
-      // Submit final score to leaderboard
-      autoSubmitScore({ gameType: 'puzzle', score: score, maxScore: puzzles.length * 300, questionCount: puzzles.length })
+      // Submit final score to leaderboard — score state is current here since it was set during solved phase
+      autoSubmitScore({ gameType: 'puzzle', score, maxScore: puzzles.length * 300, questionCount: puzzles.length })
       return
     }
     setPuzzleIdx(prev => prev + 1)

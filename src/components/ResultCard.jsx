@@ -16,7 +16,7 @@ const ALTS = [
   { type: 'adventure', path: '/adventure', label: 'Adventure', emoji: '🗺️' },
   { type: 'coloring', path: '/coloring', label: 'Coloring', emoji: '🎨' },
   { type: 'puzzle', path: '/puzzle', label: 'Puzzle', emoji: '🧩' },
-  { type: 'word', path: '/word', label: 'Word Game', emoji: '🔤' },
+  { type: 'word', path: '/wordgame', label: 'Word Game', emoji: '🔤' },
   { type: 'trivia', path: '/trivia', label: 'Trivia', emoji: '🧠' },
   { type: 'postcards', path: '/postcards', label: 'PostCards', emoji: '📷' },
 ]

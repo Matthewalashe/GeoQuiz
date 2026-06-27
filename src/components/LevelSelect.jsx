@@ -52,11 +52,29 @@ export default function LevelSelect({ session, gameSlug, gameName, gameColor, ga
   const [showOutOfLives, setShowOutOfLives] = useState(false)
   const [buyingLives, setBuyingLives] = useState(false)
 
-  const currentLevel = progress?.current_level || 1
-  const highestLevel = progress?.highest_level_reached || 0
+  // ── localStorage level keys per game slug ──
+  const LOCAL_LEVEL_KEYS = {
+    guessword: 'wanda_word_level',
+    trivia: 'wanda_trivia_level',
+    map_quiz: 'wanda_mapquiz_level',
+    pinpoint: 'wanda_pinpoint_level',
+    flagstack: 'wanda_flagstack_level',
+    postcards: 'wanda_postcards_level',
+  }
+
+  function getLocalLevel() {
+    const key = LOCAL_LEVEL_KEYS[gameSlug]
+    if (!key) return 1
+    return parseInt(localStorage.getItem(key) || '1', 10)
+  }
+
+  // Merge DB + localStorage — use whichever is higher
+  const dbLevel = progress?.current_level || 1
+  const localLevel = getLocalLevel()
+  const currentLevel = Math.max(dbLevel, localLevel)
+  const highestLevel = Math.max(progress?.highest_level_reached || 0, localLevel - 1)
 
   const load = useCallback(async () => {
-    if (!userId || !gameSlug) return
     setLoading(true)
     try {
       await loadGameConfig()
@@ -71,14 +89,17 @@ export default function LevelSelect({ session, gameSlug, gameName, gameColor, ga
         if (gc?.max_levels) setMaxLevels(gc.max_levels)
       }
 
-      const [p, l, w] = await Promise.all([
-        getGameProgressForType(userId, gameSlug),
-        regenerateLives(userId),
-        getWallet(userId),
-      ])
-      setProgress(p)
-      setLivesData(l)
-      setWallet(w)
+      // Load user-specific data (only if logged in)
+      if (userId) {
+        const [p, l, w] = await Promise.all([
+          getGameProgressForType(userId, gameSlug),
+          regenerateLives(userId),
+          getWallet(userId),
+        ])
+        setProgress(p)
+        setLivesData(l)
+        setWallet(w)
+      }
     } catch (e) {
       console.error('LevelSelect load:', e)
     }

@@ -2,6 +2,9 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { FlagRegular, HeartRegular, HomeRegular, PlayRegular, FlashRegular, TrophyRegular } from '@fluentui/react-icons'
 import { playCorrect, playWrong, playCelebration, vibrateTap, vibrateSuccess } from '../engine/audio.js'
+import { addXP } from '../engine/xp.js'
+import { calculateGameReward, addCoins } from '../engine/coinEconomy.js'
+import { autoSubmitScore } from '../engine/leaderboard.js'
 
 // ── FLAG DATA (African countries) ──
 const FLAGS = [
@@ -74,9 +77,38 @@ export default function FlagStackGame() {
   const [roundNum, setRoundNum] = useState(0)
   const [feedback, setFeedback] = useState(null) // null | 'correct' | 'wrong'
   const [tappedFlags, setTappedFlags] = useState(new Set())
+  const [revealAll, setRevealAll] = useState(false) // shows correct flag on wrong answer
   const [roundDone, setRoundDone] = useState(false)
+  const [coinsEarned, setCoinsEarned] = useState(0)
   const feedbackTimer = useRef(null)
   const roundTimer = useRef(null)
+
+  // Lock body scroll to prevent iOS rubber-band and viewport overflow
+  useEffect(() => {
+    const html = document.documentElement
+    const body = document.body
+    html.style.overflow = 'hidden'
+    html.style.position = 'fixed'
+    html.style.width = '100%'
+    html.style.height = '100%'
+    body.style.overflow = 'hidden'
+    body.style.position = 'fixed'
+    body.style.width = '100%'
+    body.style.height = '100%'
+    const preventZoom = (e) => { if (e.touches.length > 1) e.preventDefault() }
+    document.addEventListener('touchmove', preventZoom, { passive: false })
+    return () => {
+      html.style.overflow = ''
+      html.style.position = ''
+      html.style.width = ''
+      html.style.height = ''
+      body.style.overflow = ''
+      body.style.position = ''
+      body.style.width = ''
+      body.style.height = ''
+      document.removeEventListener('touchmove', preventZoom)
+    }
+  }, [])
 
   // Start game
   function startGame() {
@@ -87,6 +119,7 @@ export default function FlagStackGame() {
     setBestStreak(0)
     setRoundNum(0)
     setTappedFlags(new Set())
+    setRevealAll(false)
     setRoundDone(false)
     nextRound(0)
   }
@@ -96,6 +129,7 @@ export default function FlagStackGame() {
     setRound(r)
     setRoundNum(n => n + 1)
     setTappedFlags(new Set())
+    setRevealAll(false)
     setRoundDone(false)
   }
 
@@ -128,18 +162,20 @@ export default function FlagStackGame() {
       setLives(newLives)
       setStreak(0)
       setFeedback('wrong')
+      setRevealAll(true) // Show the correct flag
       try { playWrong(); vibrateTap() } catch {}
 
       clearTimeout(feedbackTimer.current)
       feedbackTimer.current = setTimeout(() => {
         setFeedback(null)
+        setRevealAll(false)
         if (newLives <= 0) {
-          setPhase('gameover')
+          finalizeGame(score)
           try { if (score > 2000) playCelebration() } catch {}
         } else {
           nextRound(score)
         }
-      }, 800)
+      }, 1500) // Longer delay so user can see correct answer
     }
   }, [phase, roundDone, tappedFlags, score, lives]) // eslint-disable-line
 
@@ -151,18 +187,47 @@ export default function FlagStackGame() {
     setLives(newLives)
     setStreak(0)
     setFeedback('wrong')
+    setRevealAll(true) // Show the correct flag
     try { playWrong() } catch {}
 
     clearTimeout(feedbackTimer.current)
     feedbackTimer.current = setTimeout(() => {
       setFeedback(null)
+      setRevealAll(false)
       if (newLives <= 0) {
-        setPhase('gameover')
+        finalizeGame(score)
       } else {
         nextRound(score)
       }
-    }, 800)
+    }, 1500) // Longer delay so user can see correct answer
   }, [phase, roundDone, lives, score]) // eslint-disable-line
+
+  // Finalize game — award XP, coins, submit score
+  function finalizeGame(finalScore) {
+    setPhase('gameover')
+    // Award XP
+    try {
+      addXP('COMPLETE_GAME')
+      if (finalScore >= 2000) addXP('FIRST_PERFECT_GAME')
+    } catch {}
+    // Award coins based on performance (use rounds as proxy for score %)
+    try {
+      const pct = Math.min(100, Math.round((finalScore / Math.max(roundNum * 100, 1)) * 100))
+      const coins = calculateGameReward(pct)
+      if (coins > 0) {
+        addCoins(coins, 'FlagStack game reward')
+        setCoinsEarned(coins)
+      }
+    } catch {}
+    // Submit to leaderboard
+    try { autoSubmitScore({ gameType: 'flagstack', score: finalScore, maxScore: roundNum * 100, questionCount: roundNum }) } catch {}
+    // Save to localStorage
+    try {
+      const prev = JSON.parse(localStorage.getItem('geoquiz_sessions') || '[]')
+      prev.push({ date: new Date().toISOString(), score: finalScore, game: 'flagstack', rounds: roundNum })
+      localStorage.setItem('geoquiz_sessions', JSON.stringify(prev.slice(-50)))
+    } catch {}
+  }
 
   // Cleanup
   useEffect(() => {
@@ -219,6 +284,12 @@ export default function FlagStackGame() {
               <span className="fs-stat-value">{Math.round(round?.speed * 10) / 10}s</span>
               <span className="fs-stat-label">Final Speed</span>
             </div>
+            {coinsEarned > 0 && (
+              <div className="fs-stat">
+                <span className="fs-stat-value" style={{ color: '#eab308' }}>+{coinsEarned}</span>
+                <span className="fs-stat-label">Coins</span>
+              </div>
+            )}
           </div>
           <div className="fs-gameover-actions">
             <button className="fs-btn fs-btn-start" onClick={startGame}>
@@ -248,34 +319,58 @@ export default function FlagStackGame() {
       </div>
 
       {/* Streak */}
-      {streak >= 3 && (
+      {streak >= 3 && !revealAll && (
         <div className="fs-streak-badge">🔥 {streak} streak!</div>
       )}
 
       {/* Game area */}
       <div className="fs-arena">
-        {round?.flags.map(flag => (
-          <button
-            key={flag.id}
-            className={`fs-flag ${tappedFlags.has(flag.id) ? (flag.correct ? 'fs-flag-correct' : 'fs-flag-wrong') : ''}`}
-            style={{
-              left: `${flag.left}%`,
-              animationDuration: `${round.speed}s`,
-            }}
-            onClick={() => handleTap(flag)}
-            onAnimationEnd={() => {
-              if (!tappedFlags.has(flag.id) && flag.correct) handleMiss()
-            }}
-          >
-            <img
-              src={`https://flagcdn.com/w80/${flag.code}.png`}
-              alt={flag.country}
-              className="fs-flag-img"
-              draggable={false}
-            />
-          </button>
-        ))}
+        {round?.flags.map(flag => {
+          // Determine flag visual state
+          let flagClass = ''
+          if (revealAll) {
+            // After wrong answer: highlight correct flag green, wrong tapped flag red
+            if (flag.correct) flagClass = 'fs-flag-correct fs-flag-revealed'
+            else if (tappedFlags.has(flag.id)) flagClass = 'fs-flag-wrong'
+            else flagClass = 'fs-flag-dimmed'
+          } else if (tappedFlags.has(flag.id)) {
+            flagClass = flag.correct ? 'fs-flag-correct' : 'fs-flag-wrong'
+          }
+
+          return (
+            <button
+              key={flag.id}
+              className={`fs-flag ${flagClass}`}
+              style={{
+                left: `${flag.left}%`,
+                animationDuration: `${round.speed}s`,
+                animationPlayState: revealAll ? 'paused' : 'running',
+              }}
+              onPointerDown={(e) => { e.preventDefault(); handleTap(flag) }}
+              onAnimationEnd={() => {
+                if (!tappedFlags.has(flag.id) && flag.correct) handleMiss()
+              }}
+            >
+              <img
+                src={`https://flagcdn.com/w80/${flag.code}.png`}
+                alt={flag.country}
+                className="fs-flag-img"
+                draggable={false}
+              />
+              {revealAll && flag.correct && (
+                <span className="fs-flag-label">✅ {flag.country}</span>
+              )}
+            </button>
+          )
+        })}
       </div>
+
+      {/* Correct answer callout */}
+      {revealAll && round && (
+        <div className="fs-answer-callout glass">
+          The correct flag was <strong>{round.country}</strong>
+        </div>
+      )}
 
       {/* Round indicator */}
       <div className="fs-round-indicator glass-subtle">

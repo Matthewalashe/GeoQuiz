@@ -162,6 +162,49 @@ export function playRewardClaim() {
   setTimeout(() => playTone(1800, 0.12, 'sine', 0.15), 130)
 }
 
+// ── Level Continuation Sounds (Tropical/Retro) ──
+
+// Level passed — warm tropical steel-drum fanfare
+export function playLevelPass() {
+  // Calypso-inspired ascending pattern
+  const notes = [
+    [523, 0], [659, 80], [784, 160],   // C-E-G rising
+    [1047, 300], [880, 400],            // high C, A
+    [1047, 500], [1319, 600],           // C, E octave
+  ]
+  notes.forEach(([freq, delay]) =>
+    setTimeout(() => playTone(freq, 0.18, 'sine', 0.22), delay)
+  )
+  // Triumphant chord at the end
+  setTimeout(() => playChord([1047, 1319, 1568], 0.5, 'sine', 0.12), 750)
+  // Bonus sparkle
+  setTimeout(() => playTone(2093, 0.08, 'sine', 0.1), 900)
+}
+
+// Level failed — gentle warm descending (encouraging, not harsh)
+export function playLevelFail() {
+  playTone(587, 0.15, 'triangle', 0.15)    // D5
+  setTimeout(() => playTone(523, 0.15, 'triangle', 0.13), 120) // C5
+  setTimeout(() => playTone(440, 0.15, 'triangle', 0.11), 240) // A4
+  setTimeout(() => playTone(392, 0.3, 'triangle', 0.1), 360)   // G4
+}
+
+// Level unlock — exciting ascending with shimmer
+export function playLevelUnlock() {
+  const arpeggio = [523, 659, 784, 988, 1175, 1319, 1568, 2093]
+  arpeggio.forEach((freq, i) =>
+    setTimeout(() => playTone(freq, 0.1, 'sine', 0.12 + i * 0.015), i * 55)
+  )
+  // Final sparkle chord
+  setTimeout(() => {
+    playChord([1568, 2093, 2637], 0.35, 'sine', 0.1)
+  }, arpeggio.length * 55 + 50)
+}
+
+// Vibration patterns for level events
+export function vibrateLevelPass() { vibrate([30, 20, 30, 20, 80, 40, 120]) }
+export function vibrateLevelFail() { vibrate([60, 40, 100]) }
+
 // ── Vibration ──
 
 export function vibrate(pattern = [50]) {

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { CheckmarkCircleRegular, DismissCircleRegular } from '@fluentui/react-icons'
 import { playCorrect, playWrong, playTick, vibrate } from '../engine/audio.js'
 import { addXP } from '../engine/xp.js'
+import { calculateGameReward, addCoins } from '../engine/coinEconomy.js'
 import { autoSubmitScore } from '../engine/leaderboard.js'
 import { RewardsOverlay, useRewardSystem } from '../engine/rewards.jsx'
 import ResultCard from './ResultCard.jsx'
@@ -79,6 +80,12 @@ export default function TriviaGame() {
   const answerBtnRefs = useRef([])
   const intervalRef = useRef(null)
   const [fetchingAPI, setFetchingAPI] = useState(false)
+
+  // Lock body scroll while game is mounted
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
 
   // Quick Play categories using questionBank API
   const QUICK_CATS = [
@@ -199,6 +206,11 @@ export default function TriviaGame() {
     if (idx + 1 >= questions.length) {
       const total = score
       addXP('GAME_WIN', total > 800 ? 200 : total > 400 ? 100 : 50)
+      try {
+        const pct = Math.round((total / (questions.length * 150)) * 100)
+        const coins = calculateGameReward(pct)
+        if (coins > 0) addCoins(coins, 'Trivia game reward')
+      } catch {}
       setPhase('done')
       autoSubmitScore({ gameType: 'trivia', score: total, maxScore: questions.length * 150, questionCount: questions.length })
     } else {

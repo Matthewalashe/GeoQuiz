@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { pickRandomQuestions, REGIONS } from '../data/questions.js'
+import { pickRandomQuestions, REGIONS, getQuestionsByRegion } from '../data/questions.js'
 import { getQuestions } from '../lib/cms.js'
 import { haversineDistance, calculateScore, getScoreClass, formatDistance } from '../engine/scoring.js'
 import { playCorrect, playWrong, playPinDrop, playTick, playTimeUp, playStreak, playComboBreaker, vibrate, vibrateSuccess, vibrateError, vibrateStreak } from '../engine/audio.js'
@@ -107,48 +107,91 @@ export default function GameScreen() {
   const [showFog, setShowFog] = useState(false)
   const [exploredSpots, setExploredSpots] = useState(() => getExplored())
   const [fetchError, setFetchError] = useState(null)
+  const [rewardPopup, setRewardPopup] = useState(null) // { score, streak, xp }
+  const rewardTimeout = useRef(null)
 
   // Refs to avoid stale closures in timer effects
   const userPinRef = useRef(null)
   const currentQRef = useRef(null)
   const phaseRef = useRef('loading')
+  const questionsReadyRef = useRef(false)
+  const progressDoneRef = useRef(false)
 
   const timerEnabled = config?.timer > 0
+
+  function tryTransitionToPlacing() {
+    if (questionsReadyRef.current && progressDoneRef.current) {
+      setPhase(prev => prev === 'loading' ? 'placing' : prev)
+    }
+  }
 
   function loadQuestions() {
     if (!config) return
     setFetchError(null)
     setPhase('loading')
     setLoadProgress(0)
+    questionsReadyRef.current = false
+    progressDoneRef.current = false
     let active = true
+
+    function filterAndPick(allQuestions) {
+      let pool = config.region === 'all'
+        ? allQuestions
+        : allQuestions.filter(q => q.region === config.region)
+
+      if (config.categories && config.categories.length > 0) {
+        pool = pool.filter(q => config.categories.includes(q.category))
+      }
+      if (config.difficulty && config.difficulty !== 'all') {
+        pool = pool.filter(q => q.difficulty === config.difficulty)
+      }
+      return pickRandomQuestions(pool, config.count, config.seed)
+    }
+
     getQuestions()
-      .then(({ data: allQuestions, error }) => {
+      .then(({ data: cmsQuestions, error }) => {
         if (!active) return
-        if (error) {
-          setFetchError(error)
-          return
-        }
-        let pool = config.region === 'all'
-          ? allQuestions
-          : allQuestions.filter(q => q.region === config.region)
 
-        if (config.categories && config.categories.length > 0) {
-          pool = pool.filter(q => config.categories.includes(q.category))
-        }
-        if (config.difficulty && config.difficulty !== 'all') {
-          pool = pool.filter(q => q.difficulty === config.difficulty)
+        // Try CMS questions first
+        let picked = []
+        if (!error && cmsQuestions && cmsQuestions.length > 0) {
+          picked = filterAndPick(cmsQuestions)
         }
 
-        const picked = pickRandomQuestions(pool, config.count, config.seed)
+        // Fallback to local question bank if CMS is empty
+        if (picked.length === 0) {
+          const localPool = getQuestionsByRegion(
+            config.region || 'all',
+            config.categories || [],
+            config.difficulty || 'all'
+          )
+          picked = pickRandomQuestions(localPool, config.count || 10, config.seed)
+        }
+
         if (picked.length === 0) {
           setFetchError('No questions available for your selected filters. Try different options.')
           return
         }
         setQuestions(picked)
+        questionsReadyRef.current = true
+        tryTransitionToPlacing()
       })
       .catch(err => {
         if (!active) return
-        setFetchError(err.message || 'Failed to load questions.')
+        // On network error, fallback to local questions
+        const localPool = getQuestionsByRegion(
+          config.region || 'all',
+          config.categories || [],
+          config.difficulty || 'all'
+        )
+        const picked = pickRandomQuestions(localPool, config.count || 10, config.seed)
+        if (picked.length > 0) {
+          setQuestions(picked)
+          questionsReadyRef.current = true
+          tryTransitionToPlacing()
+        } else {
+          setFetchError(err.message || 'Failed to load questions.')
+        }
       })
 
     let progress = 0
@@ -157,8 +200,8 @@ export default function GameScreen() {
       if (progress >= 100) {
         progress = 100; clearInterval(loadInterval)
         setTimeout(() => {
-          // Only transition to 'placing' if questions loaded successfully
-          setPhase(prev => prev === 'loading' ? 'placing' : prev)
+          progressDoneRef.current = true
+          tryTransitionToPlacing()
         }, 500)
       }
       setLoadProgress(Math.min(progress, 100))
@@ -237,17 +280,26 @@ export default function GameScreen() {
     }
     const score = calculateScore(dist, tolerance)
     setTotalScore(prev => prev + score)
+    let newStreak = streak
     if (score >= 60) {
       playCorrect(); vibrateSuccess()
-      // Mark location as explored for Fog of War
       markExplored(currentQ.answer.lat, currentQ.answer.lng, currentQ.answer.name)
       setExploredSpots(getExplored())
+      newStreak = streak + 1
       setStreak(prev => { const n = prev + 1; if (n > bestStreak) setBestStreak(n); if (n >= 3) { playStreak(); vibrateStreak() } return n })
     } else {
       playWrong(); vibrateError()
       if (streak >= 3) playComboBreaker()
       setStreak(0)
+      newStreak = 0
     }
+    // Show animated reward popup
+    const xpEarned = score >= 60 ? Math.round(score * 0.5) : 0
+    const streakBonus = newStreak >= 3 ? newStreak : 0
+    clearTimeout(rewardTimeout.current)
+    setRewardPopup({ score, xp: xpEarned, streak: streakBonus, good: score >= 60 })
+    rewardTimeout.current = setTimeout(() => setRewardPopup(null), 1800)
+
     setResults(prev => [...prev, { question: currentQ, userPin: { ...userPin }, distance: dist, score }])
     setPhase('feedback')
   }
@@ -291,8 +343,22 @@ export default function GameScreen() {
     )
   }
 
-  if (!config || questions.length === 0) {
-    return <div className="game-screen" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}><p>Loading...</p></div>
+  if (!config) {
+    return (
+      <div className="game-screen" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem', padding: '2rem', textAlign: 'center' }}>
+        <div style={{ width: 36, height: 36, border: '3px solid var(--border)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin .6s linear infinite' }} />
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Redirecting to quiz setup...</p>
+      </div>
+    )
+  }
+
+  if (questions.length === 0 && !fetchError && phase === 'loading') {
+    return (
+      <div className="game-screen" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem', padding: '2rem', textAlign: 'center' }}>
+        <div style={{ width: 36, height: 36, border: '3px solid var(--border)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin .6s linear infinite' }} />
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Loading questions...</p>
+      </div>
+    )
   }
 
   const lastResult = results[results.length - 1]
@@ -394,12 +460,22 @@ export default function GameScreen() {
               <div className="hud-progress"><div className="hud-progress-fill" style={{ width: `${progress}%` }} /></div>
             </div>
             <div className="hud-right">
-              <span className="hud-score">{totalScore}</span>
-              {streak >= 3 && <span className="hud-streak">🔥{streak}</span>}
+              <span className="hud-score" key={totalScore}>{totalScore}</span>
+              {streak >= 3 && <span className="hud-streak" key={`s${streak}`}>🔥{streak}</span>}
             </div>
           </div>
         )
       })()}
+
+      {/* ── Floating Reward Popup ── */}
+      {rewardPopup && (
+        <div className={`game-reward-popup ${rewardPopup.good ? 'reward-good' : 'reward-bad'}`} key={Date.now()}>
+          <div className="reward-score">{rewardPopup.good ? '+' : ''}{rewardPopup.score}</div>
+          {rewardPopup.xp > 0 && <div className="reward-xp">⭐ +{rewardPopup.xp} XP</div>}
+          {rewardPopup.streak >= 3 && <div className="reward-streak">🔥 {rewardPopup.streak}x Streak!</div>}
+          {rewardPopup.good && <div className="reward-coins">🪙 +{Math.round(rewardPopup.score * 0.3)}</div>}
+        </div>
+      )}
 
       {/* Timer ring */}
       {timerEnabled && phase === 'placing' && (

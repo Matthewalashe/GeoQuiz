@@ -19,7 +19,8 @@ import {
   PersonRegular, SettingsRegular, HeartRegular, StoreMicrosoftRegular,
   SignOutRegular, ChevronRightRegular, CameraRegular, DismissRegular,
   NavigationRegular, SaveRegular, ImageRegular, ArrowLeftRegular,
-  ShieldCheckmarkRegular, StarRegular, DeleteRegular
+  ShieldCheckmarkRegular, StarRegular, DeleteRegular, CalendarRegular,
+  ShareRegular, CopyRegular, PeopleRegular
 } from '@fluentui/react-icons'
 
 
@@ -52,9 +53,11 @@ const JOURNEY_STOPS = [
 const SIDEBAR_SECTIONS = [
   { id: 'overview', label: 'Overview', icon: <EarthRegular /> },
   { id: 'profile', label: 'Profile & Settings', icon: <PersonRegular /> },
+  { id: 'events', label: 'My Events', icon: <CalendarRegular /> },
+  { id: 'listings', label: 'My Listings', icon: <StoreMicrosoftRegular /> },
   { id: 'journey', label: 'Game Journey', icon: <MapRegular /> },
   { id: 'saved', label: 'Saved Places', icon: <HeartRegular /> },
-  { id: 'seller', label: 'Become a Seller', icon: <StoreMicrosoftRegular /> },
+  { id: 'seller', label: 'Add New Listing', icon: <EditRegular /> },
   { id: 'account', label: 'Account', icon: <SettingsRegular /> },
 ]
 
@@ -244,6 +247,8 @@ export default function Dashboard({ session: sessionProp, profile: profileProp }
         <div className="user-content">
           {active === 'overview' && <OverviewSection profile={profile} session={session} xp={xp} onNav={handleNav} />}
           {active === 'profile' && <ProfileSection profile={profile} session={session} onRefresh={refreshProfile} />}
+          {active === 'listings' && <MyListingsSection session={session} />}
+          {active === 'events' && <MyEventsSection session={session} />}
           {active === 'journey' && <JourneySection profile={profile} xp={xp} />}
           {active === 'saved' && <SavedSection session={session} />}
           {active === 'seller' && <SellerSection session={session} />}
@@ -606,7 +611,7 @@ function JourneySection({ profile, xp }) {
                     {isCurrent && <span className="db-path-xp-tag">Next: {nextStop ? nextStop.name : 'Max!'}</span>}
                   </div>
                 </div>
-                {isCurrent && <div className="db-path-avatar">{displayAvatar.startsWith('http') ? '📍' : displayAvatar}</div>}
+                {isCurrent && <div className="db-path-avatar"><ProfileImg profile={profile} size={24} /></div>}
               </div>
             )
           })}
@@ -728,6 +733,620 @@ function AccountSection({ session, profile }) {
           <SignOutRegular fontSize={16} /> Sign Out
         </button>
       </div>
+    </div>
+  )
+}
+
+// ─── MY LISTINGS ─────────────────────────────────────────
+function MyListingsSection({ session }) {
+  const [listings, setListings] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [editingId, setEditingId] = useState(null)
+  const [editForm, setEditForm] = useState({})
+  const [saving, setSaving] = useState(false)
+  const [toast, setToast] = useState(null)
+
+  useEffect(() => { loadMyListings() }, [])
+
+  async function loadMyListings() {
+    setLoading(true)
+    try {
+      if (!supabase || !session?.user?.id) return
+      const { data, error } = await supabase
+        .from('business_listings')
+        .select('*')
+        .eq('submitted_by', session.user.id)
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      setListings(data || [])
+    } catch (e) {
+      console.warn('Load my listings:', e.message)
+    }
+    setLoading(false)
+  }
+
+  function startEdit(listing) {
+    setEditingId(listing.id)
+    setEditForm({
+      name: listing.name || '',
+      description: listing.description || '',
+      phone: listing.phone || '',
+      whatsapp: listing.whatsapp || '',
+      website: listing.website || '',
+      instagram: listing.instagram || '',
+      hours: listing.hours || '',
+      area: listing.area || '',
+      address: listing.address || '',
+      trade: listing.trade || '',
+      category: listing.category || '',
+      subcategory: listing.subcategory || '',
+      price_range: listing.price_range || '',
+      experience_years: listing.experience_years || '',
+      products: (listing.products || []).join(', '),
+    })
+  }
+
+  async function saveEdit(id) {
+    setSaving(true)
+    try {
+      const { error } = await supabase
+        .from('business_listings')
+        .update({
+          name: editForm.name.trim(),
+          description: editForm.description.trim(),
+          phone: editForm.phone.trim() || null,
+          whatsapp: editForm.whatsapp.trim() || null,
+          website: editForm.website.trim() || null,
+          instagram: editForm.instagram.trim() || null,
+          hours: editForm.hours.trim() || null,
+          area: editForm.area.trim(),
+          address: editForm.address.trim() || null,
+          trade: editForm.trade.trim() || null,
+          category: editForm.category.trim() || null,
+          subcategory: editForm.subcategory.trim() || null,
+          price_range: editForm.price_range.trim() || null,
+          experience_years: editForm.experience_years ? parseInt(editForm.experience_years) : null,
+          products: editForm.products ? editForm.products.split(',').map(s => s.trim()).filter(Boolean) : [],
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', id)
+        .eq('submitted_by', session.user.id)
+      if (error) throw error
+      setToast({ msg: 'Listing updated!', type: 'success' })
+      setEditingId(null)
+      loadMyListings()
+    } catch (e) {
+      setToast({ msg: e.message, type: 'error' })
+    }
+    setSaving(false)
+  }
+
+  const statusColors = { pending: '#f59e0b', approved: '#22c55e', rejected: '#ef4444' }
+  const statusEmoji = { pending: '⏳', approved: '✅', rejected: '❌' }
+
+  return (
+    <div className="user-section">
+      <div className="user-saved-header">
+        <h3><StoreMicrosoftRegular fontSize={20} /> My Business Listings</h3>
+        <p className="user-saved-subtitle">Manage your submitted listings. Edit details anytime.</p>
+      </div>
+
+      {loading ? (
+        <div className="user-empty-state"><p>Loading your listings...</p></div>
+      ) : listings.length === 0 ? (
+        <div className="user-empty-state">
+          <div className="user-empty-icon">🏪</div>
+          <h3>No listings yet</h3>
+          <p>Submit your business or trade to get discovered by thousands.</p>
+          <Link to="/list-your-business/form" className="btn btn-primary">List Your Business</Link>
+        </div>
+      ) : (
+        <div className="my-listings-grid">
+          {listings.map(listing => {
+            const isEditing = editingId === listing.id
+            const photo = listing.logo_url || (Array.isArray(listing.photos) ? listing.photos[0] : null)
+            const isHandyman = listing.listing_type === 'handyman'
+            return (
+              <div key={listing.id} className="my-listing-card">
+                <div className="my-listing-header">
+                  {photo && (
+                    <img src={photo} alt={listing.name} className="my-listing-img"
+                      onError={e => { e.target.style.display = 'none' }} />
+                  )}
+                  {!photo && <div className="my-listing-img-placeholder">{isHandyman ? '🔧' : '🏪'}</div>}
+                  <div className="my-listing-meta">
+                    <span className="my-listing-status" style={{ color: statusColors[listing.status] || '#888' }}>
+                      {statusEmoji[listing.status] || '❓'} {listing.status?.charAt(0).toUpperCase() + listing.status?.slice(1)}
+                    </span>
+                    <span className="my-listing-type">{isHandyman ? '🔧 Handyman' : '🏪 Business'}</span>
+                  </div>
+                </div>
+
+                {isEditing ? (
+                  <div className="my-listing-edit-form">
+                    <div className="user-edit-field">
+                      <label>{isHandyman ? 'Full Name' : 'Business Name'}</label>
+                      <input value={editForm.name} onChange={e => setEditForm(p => ({ ...p, name: e.target.value }))} />
+                    </div>
+                    <div className="user-edit-field">
+                      <label>Description</label>
+                      <textarea value={editForm.description} onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))} rows={3} maxLength={500} />
+                    </div>
+                    {isHandyman && (
+                      <>
+                        <div className="user-edit-row">
+                          <div className="user-edit-field">
+                            <label>Trade / Skill</label>
+                            <input value={editForm.trade} onChange={e => setEditForm(p => ({ ...p, trade: e.target.value }))} placeholder="e.g. Plumber, Electrician" />
+                          </div>
+                          <div className="user-edit-field">
+                            <label>Years of Experience</label>
+                            <input type="number" value={editForm.experience_years} onChange={e => setEditForm(p => ({ ...p, experience_years: e.target.value }))} />
+                          </div>
+                        </div>
+                      </>
+                    )}
+                    {!isHandyman && (
+                      <div className="user-edit-row">
+                        <div className="user-edit-field">
+                          <label>Category</label>
+                          <input value={editForm.category} onChange={e => setEditForm(p => ({ ...p, category: e.target.value }))} placeholder="e.g. Restaurant, Hotel" />
+                        </div>
+                        <div className="user-edit-field">
+                          <label>Price Range</label>
+                          <input value={editForm.price_range} onChange={e => setEditForm(p => ({ ...p, price_range: e.target.value }))} placeholder="e.g. ₦₦, ₦₦₦" />
+                        </div>
+                      </div>
+                    )}
+                    <div className="user-edit-row">
+                      <div className="user-edit-field">
+                        <label>Phone</label>
+                        <input type="tel" value={editForm.phone} onChange={e => setEditForm(p => ({ ...p, phone: e.target.value }))} />
+                      </div>
+                      <div className="user-edit-field">
+                        <label>WhatsApp</label>
+                        <input type="tel" value={editForm.whatsapp} onChange={e => setEditForm(p => ({ ...p, whatsapp: e.target.value }))} />
+                      </div>
+                    </div>
+                    <div className="user-edit-row">
+                      <div className="user-edit-field">
+                        <label>Website</label>
+                        <input value={editForm.website} onChange={e => setEditForm(p => ({ ...p, website: e.target.value }))} />
+                      </div>
+                      <div className="user-edit-field">
+                        <label>Instagram</label>
+                        <input value={editForm.instagram} onChange={e => setEditForm(p => ({ ...p, instagram: e.target.value }))} placeholder="@handle" />
+                      </div>
+                    </div>
+                    <div className="user-edit-row">
+                      <div className="user-edit-field">
+                        <label>Area / Location</label>
+                        <input value={editForm.area} onChange={e => setEditForm(p => ({ ...p, area: e.target.value }))} />
+                      </div>
+                      <div className="user-edit-field">
+                        <label>Opening Hours</label>
+                        <input value={editForm.hours} onChange={e => setEditForm(p => ({ ...p, hours: e.target.value }))} placeholder="e.g. Mon-Sat 9am-6pm" />
+                      </div>
+                    </div>
+                    <div className="user-edit-field">
+                      <label>Full Address</label>
+                      <input value={editForm.address} onChange={e => setEditForm(p => ({ ...p, address: e.target.value }))} />
+                    </div>
+                    {!isHandyman && (
+                      <div className="user-edit-field">
+                        <label>Products / Services (comma-separated)</label>
+                        <input value={editForm.products} onChange={e => setEditForm(p => ({ ...p, products: e.target.value }))} placeholder="e.g. Jollof Rice, Suya, Small Chops" />
+                      </div>
+                    )}
+                    <div className="user-edit-actions">
+                      <button className="btn btn-primary btn-sm" onClick={() => saveEdit(listing.id)} disabled={saving}>
+                        {saving ? 'Saving...' : 'Save Changes'}
+                      </button>
+                      <button className="btn btn-outline btn-sm" onClick={() => setEditingId(null)}>Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="my-listing-info">
+                    <h4 className="my-listing-name">{listing.name}</h4>
+                    <p className="my-listing-area">📍 {listing.area}{listing.address ? ` · ${listing.address}` : ''}</p>
+                    {listing.trade && <p className="my-listing-trade">🔧 {listing.trade}{listing.experience_years ? ` · ${listing.experience_years}yrs exp` : ''}</p>}
+                    {listing.category && <p className="my-listing-trade">📂 {listing.category}</p>}
+                    {listing.description && <p className="my-listing-desc">{listing.description}</p>}
+                    <div className="my-listing-actions">
+                      <button className="btn btn-outline btn-sm" onClick={() => startEdit(listing)}>
+                        <EditRegular fontSize={14} /> Edit
+                      </button>
+                      <Link to={`/business/${listing.id}`} className="btn btn-sm btn-primary">View Page →</Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+        <Link to="/list-your-business/form" className="btn btn-primary">+ Add New Listing</Link>
+      </div>
+
+      {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
+    </div>
+  )
+}
+
+// ─── MY EVENTS ─────────────────────────────────────────
+function MyEventsSection({ session }) {
+  const navigate = useNavigate()
+  const [organized, setOrganized] = useState([])
+  const [attending, setAttending] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [editingId, setEditingId] = useState(null)
+  const [editForm, setEditForm] = useState({})
+  const [saving, setSaving] = useState(false)
+  const [viewRsvps, setViewRsvps] = useState(null) // event id
+  const [rsvpList, setRsvpList] = useState([])
+  const [rsvpLoading, setRsvpLoading] = useState(false)
+  const [toast, setToast] = useState(null)
+
+  useEffect(() => {
+    if (!session?.user?.id) return
+    loadEvents()
+  }, [session])
+
+  async function loadEvents() {
+    setLoading(true)
+    try {
+      const { data: org } = await supabase.from('events')
+        .select('*').eq('organizer_id', session.user.id)
+        .order('created_at', { ascending: false })
+      setOrganized(org || [])
+
+      const { data: rsvps } = await supabase.from('event_rsvps')
+        .select('*, events(*)').eq('user_id', session.user.id)
+        .neq('status', 'not_interested')
+      setAttending((rsvps || []).filter(r => r.events))
+    } catch (e) { console.warn('Events load:', e.message) }
+    setLoading(false)
+  }
+
+  function formatDate(d) {
+    return new Date(d).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })
+  }
+  function toInputDate(d) { return d ? d.substring(0, 10) : '' }
+  function toInputTime(d) { return d ? d.substring(11, 16) : '' }
+
+  // ── Edit ──
+  function startEditEvent(ev) {
+    setEditingId(ev.id)
+    setEditForm({
+      title: ev.title || '',
+      description: ev.description || '',
+      about: ev.about || '',
+      category: ev.category || '',
+      venue_name: ev.venue_name || '',
+      venue_address: ev.venue_address || '',
+      venue_type: ev.venue_type || 'physical',
+      meeting_link: ev.meeting_link || '',
+      start_date: toInputDate(ev.start_date),
+      start_time: toInputTime(ev.start_date),
+      end_date: toInputDate(ev.end_date),
+      end_time: toInputTime(ev.end_date),
+      is_free: ev.is_free ?? true,
+      price: ev.price || '',
+      payment_link: ev.payment_link || '',
+      visibility: ev.visibility || 'public',
+    })
+  }
+
+  async function saveEventEdit(id) {
+    setSaving(true)
+    try {
+      const startDT = `${editForm.start_date}T${editForm.start_time || '00:00'}:00`
+      const endDT = editForm.end_date ? `${editForm.end_date}T${editForm.end_time || '23:59'}:00` : null
+      const { error } = await supabase.from('events').update({
+        title: editForm.title.trim(),
+        description: editForm.description.trim(),
+        about: editForm.about.trim() || null,
+        category: editForm.category.trim(),
+        venue_name: editForm.venue_name.trim(),
+        venue_address: editForm.venue_address.trim() || null,
+        venue_type: editForm.venue_type,
+        meeting_link: editForm.meeting_link.trim() || null,
+        start_date: startDT,
+        end_date: endDT,
+        is_free: editForm.is_free,
+        price: editForm.is_free ? null : parseFloat(editForm.price) || null,
+        payment_link: editForm.is_free ? null : editForm.payment_link.trim() || null,
+        visibility: editForm.visibility,
+        updated_at: new Date().toISOString(),
+      }).eq('id', id).eq('organizer_id', session.user.id)
+      if (error) throw error
+      setToast({ msg: 'Event updated!', type: 'success' })
+      setEditingId(null)
+      loadEvents()
+    } catch (e) { setToast({ msg: e.message, type: 'error' }) }
+    setSaving(false)
+  }
+
+  // ── Actions ──
+  async function cancelEvent(id) {
+    if (!confirm('Cancel this event? Attendees won\'t be notified automatically.')) return
+    await supabase.from('events').update({ status: 'cancelled' }).eq('id', id)
+    loadEvents()
+  }
+  async function republishEvent(id) {
+    await supabase.from('events').update({ status: 'published' }).eq('id', id)
+    loadEvents()
+  }
+  async function deleteEvent(id) {
+    if (!confirm('Permanently delete this event and all RSVPs?')) return
+    await supabase.from('event_rsvps').delete().eq('event_id', id)
+    await supabase.from('events').delete().eq('id', id)
+    loadEvents()
+  }
+
+  function copyReminder(ev) {
+    const url = `visitnaija.online/pass/${ev.slug}`
+    const diff = new Date(ev.start_date) - new Date()
+    const days = Math.max(0, Math.floor(diff / 86400000))
+    const msg = `🎉 ${ev.title} — ${days > 0 ? days + ' days to go!' : 'Happening now!'}\n📅 ${formatDate(ev.start_date)}\n📍 ${ev.venue_name || 'TBA'}\nRSVP: ${url}`
+    navigator.clipboard?.writeText(msg)
+    setToast({ msg: 'Reminder copied!', type: 'success' })
+  }
+
+  // ── RSVP Viewer ──
+  async function loadRsvps(eventId) {
+    setViewRsvps(eventId)
+    setRsvpLoading(true)
+    try {
+      const { data } = await supabase.from('event_rsvps')
+        .select('*, profiles:user_id(full_name, email, username)')
+        .eq('event_id', eventId)
+        .order('created_at', { ascending: false })
+      setRsvpList(data || [])
+    } catch (e) { console.warn(e) }
+    setRsvpLoading(false)
+  }
+
+  if (loading) return <div className="de-empty"><div className="ed-spinner" style={{ margin: '0 auto' }} /></div>
+
+  return (
+    <div>
+      <div style={{ marginBottom: '1rem' }}>
+        <button className="btn btn-primary" onClick={() => navigate('/pass/create')}>
+          + Create New Event
+        </button>
+      </div>
+
+      {/* ── Organized Events ── */}
+      <div className="de-section">
+        <h3><CalendarRegular fontSize={18} /> Events I'm Organizing ({organized.length})</h3>
+        {organized.length === 0 ? (
+          <div className="de-empty">You haven't created any events yet</div>
+        ) : organized.map(ev => {
+          const isEditing = editingId === ev.id
+          const showingRsvps = viewRsvps === ev.id
+
+          return (
+            <div key={ev.id} className="de-event-card" style={{ cursor: 'default' }}>
+              <div className="de-event-top">
+                <div>
+                  <div className="de-event-title">{ev.title}</div>
+                  <div className="de-event-meta">
+                    <span>📅 {formatDate(ev.start_date)}</span>
+                    <span>{ev.category}</span>
+                    <span>{ev.visibility === 'public' ? '🌍 Public' : '🔒 Private'}</span>
+                    <span>{ev.is_free ? '🆓 Free' : `₦${Number(ev.price).toLocaleString()}`}</span>
+                  </div>
+                </div>
+                <span className={`de-event-status ${ev.status}`}>{ev.status}</span>
+              </div>
+
+              {/* Action buttons */}
+              <div className="de-actions">
+                <Link to={`/pass/${ev.slug}`} className="btn btn-outline btn-sm">View Event</Link>
+                <button className="btn btn-outline btn-sm" onClick={() => isEditing ? setEditingId(null) : startEditEvent(ev)}>
+                  <EditRegular fontSize={14} /> {isEditing ? 'Cancel Edit' : 'Edit'}
+                </button>
+                <button className="btn btn-outline btn-sm" onClick={() => showingRsvps ? setViewRsvps(null) : loadRsvps(ev.id)}>
+                  <PeopleRegular fontSize={14} /> {showingRsvps ? 'Hide RSVPs' : 'RSVPs'}
+                </button>
+                <button className="btn btn-outline btn-sm" onClick={() => copyReminder(ev)}>
+                  <CopyRegular fontSize={14} /> Reminder
+                </button>
+                {ev.status === 'published' && (
+                  <button className="btn btn-outline btn-sm" onClick={() => cancelEvent(ev.id)} style={{ color: '#f59e0b' }}>Cancel</button>
+                )}
+                {ev.status === 'cancelled' && (
+                  <>
+                    <button className="btn btn-outline btn-sm" onClick={() => republishEvent(ev.id)} style={{ color: '#22c55e' }}>Republish</button>
+                    <button className="btn btn-outline btn-sm" onClick={() => deleteEvent(ev.id)} style={{ color: '#ef4444' }}>
+                      <DeleteRegular fontSize={14} /> Delete
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* ── Inline Edit Form ── */}
+              {isEditing && (
+                <div className="my-listing-edit-form" style={{ marginTop: '0.75rem' }}>
+                  <div className="user-edit-field">
+                    <label>Event Title</label>
+                    <input value={editForm.title} onChange={e => setEditForm(p => ({ ...p, title: e.target.value }))} />
+                  </div>
+                  <div className="user-edit-field">
+                    <label>Short Description</label>
+                    <textarea value={editForm.description} onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))} rows={2} maxLength={200} />
+                  </div>
+                  <div className="user-edit-field">
+                    <label>About / Details</label>
+                    <textarea value={editForm.about} onChange={e => setEditForm(p => ({ ...p, about: e.target.value }))} rows={3} maxLength={1000} />
+                  </div>
+                  <div className="user-edit-row">
+                    <div className="user-edit-field">
+                      <label>Category</label>
+                      <input value={editForm.category} onChange={e => setEditForm(p => ({ ...p, category: e.target.value }))} />
+                    </div>
+                    <div className="user-edit-field">
+                      <label>Venue Type</label>
+                      <select value={editForm.venue_type} onChange={e => setEditForm(p => ({ ...p, venue_type: e.target.value }))} className="ce-select">
+                        <option value="physical">Physical</option>
+                        <option value="virtual">Virtual</option>
+                        <option value="hybrid">Hybrid</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="user-edit-row">
+                    <div className="user-edit-field">
+                      <label>Venue Name</label>
+                      <input value={editForm.venue_name} onChange={e => setEditForm(p => ({ ...p, venue_name: e.target.value }))} />
+                    </div>
+                    <div className="user-edit-field">
+                      <label>Venue Address</label>
+                      <input value={editForm.venue_address} onChange={e => setEditForm(p => ({ ...p, venue_address: e.target.value }))} />
+                    </div>
+                  </div>
+                  {(editForm.venue_type === 'virtual' || editForm.venue_type === 'hybrid') && (
+                    <div className="user-edit-field">
+                      <label>Meeting Link</label>
+                      <input value={editForm.meeting_link} onChange={e => setEditForm(p => ({ ...p, meeting_link: e.target.value }))} placeholder="https://meet.google.com/..." />
+                    </div>
+                  )}
+                  <div className="user-edit-row">
+                    <div className="user-edit-field">
+                      <label>Start Date</label>
+                      <input type="date" value={editForm.start_date} onChange={e => setEditForm(p => ({ ...p, start_date: e.target.value }))} />
+                    </div>
+                    <div className="user-edit-field">
+                      <label>Start Time</label>
+                      <input type="time" value={editForm.start_time} onChange={e => setEditForm(p => ({ ...p, start_time: e.target.value }))} />
+                    </div>
+                  </div>
+                  <div className="user-edit-row">
+                    <div className="user-edit-field">
+                      <label>End Date</label>
+                      <input type="date" value={editForm.end_date} onChange={e => setEditForm(p => ({ ...p, end_date: e.target.value }))} />
+                    </div>
+                    <div className="user-edit-field">
+                      <label>End Time</label>
+                      <input type="time" value={editForm.end_time} onChange={e => setEditForm(p => ({ ...p, end_time: e.target.value }))} />
+                    </div>
+                  </div>
+                  <div className="user-edit-row">
+                    <div className="user-edit-field">
+                      <label>Pricing</label>
+                      <select value={editForm.is_free ? 'free' : 'paid'} onChange={e => setEditForm(p => ({ ...p, is_free: e.target.value === 'free' }))} className="ce-select">
+                        <option value="free">Free</option>
+                        <option value="paid">Paid</option>
+                      </select>
+                    </div>
+                    {!editForm.is_free && (
+                      <div className="user-edit-field">
+                        <label>Price (₦)</label>
+                        <input type="number" value={editForm.price} onChange={e => setEditForm(p => ({ ...p, price: e.target.value }))} />
+                      </div>
+                    )}
+                  </div>
+                  {!editForm.is_free && (
+                    <div className="user-edit-field">
+                      <label>Payment Link</label>
+                      <input value={editForm.payment_link} onChange={e => setEditForm(p => ({ ...p, payment_link: e.target.value }))} placeholder="Bank details or WhatsApp link" />
+                    </div>
+                  )}
+                  <div className="user-edit-field">
+                    <label>Visibility</label>
+                    <select value={editForm.visibility} onChange={e => setEditForm(p => ({ ...p, visibility: e.target.value }))} className="ce-select">
+                      <option value="public">Public — visible on Wanda</option>
+                      <option value="private">Private — invite link only</option>
+                    </select>
+                  </div>
+                  <div className="user-edit-actions">
+                    <button className="btn btn-primary btn-sm" onClick={() => saveEventEdit(ev.id)} disabled={saving}>
+                      {saving ? 'Saving...' : 'Save Changes'}
+                    </button>
+                    <button className="btn btn-outline btn-sm" onClick={() => setEditingId(null)}>Cancel</button>
+                  </div>
+                </div>
+              )}
+
+              {/* ── RSVP Viewer ── */}
+              {showingRsvps && (
+                <div style={{ marginTop: '0.75rem' }}>
+                  {rsvpLoading ? (
+                    <div className="de-empty"><div className="ed-spinner" style={{ margin: '0 auto', width: 20, height: 20 }} /></div>
+                  ) : rsvpList.length === 0 ? (
+                    <div className="de-empty">No RSVPs yet</div>
+                  ) : (
+                    <div style={{ background: 'var(--bg)', borderRadius: '0.5rem', padding: '0.5rem', maxHeight: 300, overflowY: 'auto' }}>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                        {rsvpList.length} total — {rsvpList.filter(r => r.status === 'interested').length} going, {rsvpList.filter(r => r.status === 'maybe').length} maybe
+                      </div>
+                      {rsvpList.map(r => {
+                        const name = r.guest_name || r.profiles?.full_name || r.profiles?.username || 'Anonymous'
+                        const contact = r.guest_email || r.profiles?.email || r.guest_phone || '—'
+                        return (
+                          <div key={r.id} style={{
+                            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                            padding: '0.4rem 0.5rem', borderBottom: '1px solid var(--border)',
+                            fontSize: '0.85rem',
+                          }}>
+                            <div>
+                              <div style={{ color: 'var(--text)', fontWeight: 500 }}>{name}</div>
+                              <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
+                                {contact}
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
+                              <span className={`de-rsvp-badge ${r.status === 'interested' ? 'going' : 'maybe'}`}>
+                                {r.status === 'interested' ? 'Going' : 'Maybe'}
+                              </span>
+                              {r.has_paid && <span className="de-rsvp-badge paid">Paid</span>}
+                            </div>
+                          </div>
+                        )
+                      })}
+                      <div style={{ textAlign: 'center', marginTop: '0.5rem' }}>
+                        <Link to={`/pass/${ev.slug}/ticket`} className="btn btn-outline btn-sm" style={{ fontSize: '0.75rem' }}>
+                          🎟️ View / Download Ticket
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* ── Attending Events ── */}
+      <div className="de-section">
+        <h3><PeopleRegular fontSize={18} /> Events I'm Attending ({attending.length})</h3>
+        {attending.length === 0 ? (
+          <div className="de-empty">You haven't RSVP'd to any events. <Link to="/pass" style={{ color: 'var(--primary)' }}>Browse events →</Link></div>
+        ) : attending.map(r => (
+          <Link to={`/pass/${r.events.slug}`} key={r.id} className="de-event-card">
+            <div className="de-event-top">
+              <div>
+                <div className="de-event-title">{r.events.title}</div>
+                <div className="de-event-meta">
+                  <span>📅 {formatDate(r.events.start_date)}</span>
+                  <span>{r.events.category}</span>
+                </div>
+              </div>
+              <div>
+                <span className={`de-rsvp-badge ${r.status === 'interested' ? 'going' : 'maybe'}`}>
+                  {r.status === 'interested' ? '✅ Going' : '🤔 Maybe'}
+                </span>
+                {r.has_paid && <span className="de-rsvp-badge paid" style={{ marginLeft: 4 }}>💰 Paid</span>}
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   )
 }

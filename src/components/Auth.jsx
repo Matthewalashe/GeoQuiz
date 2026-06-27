@@ -174,7 +174,8 @@ export default function Auth() {
       if (authError) throw authError
 
       if (data?.user) {
-        await ensureProfile(data.user)
+        // Profile creation is non-blocking — never let it stop Google login
+        try { await ensureProfile(data.user) } catch (e) { console.warn('[Auth] ensureProfile:', e.message) }
         playStepComplete()
         vibrateTap()
         const wasOnboarded = localStorage.getItem('wanda_onboarded')
@@ -182,8 +183,11 @@ export default function Auth() {
           setShowOnboarding(true)
           setLoading(false)
         } else {
+          setLoading(false)
           navigate(searchParams.get('redirect') || '/dashboard', { replace: true })
         }
+      } else {
+        setLoading(false)
       }
     } catch (err) {
       console.error('[Auth] Google error:', err)

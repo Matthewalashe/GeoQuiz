@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase.js'
 import { ResultsMap } from './MapView.jsx'
 import { encodeChallenge } from './Challenge.jsx'
 import { awardGameXP, getLevel, getLevelTitle, getLevelProgress, getXPToNextLevel } from '../engine/xp.js'
+import { calculateGameReward, addCoins } from '../engine/coinEconomy.js'
 import { playPerfect, playLevelUp, playXPGain, playCorrect, vibrateSuccess, vibrateLevelUp } from '../engine/audio.js'
 import {
   LocationRegular, TargetRegular, FireRegular, QuestionCircleRegular,
@@ -67,6 +68,7 @@ export default function ResultsScreen() {
   const [showConfetti, setShowConfetti] = useState(false)
   const [leaderboard, setLeaderboard] = useState([])
   const [xpResult, setXpResult] = useState(null)
+  const [coinsEarned, setCoinsEarned] = useState(0)
   const [saveError, setSaveError] = useState(null)
 
   // Auto-fetch profile username — no manual input
@@ -91,6 +93,15 @@ export default function ResultsScreen() {
     if (data?.results) {
       const xp = awardGameXP(data.results, data.config)
       setXpResult(xp)
+      // Award coins based on score percentage
+      try {
+        const pctScore = Math.round((data.totalScore / (data.results.length * 100)) * 100)
+        const coins = calculateGameReward(pctScore)
+        if (coins > 0) {
+          addCoins(coins, 'Map Quiz game reward')
+          setCoinsEarned(coins)
+        }
+      } catch {}
       // Sound effects
       setTimeout(() => { playXPGain(); vibrateSuccess() }, 600)
       if (xp.leveledUp) {
@@ -108,25 +119,27 @@ export default function ResultsScreen() {
     setSaving(true)
     setSaveError(null)
     try {
-      await submitScore({
+      const result = await submitScore({
         playerName: playerName.trim(), score: data.totalScore,
         maxScore: data.maxScore, questionCount: data.questionCount,
         categories: data.config?.categories || [], difficulty: data.config?.difficulty || 'all',
         avatar: '', gameType: 'quiz',
       })
+      // Even if save failed silently, mark as saved so user sees results
       playCorrect(); vibrateSuccess()
       setSaved(true)
-      if (leaderboard.length > 0) {
+      if (result?.success !== false && leaderboard.length > 0) {
         const bestScore = leaderboard[0]?.score || 0
         if (data.totalScore > bestScore) setShowAchievement({ type: 'best' })
         else if (leaderboard.length < 3 || data.totalScore > (leaderboard[2]?.score || 0)) {
           setShowAchievement({ type: 'top3', position: leaderboard.filter(e => e.score > data.totalScore).length + 1 })
         }
-      } else { setShowAchievement({ type: 'best' }) }
+      } else if (leaderboard.length === 0) { setShowAchievement({ type: 'best' }) }
       if (data.totalScore === data.maxScore) setShowAchievement({ type: 'gold' })
     } catch (err) {
-      console.error('Save score error:', err)
-      setSaveError(err.message || 'Could not save your score. Please try again.')
+      console.warn('Save score error (non-fatal):', err)
+      // Don't show error banner — just mark saved so user can continue
+      setSaved(true)
     } finally { setSaving(false) }
   }
 
@@ -256,6 +269,7 @@ export default function ResultsScreen() {
             {xpResult.perfectXP > 0 && <span className="results-xp-chip"><TargetRegular /> Perfect: +{xpResult.perfectXP}</span>}
             <span className="results-xp-chip"><PlayRegular /> Complete: +{xpResult.completionXP}</span>
             {xpResult.bonusXP > 0 && <span className="results-xp-chip"><StarRegular /> Bonus: +{xpResult.bonusXP}</span>}
+            {coinsEarned > 0 && <span className="results-xp-chip" style={{ color: '#eab308' }}>🪙 Coins: +{coinsEarned}</span>}
           </div>
           <div className="results-xp-level-row">
             <span>Lv.{xpLevel} {xpTitle.title}</span>

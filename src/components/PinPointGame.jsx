@@ -2,8 +2,11 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { MapContainer, TileLayer, Marker, Polyline, useMapEvents, useMap } from 'react-leaflet'
 import L from 'leaflet'
-import { TargetRegular, TimerRegular, ArrowRightRegular, HomeRegular, PlayRegular, TrophyRegular } from '@fluentui/react-icons'
+import { TargetRegular, TimerRegular, ArrowRightRegular, HomeRegular, PlayRegular, TrophyRegular, FlashRegular } from '@fluentui/react-icons'
 import { playCorrect, playWrong, playCelebration, vibrateTap, vibrateSuccess } from '../engine/audio.js'
+import { addXP, XP_REWARDS } from '../engine/xp.js'
+import { calculateGameReward, addCoins } from '../engine/coinEconomy.js'
+import { autoSubmitScore } from '../engine/leaderboard.js'
 
 // ── PLACES ──
 const PLACES = [
@@ -112,7 +115,15 @@ export default function PinPointGame() {
   const [timeLeft, setTimeLeft] = useState(TIME_LIMIT)
   const [phase, setPhase] = useState('playing') // playing | end
   const [feedback, setFeedback] = useState(null) // null | 'perfect' | 'close' | 'far'
+  const [xpEarned, setXpEarned] = useState(0)
+  const [coinsEarned, setCoinsEarned] = useState(0)
   const timerRef = useRef(null)
+
+  // Lock body scroll to prevent mobile viewport overflow
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
 
   const current = questions[qIndex]
   const totalScore = results.reduce((s, r) => s + r.score, 0)
@@ -176,7 +187,18 @@ export default function PinPointGame() {
   function handleNext() {
     if (qIndex + 1 >= TOTAL) {
       setPhase('end')
-      try { if (totalScore / maxScore >= 0.7) playCelebration() } catch {}
+      // Award XP + coins + leaderboard
+      const finalResults = [...results] // results already includes last answer
+      const finalTotal = finalResults.reduce((s, r) => s + r.score, 0)
+      const pctForReward = Math.round((finalTotal / maxScore) * 100)
+      try {
+        const xp = addXP('GAME_WIN')
+        setXpEarned(XP_REWARDS.GAME_WIN)
+        const coins = calculateGameReward(pctForReward)
+        if (coins > 0) { addCoins(coins, 'PinPoint game reward'); setCoinsEarned(coins) }
+        autoSubmitScore({ gameType: 'pinpoint', score: finalTotal, maxScore })
+      } catch {}
+      try { if (finalTotal / maxScore >= 0.7) playCelebration() } catch {}
       return
     }
     setQIndex(q => q + 1)
@@ -204,6 +226,12 @@ export default function PinPointGame() {
           <div className="pp-end-score">{totalScore} <span>/ {maxScore}</span></div>
           <div className="pp-end-pct" style={{ color: grade.color }}>{pct}%</div>
           <div className="pp-end-grade" style={{ color: grade.color, borderColor: grade.color }}>{grade.label}</div>
+          {(xpEarned > 0 || coinsEarned > 0) && (
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '0.75rem' }}>
+              {xpEarned > 0 && <span style={{ color: '#8b5cf6', fontWeight: 700 }}><FlashRegular /> +{xpEarned} XP</span>}
+              {coinsEarned > 0 && <span style={{ color: '#eab308', fontWeight: 700 }}>🪙 +{coinsEarned}</span>}
+            </div>
+          )}
         </div>
 
         <h3 className="pp-breakdown-title">Question Breakdown</h3>

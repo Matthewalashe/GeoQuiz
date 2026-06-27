@@ -91,6 +91,18 @@ export const CATEGORIES = [
   { id: 'culture', label: 'Culture', icon: <TicketDiagonalRegular fontSize={24} /> },
   { id: 'experience', label: 'Experiences', icon: <StarRegular fontSize={24} /> },
   { id: 'shopping', label: 'Shopping', icon: <ShoppingBagRegular fontSize={24} /> },
+  { id: 'arts-crafts', label: 'Arts & Crafts', icon: <StarRegular fontSize={24} /> },
+]
+
+export const HOME_CATEGORIES = [
+  { id: 'places', label: 'Places', icon: <LocationRegular fontSize={28} />, path: '/explore?category=attraction', color: '#C8963E' },
+  { id: 'events', label: 'Events', icon: <TicketDiagonalRegular fontSize={28} />, path: '/explore?category=experience', color: '#3D348B' },
+  { id: 'food', label: 'Food', icon: <FoodPizzaRegular fontSize={28} />, path: '/explore?category=restaurant', color: '#E05A3A' },
+  { id: 'hotels', label: 'Hotels', icon: <BuildingMultipleRegular fontSize={28} />, path: '/explore?category=hotel', color: '#0D9488' },
+  { id: 'artisans', label: 'Artisans', icon: <StarRegular fontSize={28} />, path: '/handymen', color: '#8B5CF6' },
+  { id: 'services', label: 'Services', icon: <SearchRegular fontSize={28} />, path: '/handymen', color: '#0ea5e9' },
+  { id: 'deals', label: 'Deals', icon: <ShoppingBagRegular fontSize={28} />, path: '/deals', color: '#f59e0b' },
+  { id: 'more', label: 'More', icon: <DrinkMargaritaRegular fontSize={28} />, path: '/explore', color: '#6B6B6B' },
 ]
 
 export const PRICE_LABELS = { [N1]: 'Budget', [N2]: 'Mid-range', [N3]: 'Premium', [N4]: 'Luxury' }

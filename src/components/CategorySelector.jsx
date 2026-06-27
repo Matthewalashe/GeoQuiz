@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import LevelSelect from './LevelSelect.jsx'
 import { CATEGORIES, REGIONS, getQuestionsByRegion } from '../data/questions.js'
 import {
   regenerateLives, getWallet, getStreak, getGameProgress,
   getGames, getCoinValue, loadGameConfig, buyLives,
-  processDailyLogin
+  processDailyLogin, getUserRank
 } from '../lib/gameService.js'
 import {
   MapRegular, CameraRegular, TextFontRegular,
@@ -304,6 +304,7 @@ export default function CategorySelector({ session }) {
   const [showOutOfLives, setShowOutOfLives] = useState(false)
   const [buyingLives, setBuyingLives] = useState(false)
   const [dailyResult, setDailyResult] = useState(null)
+  const [userRank, setUserRank] = useState(null)
 
   const userId = session?.user?.id
   const available = getQuestionsByRegion(region, selectedCats, difficulty)
@@ -330,6 +331,11 @@ export default function CategorySelector({ session }) {
         const refreshed = await getWallet(userId)
         setWallet(refreshed)
       }
+      // Fetch leaderboard rank
+      try {
+        const rank = await getUserRank(userId)
+        setUserRank(rank)
+      } catch {}
     } catch (e) {
       console.error('loadGameData:', e)
     }
@@ -397,6 +403,8 @@ export default function CategorySelector({ session }) {
 
   function navigateToGame(gameId) {
     if (livesData && livesData.lives <= 0) { setShowOutOfLives(true); return }
+    // Map Quiz needs the setup flow (pick categories, difficulty, etc.)
+    if (gameId === 'quiz') { setView('quiz-setup'); return }
     navigate(`/${gameId}`)
   }
 
@@ -564,39 +572,49 @@ export default function CategorySelector({ session }) {
       {/* ── Game Journey Dashboard ── */}
       {userId && (
         <div className="gj-dashboard">
-          {/* Stats row */}
-          <div className="gj-stats-row">
-            <div className="gj-stat">
-              <span className="gj-stat-icon">🪙</span>
-              <div className="gj-stat-info">
-                <span className="gj-stat-value">{wallet?.coins ?? 0}</span>
-                <span className="gj-stat-label">Coins</span>
-              </div>
+          {/* ── Unified Stats Bar (Glassmorphism) ── */}
+          <div className="stats-bar glass">
+            <Link to="/play" className="stats-bar-item" title="Lives">
+              <span className="stats-bar-icon stats-bar-life">❤️</span>
+              <span className="stats-bar-value">{lives}</span>
+              <span className="stats-bar-label">Life</span>
+            </Link>
+            <div className="stats-bar-divider" />
+            <Link to="/rewards" className="stats-bar-item" title="Open Store">
+              <span className="stats-bar-icon stats-bar-coins">🪙</span>
+              <span className="stats-bar-value">{wallet?.coins ?? 0}</span>
+              <span className="stats-bar-label">Coins</span>
+            </Link>
+            <div className="stats-bar-divider" />
+            <Link to="/dashboard" onClick={() => setTimeout(() => window.dispatchEvent(new CustomEvent('dashboard-tab', { detail: 'journey' })), 100)} className="stats-bar-item" title="Game Journey">
+              <span className="stats-bar-icon stats-bar-streak">⚡</span>
+              <span className="stats-bar-value">{streak?.current_streak ?? 0}</span>
+              <span className="stats-bar-label">Streak</span>
+            </Link>
+            <div className="stats-bar-divider" />
+            <div className="stats-bar-item" title="All-time XP">
+              <span className="stats-bar-icon stats-bar-alltime">⭐</span>
+              <span className="stats-bar-value">{wallet?.lifetime_coins ?? 0}</span>
+              <span className="stats-bar-label">All-time</span>
             </div>
-            <div className="gj-stat">
-              <span className="gj-stat-icon">🔥</span>
-              <div className="gj-stat-info">
-                <span className="gj-stat-value">{streak?.current_streak ?? 0}</span>
-                <span className="gj-stat-label">Day Streak</span>
-              </div>
-            </div>
-            <div className="gj-stat">
-              <span className="gj-stat-icon">⭐</span>
-              <div className="gj-stat-info">
-                <span className="gj-stat-value">{wallet?.lifetime_coins ?? 0}</span>
-                <span className="gj-stat-label">All-time</span>
-              </div>
-            </div>
+            <div className="stats-bar-divider" />
+            <Link to="/leaderboard" className="stats-bar-item" title="Leaderboard">
+              <span className="stats-bar-icon stats-bar-rank">🏆</span>
+              <span className="stats-bar-value">{userRank ? `#${userRank}` : '—'}</span>
+              <span className="stats-bar-label">Rank</span>
+            </Link>
           </div>
 
-          {/* Lives bar */}
-          <LivesBar
-            lives={lives}
-            maxLives={maxLives}
-            secondsUntilNext={secsNext}
-            onBuyLives={handleBuyLives}
-            buying={buyingLives}
-          />
+          {/* Lives regen timer (only show when lives < max) */}
+          {lives < maxLives && (
+            <LivesBar
+              lives={lives}
+              maxLives={maxLives}
+              secondsUntilNext={secsNext}
+              onBuyLives={handleBuyLives}
+              buying={buyingLives}
+            />
+          )}
 
           {/* Daily login celebration */}
           {dailyResult && !dailyResult.already_logged_in && dailyResult.daily_coins?.awarded && (

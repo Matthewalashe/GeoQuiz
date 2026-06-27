@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CheckmarkCircleRegular } from '@fluentui/react-icons'
 import { addXP } from '../engine/xp.js'
+import { calculateGameReward, addCoins } from '../engine/coinEconomy.js'
 import { autoSubmitScore } from '../engine/leaderboard.js'
 import { RewardsOverlay, useRewardSystem } from '../engine/rewards.jsx'
 import ResultCard from './ResultCard.jsx'
@@ -34,6 +35,11 @@ export default function CrosswordGame() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [showQuitModal, setShowQuitModal] = useState(false)
   const [pendingNav, setPendingNav] = useState(null)
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
 
   const puzzle = selectedPuzzle ? PUZZLES.find(p => p.id === selectedPuzzle) : null
 
@@ -117,6 +123,10 @@ export default function CrosswordGame() {
     if (isWin) {
       setWon(true)
       addXP('GAME_WIN')
+      try {
+        const coins = calculateGameReward(100)
+        if (coins > 0) addCoins(coins, 'Crossword game reward')
+      } catch {}
       showStarBurst(3)
       setTimeout(() => openChest(100), 800)
       // Submit to leaderboard

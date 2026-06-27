@@ -40,34 +40,48 @@ class ErrorBoundary extends Component {
 }
 import Header from './components/Header.jsx'
 import Landing from './components/Landing.jsx'
-import CategorySelector from './components/CategorySelector.jsx'
-import GameScreen from './components/GameScreen.jsx'
-import ResultsScreen from './components/ResultsScreen.jsx'
-import Leaderboard from './components/Leaderboard.jsx'
-import About from './components/About.jsx'
-import Challenge from './components/Challenge.jsx'
-import Dashboard from './components/Dashboard.jsx'
-import Achievements from './components/Achievements.jsx'
-import Community from './components/Community.jsx'
-import PostCards from './components/PostCards.jsx'
-import WordGame from './components/WordGame.jsx'
-import Rewards from './components/Rewards.jsx'
-import TriviaGame from './components/TriviaGame.jsx'
-import PinPointGame from './components/PinPointGame.jsx'
-import FlagStackGame from './components/FlagStackGame.jsx'
-import Discovery from './components/Discovery.jsx'
-import DealsPage from './components/DealsPage.jsx'
-import Explore from './components/Explore.jsx'
-import ListingDetail from './components/ListingDetail.jsx'
-import PassLanding from './components/PassLanding.jsx'
-import ListBusiness from './components/ListBusiness.jsx'
-import ListBusinessLanding from './components/ListBusinessLanding.jsx'
-import Handymen from './components/Handymen.jsx'
-import Notifications from './components/Notifications.jsx'
 import InstallPrompt from './components/InstallPrompt.jsx'
 import PageTransition from './components/PageTransition.jsx'
-import Auth from './components/Auth.jsx'
-import AdminDashboard from './components/admin/AdminDashboard.jsx'
+import SEO, { SEO_PAGES } from './components/SEO.jsx'
+
+// ─── Lazy-loaded routes for code splitting ───
+import { lazy, Suspense } from 'react'
+const CategorySelector = lazy(() => import('./components/CategorySelector.jsx'))
+const GameScreen = lazy(() => import('./components/GameScreen.jsx'))
+const ResultsScreen = lazy(() => import('./components/ResultsScreen.jsx'))
+const Leaderboard = lazy(() => import('./components/Leaderboard.jsx'))
+const About = lazy(() => import('./components/About.jsx'))
+const Challenge = lazy(() => import('./components/Challenge.jsx'))
+const Dashboard = lazy(() => import('./components/Dashboard.jsx'))
+const Achievements = lazy(() => import('./components/Achievements.jsx'))
+const Community = lazy(() => import('./components/Community.jsx'))
+const PostCards = lazy(() => import('./components/PostCards.jsx'))
+const WordGame = lazy(() => import('./components/WordGame.jsx'))
+const Rewards = lazy(() => import('./components/Rewards.jsx'))
+const TriviaGame = lazy(() => import('./components/TriviaGame.jsx'))
+const PinPointGame = lazy(() => import('./components/PinPointGame.jsx'))
+const FlagStackGame = lazy(() => import('./components/FlagStackGame.jsx'))
+const Discovery = lazy(() => import('./components/Discovery.jsx'))
+const DealsPage = lazy(() => import('./components/DealsPage.jsx'))
+const Explore = lazy(() => import('./components/Explore.jsx'))
+const ListingDetail = lazy(() => import('./components/ListingDetail.jsx'))
+const PassLanding = lazy(() => import('./components/PassLanding.jsx'))
+const ListBusiness = lazy(() => import('./components/ListBusiness.jsx'))
+const ListBusinessLanding = lazy(() => import('./components/ListBusinessLanding.jsx'))
+const Handymen = lazy(() => import('./components/Handymen.jsx'))
+const BusinessDetail = lazy(() => import('./components/BusinessDetail.jsx'))
+const Notifications = lazy(() => import('./components/Notifications.jsx'))
+const PuzzleGame = lazy(() => import('./components/PuzzleGame.jsx'))
+const CrosswordGame = lazy(() => import('./components/CrosswordGame.jsx'))
+const ColoringGame = lazy(() => import('./components/ColoringGame.jsx'))
+const AdventureGame = lazy(() => import('./components/AdventureGame.jsx'))
+const StoryMode = lazy(() => import('./components/StoryMode.jsx'))
+const Auth = lazy(() => import('./components/Auth.jsx'))
+const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard.jsx'))
+const Flyer = lazy(() => import('./components/Flyer.jsx'))
+const CreateEvent = lazy(() => import('./components/CreateEvent.jsx'))
+const EventDetail = lazy(() => import('./components/EventDetail.jsx'))
+const EventPass = lazy(() => import('./components/EventPass.jsx'))
 import { processDailyLogin, getXPData, getLevel, getLevelTitle, getCurrentLeague } from './engine/xp.js'
 import { preloadQuestionBank } from './engine/questionBank.js'
 import { scheduleNotifChecks, getNotifPermission } from './engine/notifications.js'
@@ -80,7 +94,7 @@ function useTheme() {
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem('geoquiz_theme')
     if (saved) return saved
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    return 'light'
   })
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
@@ -90,60 +104,20 @@ function useTheme() {
   return { theme, toggle }
 }
 
-function SplashScreen({ onDone }) {
-  const [progress, setProgress] = useState(0)
-  const [fadeOut, setFadeOut] = useState(false)
-
-  useEffect(() => {
-    let p = 0
-    const interval = setInterval(() => {
-      p += Math.random() * 8 + 3
-      if (p >= 100) {
-        p = 100
-        clearInterval(interval)
-        setTimeout(() => setFadeOut(true), 400)
-        setTimeout(() => onDone(), 1000)
-      }
-      setProgress(Math.min(p, 100))
-    }, 120)
-    return () => clearInterval(interval)
-  }, [onDone])
-
-  return (
-    <div className={`splash-screen ${fadeOut ? 'fade-out' : ''}`}>
-      <div className="splash-logo">
-        <img src="/wanda-logo.png" alt="Wanda" className="splash-logo-img" />
-      </div>
-      <div className="splash-tagline">Experience Nigeria</div>
-      <div className="splash-bar-wrap">
-        <div className="splash-bar" style={{ width: `${progress}%` }} />
-      </div>
-    </div>
-  )
-}
+// Splash screen removed — was causing a brief flash before app loads (bad UX)
 
 export default function App() {
   const location = useLocation()
-  const GAME_ROUTES = ['/game', '/wordgame', '/trivia', '/pinpoint', '/flagstack']
+  const GAME_ROUTES = ['/game', '/quiz', '/wordgame', '/trivia', '/pinpoint', '/flagstack', '/puzzle', '/crossword', '/coloring', '/adventure', '/story', '/postcards']
   const isGamePage = GAME_ROUTES.includes(location.pathname)
   const isAdminPage = location.pathname === '/admin'
   const isDashboardPage = location.pathname === '/dashboard'
   const isStandalonePage = isAdminPage || isDashboardPage
   const { theme, toggle: toggleTheme } = useTheme()
-  const [showSplash, setShowSplash] = useState(() => {
-    // Only show splash on fresh app loads, not on navigations
-    const shown = sessionStorage.getItem('geoquiz_splash')
-    return !shown
-  })
 
   const [dailyToast, setDailyToast] = useState(null)
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
-
-  function handleSplashDone() {
-    setShowSplash(false)
-    sessionStorage.setItem('geoquiz_splash', '1')
-  }
 
   // Auth & Profile management
   useEffect(() => {
@@ -173,11 +147,45 @@ export default function App() {
    * Called after ANY successful auth. Guarantees a profile exists.
    * This is the safety net — if the DB trigger failed, this creates the profile.
    */
-  async function handleAuthUser(user) {
+   async function handleAuthUser(user) {
     try {
       // ensureProfile: checks if profile exists, creates it if not
       const p = await ensureProfile(user)
       setProfile(p)
+
+      // Send welcome notifications for brand-new users
+      const isNew = !localStorage.getItem('wanda_welcomed_' + user.id)
+      if (isNew && p) {
+        localStorage.setItem('wanda_welcomed_' + user.id, '1')
+        // Fire welcome notifications (non-blocking)
+        import('./lib/push.js').then(({ createNotification }) => {
+          createNotification(user.id, { type: 'info', title: '🎉 Welcome to Wanda!', body: 'You just joined Nigeria\'s most exciting exploration platform. Let\'s get started!', icon: '🎉', link: '/' })
+          setTimeout(() => createNotification(user.id, { type: 'info', title: '🗺️ Explore Lagos', body: 'Discover restaurants, hotels, attractions, and hidden gems across Lagos with interactive maps.', icon: '🗺️', link: '/explore' }), 500)
+          setTimeout(() => createNotification(user.id, { type: 'info', title: '🎮 Play & Win', body: 'Test your knowledge with geography quizzes, word games, trivia, and more. Earn XP and climb the leaderboard!', icon: '🎮', link: '/play' }), 1000)
+          setTimeout(() => createNotification(user.id, { type: 'info', title: '🎟️ Events & Passes', body: 'RSVP to events, download your event pass, and connect with other attendees.', icon: '🎟️', link: '/pass' }), 1500)
+          setTimeout(() => createNotification(user.id, { type: 'info', title: '📍 List Your Business', body: 'Own a business? List it free and get discovered by thousands of explorers.', icon: '📍', link: '/list-your-business' }), 2000)
+          setTimeout(() => createNotification(user.id, { type: 'info', title: '🏆 Achievements & Rewards', body: 'Complete challenges, earn badges, collect daily rewards, and unlock exclusive content.', icon: '🏆', link: '/achievements' }), 2500)
+        })
+      }
+
+      // Check for app updates and notify (once per version)
+      try {
+        const res = await fetch('/version.json?t=' + Date.now())
+        const ver = await res.json()
+        const lastSeen = localStorage.getItem('wanda_last_version')
+        if (lastSeen && lastSeen !== ver.version && p) {
+          import('./lib/push.js').then(({ createNotification }) => {
+            createNotification(user.id, {
+              type: 'info',
+              title: '🆕 Wanda just got better!',
+              body: `Version ${ver.version} is here! New features: Scannable QR codes on event passes, tap-to-navigate venue addresses, image preview overlay, Aso-Ebi fields, and more. Pull down to refresh!`,
+              icon: '🚀',
+              link: '/notifications'
+            })
+          })
+        }
+        localStorage.setItem('wanda_last_version', ver.version)
+      } catch { /* version check is non-critical */ }
 
       // Sync local XP progress (once per device)
       const alreadySynced = localStorage.getItem('geoquiz_synced')
@@ -197,7 +205,7 @@ export default function App() {
         email: user.email || '',
         username: user.user_metadata?.username || user.email?.split('@')[0] || 'Explorer',
         full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
-        avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || '🧭',
+        avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
         role: 'user',
         total_xp: 0,
         streak_days: 0,
@@ -249,7 +257,7 @@ export default function App() {
   return (
     <ErrorBoundary>
     <div className={`app ${isGamePage ? 'fullscreen-game' : ''}`}>
-      {showSplash && <SplashScreen onDone={handleSplashDone} />}
+      {/* Splash screen removed */}
 
       {/* Daily login XP toast */}
       {dailyToast && (
@@ -268,35 +276,48 @@ export default function App() {
       <CelebrationOverlay {...celebrationProps} />
       <main className={isGamePage ? 'app-main-full' : isStandalonePage ? '' : 'app-main'}>
         <PageTransition>
+          <Suspense fallback={<div style={{ display:'flex',alignItems:'center',justifyContent:'center',minHeight:'60vh',flexDirection:'column',gap:'0.75rem' }}><div style={{ width:36,height:36,border:'3px solid var(--border)',borderTopColor:'var(--primary)',borderRadius:'50%',animation:'spin .6s linear infinite' }} /><span style={{ color:'var(--text-secondary)',fontSize:'0.85rem' }}>Loading...</span></div>}>
           <Routes>
-            <Route path="/" element={<Landing session={session} profile={profile} />} />
-            <Route path="/explore" element={<Explore />} />
-            <Route path="/explore/:id" element={<ListingDetail />} />
-            <Route path="/play" element={<CategorySelector session={session} />} />
-            <Route path="/game" element={<GameScreen />} />
-            <Route path="/results" element={<ResultsScreen />} />
-            <Route path="/leaderboard" element={<Leaderboard />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/challenge" element={<Challenge />} />
-            <Route path="/dashboard" element={<Dashboard session={session} profile={profile} />} />
-            <Route path="/achievements" element={<Achievements />} />
-            <Route path="/community" element={<Community session={session} profile={profile} />} />
-            <Route path="/postcards" element={<PostCards />} />
-            <Route path="/wordgame" element={<WordGame />} />
-            <Route path="/trivia" element={<TriviaGame />} />
-            <Route path="/pinpoint" element={<PinPointGame />} />
-            <Route path="/flagstack" element={<FlagStackGame />} />
-            <Route path="/rewards" element={<Rewards session={session} profile={profile} />} />
-            <Route path="/discovery" element={<Discovery />} />
-            <Route path="/deals" element={<DealsPage />} />
-            <Route path="/pass" element={<PassLanding />} />
-            <Route path="/list-your-business" element={<ListBusinessLanding />} />
-            <Route path="/list-your-business/form" element={<ListBusiness />} />
-            <Route path="/handymen" element={<Handymen />} />
-            <Route path="/notifications" element={<Notifications session={session} />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/admin" element={<AdminDashboard session={session} profile={profile} />} />
+            <Route path="/" element={<><SEO {...SEO_PAGES.home} /><Landing session={session} profile={profile} /></>} />
+            <Route path="/explore" element={<><SEO {...SEO_PAGES.explore} /><Explore /></>} />
+            <Route path="/explore/:id" element={<><SEO title="Explore" description="Discover this listing on Wanda." /><ListingDetail /></>} />
+            <Route path="/play" element={<><SEO {...SEO_PAGES.play} /><CategorySelector session={session} /></>} />
+            <Route path="/game" element={<><SEO title="Map Quiz" description="Pin the location on the map! Test your Nigerian geography knowledge." /><GameScreen /></>} />
+            <Route path="/quiz" element={<><SEO title="Quiz" description="Answer geography questions about Nigeria." /><GameScreen /></>} />
+            <Route path="/results" element={<><SEO title="Results" description="See how you scored on the quiz!" /><ResultsScreen /></>} />
+            <Route path="/leaderboard" element={<><SEO {...SEO_PAGES.leaderboard} /><Leaderboard /></>} />
+            <Route path="/about" element={<><SEO {...SEO_PAGES.about} /><About /></>} />
+            <Route path="/challenge" element={<><SEO title="Daily Challenge" description="Take on today's geography challenge and compete with other players." /><Challenge /></>} />
+            <Route path="/dashboard" element={<><SEO {...SEO_PAGES.dashboard} /><Dashboard session={session} profile={profile} /></>} />
+            <Route path="/achievements" element={<><SEO {...SEO_PAGES.achievements} /><Achievements /></>} />
+            <Route path="/community" element={<><SEO {...SEO_PAGES.community} /><Community session={session} profile={profile} /></>} />
+            <Route path="/postcards" element={<><SEO title="Postcards" description="Collect beautiful digital postcards of Nigerian landmarks and places." /><PostCards /></>} />
+            <Route path="/wordgame" element={<><SEO {...SEO_PAGES.wordGame} /><WordGame /></>} />
+            <Route path="/trivia" element={<><SEO {...SEO_PAGES.trivia} /><TriviaGame /></>} />
+            <Route path="/pinpoint" element={<><SEO title="PinPoint" description="How precisely can you locate places on the map? Test your accuracy!" /><PinPointGame /></>} />
+            <Route path="/flagstack" element={<><SEO title="Flag Stack" description="Match flags to their Nigerian states and African countries." /><FlagStackGame /></>} />
+            <Route path="/puzzle" element={<><SEO title="Puzzle" description="Solve visual puzzles featuring Nigerian landmarks and scenery." /><PuzzleGame /></>} />
+            <Route path="/crossword" element={<><SEO title="Crossword" description="Complete crossword puzzles about Nigerian geography and culture." /><CrosswordGame /></>} />
+            <Route path="/coloring" element={<><SEO title="Coloring" description="Color beautiful scenes of Nigerian landmarks and landscapes." /><ColoringGame /></>} />
+            <Route path="/adventure" element={<><SEO title="Adventure" description="Embark on a story-driven adventure through Nigeria's cities and landmarks." /><AdventureGame /></>} />
+            <Route path="/story" element={<><SEO title="Story Mode" description="Experience interactive stories set in Nigeria's vibrant cities." /><StoryMode /></>} />
+            <Route path="/rewards" element={<><SEO {...SEO_PAGES.rewards} /><Rewards session={session} profile={profile} /></>} />
+            <Route path="/discovery" element={<><SEO {...SEO_PAGES.discovery} /><Discovery /></>} />
+            <Route path="/deals" element={<><SEO {...SEO_PAGES.deals} /><DealsPage /></>} />
+            <Route path="/pass/create" element={<><SEO title="Create Event" description="Create and publish your event on Wanda Pass." /><CreateEvent /></>} />
+            <Route path="/pass/:slug/ticket" element={<><SEO title="Event Ticket" description="Your Wanda Pass event ticket." /><EventPass /></>} />
+            <Route path="/pass/:slug" element={<><SEO title="Event Details" description="View event details, get tickets, and RSVP on Wanda." /><EventDetail /></>} />
+            <Route path="/pass" element={<><SEO {...SEO_PAGES.pass} /><PassLanding /></>} />
+            <Route path="/list-your-business" element={<><SEO {...SEO_PAGES.listBusiness} /><ListBusinessLanding /></>} />
+            <Route path="/list-your-business/form" element={<><SEO title="Business Registration" description="Submit your business details to get listed on Wanda." /><ListBusiness /></>} />
+            <Route path="/handymen" element={<><SEO {...SEO_PAGES.handymen} /><Handymen /></>} />
+            <Route path="/business/:id" element={<><SEO title="Business" description="View business details, ratings, and contact info on Wanda." /><BusinessDetail /></>} />
+            <Route path="/notifications" element={<><SEO title="Notifications" description="Your Wanda notifications." noIndex /><Notifications session={session} /></>} />
+            <Route path="/auth" element={<><SEO {...SEO_PAGES.auth} /><Auth /></>} />
+            <Route path="/flyer" element={<><SEO title="Share Wanda" description="Share Wanda with your friends." /><Flyer /></>} />
+            <Route path="/admin" element={<><SEO {...SEO_PAGES.admin} /><AdminDashboard session={session} profile={profile} /></>} />
           </Routes>
+          </Suspense>
         </PageTransition>
       </main>
       {!isGamePage && !isStandalonePage && (

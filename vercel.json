@@ -4,6 +4,28 @@
   "buildCommand": "vite build",
   "outputDirectory": "dist",
   "rewrites": [
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(Googlebot|bingbot|facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|TelegramBot|WhatsApp|Discordbot|Pinterest|Applebot).*"
+        }
+      ],
+      "destination": "/api/og?path=/"
+    },
+    {
+      "source": "/:path(explore|play|pass|list-your-business|handymen|about|leaderboard|community|deals|discovery|rewards|wordgame|trivia|challenge|pinpoint|flagstack|puzzle|crossword|coloring|adventure|postcards|story)",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(Googlebot|bingbot|facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|TelegramBot|WhatsApp|Discordbot|Pinterest|Applebot).*"
+        }
+      ],
+      "destination": "/api/og?path=/:path"
+    },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [

@@ -75,6 +75,7 @@ export default function Explore() {
           throw new Error('Supabase client is not initialized. Please configure your .env file.')
         }
 
+        // Fetch CMS listings
         const { data, error } = await supabase
           .from('cms_listings')
           .select('*')
@@ -124,6 +125,7 @@ export default function Explore() {
           }
           return {
             ...d,
+            _source: 'cms',
             priceRange: d.price_range,
             price_min: pMin,
             price_max: d.price_max ? parseInt(d.price_max, 10) : null,
@@ -135,7 +137,42 @@ export default function Explore() {
           }
         })
 
-        setListings(mapped)
+        // Also fetch approved user-submitted business listings
+        let bizMapped = []
+        try {
+          const { data: bizData } = await supabase
+            .from('business_listings')
+            .select('*')
+            .eq('status', 'approved')
+            .eq('listing_type', 'business')
+            .order('name')
+
+          bizMapped = (bizData || []).map(b => {
+            const photos = []
+            if (b.logo_url) photos.push(b.logo_url)
+            if (Array.isArray(b.photos)) photos.push(...b.photos)
+            else if (typeof b.photos === 'string') {
+              try { photos.push(...JSON.parse(b.photos)) } catch {}
+            }
+            return {
+              ...b,
+              _source: 'business',
+              subcategory: b.subcategory || b.category,
+              priceRange: b.price_range,
+              price_min: PRICE_MIN_MAP[b.price_range] || null,
+              price_max: null,
+              lat: null,
+              lng: null,
+              rating: 5.0,
+              photos,
+              tags: [],
+            }
+          })
+        } catch (e) {
+          console.warn('Business listings fetch:', e.message)
+        }
+
+        setListings([...mapped, ...bizMapped])
       } catch (err) {
         console.error('Explore listings fetch error:', err)
         setError(err.message || 'Failed to load places.')
@@ -376,8 +413,10 @@ export default function Explore() {
           {/* LIST VIEW */}
           {view === 'list' && (
             <div className="ex-grid">
-              {filtered.map(listing => (
-                <Link key={listing.id} to={`/explore/${listing.id}`} className="ex-card">
+              {filtered.map(listing => {
+                const detailPath = listing._source === 'business' ? `/business/${listing.id}` : `/explore/${listing.id}`
+                return (
+                <Link key={listing.id} to={detailPath} className="ex-card">
                   <div className="ex-card-img">
                     <img
                       src={listing.photos?.[0] || '/images/postcards/national-theatre.png'}
@@ -386,10 +425,14 @@ export default function Explore() {
                       onError={e => { e.target.src = '/images/postcards/national-theatre.png' }}
                     />
                     <span className="ex-card-price">
-                      {listing.price_min ? `From ₦${listing.price_min.toLocaleString()}` : 'Free Entry'}
+                      {listing.price_min ? `From ₦${listing.price_min.toLocaleString()}` : (listing._source === 'business' ? (listing.priceRange || '🏪 Business') : 'Free Entry')}
                     </span>
                     {listing.is_wanda_pick && (
                       <span className="ex-wanda-pick">✦ Wanda Pick</span>
+                    )}
+                    {listing._source === 'business' && listing.logo_url && (
+                      <img src={listing.logo_url} alt="" className="ex-card-avatar"
+                        onError={e => { e.target.style.display = 'none' }} />
                     )}
                   </div>
                   <div className="ex-card-body">
@@ -408,7 +451,7 @@ export default function Explore() {
                     </div>
                   </div>
                 </Link>
-              ))}
+              )})}
             </div>
           )}
 

@@ -1,4 +1,4 @@
-const CACHE = 'wanda-v14'
+const CACHE = 'wanda-v15'
 
 self.addEventListener('install', e => {
   self.skipWaiting()
@@ -61,13 +61,37 @@ self.addEventListener('fetch', e => {
     return
   }
 
+  // Hashed static assets (e.g. /assets/index-DQMFPl0Z.js) — cache-first (immutable)
+  const isHashedAsset = url.includes('/assets/') && /[-_][A-Za-z0-9]{6,}\.(js|css|woff2?|png|jpg|svg|webp)/.test(url)
+  if (isHashedAsset) {
+    e.respondWith(
+      caches.match(e.request).then(cached => {
+        if (cached) return cached
+        return fetch(e.request).then(res => {
+          if (res.ok) {
+            const clone = res.clone()
+            caches.open(CACHE).then(c => {
+              c.put(e.request, clone)
+              trimCache(c, 80)
+            }).catch(() => {})
+          }
+          return res
+        }).catch(() => new Response('', { status: 404 }))
+      })
+    )
+    return
+  }
+
   // Other assets: network-first with cache fallback
   e.respondWith(
     fetch(e.request)
       .then(res => {
         if (res.ok) {
           const clone = res.clone()
-          caches.open(CACHE).then(c => c.put(e.request, clone)).catch(() => {})
+          caches.open(CACHE).then(c => {
+            c.put(e.request, clone)
+            trimCache(c, 80)
+          }).catch(() => {})
         }
         return res
       })
@@ -78,6 +102,15 @@ self.addEventListener('fetch', e => {
       )
   )
 })
+
+// Limit cache size to prevent storage bloat
+function trimCache(cache, max) {
+  cache.keys().then(keys => {
+    if (keys.length > max) {
+      cache.delete(keys[0]).then(() => { if (keys.length > max + 1) trimCache(cache, max) })
+    }
+  })
+}
 
 // Push Notifications
 self.addEventListener('push', e => {
