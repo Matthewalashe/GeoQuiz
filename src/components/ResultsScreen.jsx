@@ -327,7 +327,10 @@ export default function ResultsScreen() {
 
       {/* Actions */}
       <div className="results-actions">
-        <Link to="/play" className="btn btn-primary"><PlayRegular /> Play Again</Link>
+        <button className="btn btn-primary" onClick={() => {
+          const nextConfig = { ...data.config, seed: Math.floor(Math.random() * 99999) }
+          navigate('/game', { state: nextConfig })
+        }}><ArrowRightRegular /> Continue to Next Level</button>
         <Link to="/leaderboard" className="btn btn-outline"><TrophyRegular /> Leaderboard</Link>
         <Link to="/" className="btn btn-outline"><HomeRegular /> Home</Link>
       </div>

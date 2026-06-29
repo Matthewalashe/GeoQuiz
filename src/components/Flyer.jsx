@@ -124,7 +124,7 @@ export default function Flyer() {
             <ShareRegular fontSize={20} />
             Share App Link
           </button>
-          <a href="/wanda-model-photo.png" download="wanda-advertising-flyer.png" className="btn btn-outline flyer-action-btn download-btn">
+          <a href="/images/wanda-flyer.png" download="wanda-advertising-flyer.png" className="btn btn-outline flyer-action-btn download-btn">
             <ArrowDownloadRegular fontSize={20} />
             Download Flyer Image
           </a>
