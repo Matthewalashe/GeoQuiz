@@ -1,9 +1,4 @@
-/**
- * Vercel Serverless Function - Send branded Wanda emails via Resend API
- * POST /api/send-email { type, to, data }
- * GET  /api/send-email  -> health check
- */
-var https = require('https');
+import https from 'https';
 
 var RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 var FROM_EMAIL = 'Matthew Alashe <onboarding@resend.dev>';
@@ -152,7 +147,7 @@ function _fRow(title, desc) {
     + '</tr></table></td></tr>';
 }
 
-module.exports = function handler(req, res) {
+export default function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -211,4 +206,4 @@ module.exports = function handler(req, res) {
       console.error('[send-email] Error: ' + err.message);
       res.status(500).json({ error: err.message });
     });
-};
+}

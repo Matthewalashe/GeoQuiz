@@ -154,7 +154,7 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;')
 }
 
-module.exports = function handler(req, res) {
+export default function handler(req, res) {
   const path = req.query.path || '/'
   const route = STATIC_ROUTES[path]
 
