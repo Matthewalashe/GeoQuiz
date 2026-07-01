@@ -23,6 +23,7 @@ const SECTIONS = [
   { id: 'questions', label: 'Questions', icon: <QuestionRegular />, table: 'cms_questions' },
   { id: 'wordgame', label: 'Word Game', icon: <TextFontRegular />, table: 'cms_wordgame' },
   { id: 'submissions', label: 'Submissions', icon: <MailInboxRegular />, },
+  { id: 'handymen', label: 'Handymen', icon: <WrenchRegular />, },
   { id: 'hero_page', label: 'Hero Page', icon: <ImageRegular /> },
   { id: 'seo_og', label: 'SEO / OG Images', icon: <GlobeRegular /> },
   { id: 'users', label: 'Users', icon: <PeopleRegular /> },
@@ -1175,6 +1176,10 @@ function SubmissionsSection({ session }) {
         if (updateError) throw updateError
         clearCache()
         setToast({ msg: `Handyman "${sub.name}" approved!`, type: 'success' })
+        // Approval email (fire-and-forget)
+        if (sub.email || sub.whatsapp) {
+          fetch('/api/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'listing_approved', to: sub.email || '', data: { name: sub.name, listingType: 'handyman', listingId: sub.id } }) }).catch(() => {})
+        }
         loadSubmissions()
         setActioning(null)
         return
@@ -1241,6 +1246,10 @@ function SubmissionsSection({ session }) {
       clearCache()
 
       setToast({ msg: 'Listing approved and published successfully!', type: 'success' })
+      // Approval email (fire-and-forget)
+      if (sub.email || sub.whatsapp) {
+        fetch('/api/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'listing_approved', to: sub.email || '', data: { name: sub.name, listingType: sub.listing_type || 'business', listingId: slug } }) }).catch(() => {})
+      }
       loadSubmissions()
     } catch (e) {
       setToast({ msg: 'Error: ' + e.message, type: 'error' })
@@ -1393,6 +1402,330 @@ function SubmissionsSection({ session }) {
                   </td>
                 </tr>
               ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
+    </>
+  )
+}
+// ─── HANDYMEN CMS SECTION ───────────────────────────────────────────
+// Dedicated CMS panel for managing handyman listings from business_listings.
+// Supports editing, approving, rejecting, and searching/filtering.
+
+const TRADE_OPTIONS = [
+  'plumber', 'electrician', 'carpenter', 'painter', 'welder', 'mechanic',
+  'tailor', 'wig-maker', 'bricklayer', 'tiler', 'ac-technician',
+  'generator-repairer', 'vulcanizer', 'barber', 'phone-repairer',
+  'cobbler', 'furniture-maker', 'interior-decorator', 'pest-control', 'arts-crafts'
+]
+
+function HandymenCMSSection({ session }) {
+  const [handymen, setHandymen] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [filterTrade, setFilterTrade] = useState('all')
+  const [filterStatus, setFilterStatus] = useState('all')
+  const [toast, setToast] = useState(null)
+  const [actioning, setActioning] = useState(null)
+  const [editing, setEditing] = useState(null) // id of row being edited
+  const [editData, setEditData] = useState({})
+
+  const loadHandymen = useCallback(async () => {
+    setLoading(true)
+    try {
+      if (!supabase) throw new Error('Supabase client not initialized')
+      const { data, error } = await supabase
+        .from('business_listings')
+        .select('*')
+        .eq('listing_type', 'handyman')
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      setHandymen(data || [])
+    } catch (e) {
+      setToast({ msg: 'Failed to load handymen: ' + e.message, type: 'error' })
+    }
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { loadHandymen() }, [loadHandymen])
+
+  const filtered = handymen.filter(h => {
+    if (filterTrade !== 'all' && h.trade !== filterTrade) return false
+    if (filterStatus !== 'all' && h.status !== filterStatus) return false
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      return (h.name?.toLowerCase().includes(q) || h.trade?.toLowerCase().includes(q) ||
+        h.area?.toLowerCase().includes(q) || h.phone?.includes(q) || h.email?.toLowerCase().includes(q))
+    }
+    return true
+  })
+
+  // Count by status
+  const counts = { pending: 0, approved: 0, rejected: 0 }
+  handymen.forEach(h => { if (counts[h.status] !== undefined) counts[h.status]++ })
+
+  async function handleApprove(item) {
+    setActioning(item.id)
+    try {
+      const { error } = await supabase
+        .from('business_listings')
+        .update({ status: 'approved' })
+        .eq('id', item.id)
+      if (error) throw error
+      clearCache()
+      setToast({ msg: `"${item.name}" approved!`, type: 'success' })
+      // Approval email
+      if (item.email) {
+        fetch('/api/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'listing_approved', to: item.email, data: { name: item.name, listingType: 'handyman', listingId: item.id } }) }).catch(() => {})
+      }
+      loadHandymen()
+    } catch (e) { setToast({ msg: 'Error: ' + e.message, type: 'error' }) }
+    setActioning(null)
+  }
+
+  async function handleReject(id) {
+    setActioning(id)
+    try {
+      const { error } = await supabase
+        .from('business_listings')
+        .update({ status: 'rejected' })
+        .eq('id', id)
+      if (error) throw error
+      setToast({ msg: 'Listing rejected.', type: 'success' })
+      loadHandymen()
+    } catch (e) { setToast({ msg: 'Error: ' + e.message, type: 'error' }) }
+    setActioning(null)
+  }
+
+  function startEdit(h) {
+    setEditing(h.id)
+    setEditData({
+      name: h.name || '', trade: h.trade || '', area: h.area || '',
+      address: h.address || '', phone: h.phone || '', whatsapp: h.whatsapp || '',
+      email: h.email || '', description: h.description || '',
+      experience_years: h.experience_years || '', status: h.status || 'pending',
+    })
+  }
+
+  async function saveEdit() {
+    if (!editing) return
+    setActioning(editing)
+    try {
+      const updates = { ...editData, experience_years: editData.experience_years ? parseInt(editData.experience_years, 10) : null }
+      const { error } = await supabase
+        .from('business_listings')
+        .update(updates)
+        .eq('id', editing)
+      if (error) throw error
+      clearCache()
+      setToast({ msg: 'Handyman updated!', type: 'success' })
+      setEditing(null)
+      loadHandymen()
+    } catch (e) { setToast({ msg: 'Error: ' + e.message, type: 'error' }) }
+    setActioning(null)
+  }
+
+  async function handleDelete(id, name) {
+    if (!confirm(`Delete "${name}" permanently?`)) return
+    setActioning(id)
+    try {
+      const { error } = await supabase.from('business_listings').delete().eq('id', id)
+      if (error) throw error
+      clearCache()
+      setToast({ msg: `"${name}" deleted.`, type: 'success' })
+      loadHandymen()
+    } catch (e) { setToast({ msg: 'Error: ' + e.message, type: 'error' }) }
+    setActioning(null)
+  }
+
+  const editField = (field, value) => setEditData(prev => ({ ...prev, [field]: value }))
+
+  return (
+    <>
+      {/* Status summary bar */}
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+        <div style={{ background: 'rgba(234,179,8,0.1)', border: '1px solid rgba(234,179,8,0.2)', borderRadius: '10px', padding: '0.75rem 1.25rem', flex: '1', minWidth: '120px', textAlign: 'center' }}>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#eab308' }}>{counts.pending}</div>
+          <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Pending Review</div>
+        </div>
+        <div style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '10px', padding: '0.75rem 1.25rem', flex: '1', minWidth: '120px', textAlign: 'center' }}>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#22c55e' }}>{counts.approved}</div>
+          <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Approved</div>
+        </div>
+        <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '10px', padding: '0.75rem 1.25rem', flex: '1', minWidth: '120px', textAlign: 'center' }}>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#ef4444' }}>{counts.rejected}</div>
+          <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Rejected</div>
+        </div>
+      </div>
+
+      {/* Toolbar */}
+      <div className="admin-toolbar" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
+        <input
+          className="admin-search"
+          placeholder="Search by name, trade, area, phone, email..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{ flex: '1', minWidth: '180px' }}
+        />
+        <select value={filterTrade} onChange={e => setFilterTrade(e.target.value)}
+          style={{ background: 'rgba(255,255,255,0.06)', color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.5rem', padding: '0.5rem 0.75rem', fontSize: '0.8rem' }}>
+          <option value="all">All Trades</option>
+          {TRADE_OPTIONS.map(t => <option key={t} value={t}>{t.replace(/-/g, ' ')}</option>)}
+        </select>
+        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
+          style={{ background: 'rgba(255,255,255,0.06)', color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.5rem', padding: '0.5rem 0.75rem', fontSize: '0.8rem' }}>
+          <option value="all">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
+        <span style={{ color: '#64748b', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>{filtered.length} of {handymen.length}</span>
+      </div>
+
+      {/* Table */}
+      <div className="admin-table-wrap">
+        {loading ? (
+          <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>Loading handymen...</div>
+        ) : filtered.length === 0 ? (
+          <div className="admin-empty">
+            <div className="admin-empty-icon"><WrenchRegular fontSize={48} /></div>
+            <p>No handymen found.</p>
+          </div>
+        ) : (
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Trade</th>
+                <th>Area</th>
+                <th>Contact</th>
+                <th>Experience</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map(h => {
+                const isEditing = editing === h.id
+                return (
+                  <tr key={h.id} style={{ background: isEditing ? 'rgba(200,150,62,0.05)' : undefined }}>
+                    <td>
+                      {isEditing ? (
+                        <input value={editData.name} onChange={e => editField('name', e.target.value)}
+                          style={{ background: 'rgba(255,255,255,0.06)', color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', padding: '4px 6px', width: '100%', fontSize: '0.8rem' }} />
+                      ) : (
+                        <div>
+                          <strong>{h.name}</strong>
+                          {h.description && <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '3px', maxWidth: '220px', whiteSpace: 'normal' }}>{h.description.slice(0, 80)}{h.description.length > 80 ? '...' : ''}</div>}
+                        </div>
+                      )}
+                    </td>
+                    <td>
+                      {isEditing ? (
+                        <select value={editData.trade} onChange={e => editField('trade', e.target.value)}
+                          style={{ background: 'rgba(255,255,255,0.06)', color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', padding: '4px', fontSize: '0.8rem' }}>
+                          <option value="">Select trade</option>
+                          {TRADE_OPTIONS.map(t => <option key={t} value={t}>{t.replace(/-/g, ' ')}</option>)}
+                        </select>
+                      ) : (
+                        <span className="admin-badge" style={{ background: 'rgba(34,197,94,0.15)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.3)' }}>
+                          🔧 {h.trade || 'N/A'}
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      {isEditing ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                          <input placeholder="Area" value={editData.area} onChange={e => editField('area', e.target.value)}
+                            style={{ background: 'rgba(255,255,255,0.06)', color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', padding: '4px 6px', fontSize: '0.8rem' }} />
+                          <input placeholder="Address" value={editData.address} onChange={e => editField('address', e.target.value)}
+                            style={{ background: 'rgba(255,255,255,0.06)', color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', padding: '4px 6px', fontSize: '0.8rem' }} />
+                        </div>
+                      ) : (
+                        <div>
+                          <div>📍 <strong>{h.area}</strong></div>
+                          {h.address && <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{h.address}</div>}
+                        </div>
+                      )}
+                    </td>
+                    <td>
+                      {isEditing ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                          <input placeholder="Phone" value={editData.phone} onChange={e => editField('phone', e.target.value)}
+                            style={{ background: 'rgba(255,255,255,0.06)', color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', padding: '4px 6px', fontSize: '0.8rem' }} />
+                          <input placeholder="WhatsApp" value={editData.whatsapp} onChange={e => editField('whatsapp', e.target.value)}
+                            style={{ background: 'rgba(255,255,255,0.06)', color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', padding: '4px 6px', fontSize: '0.8rem' }} />
+                          <input placeholder="Email" value={editData.email} onChange={e => editField('email', e.target.value)}
+                            style={{ background: 'rgba(255,255,255,0.06)', color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', padding: '4px 6px', fontSize: '0.8rem' }} />
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: '0.8rem', lineHeight: '1.4' }}>
+                          {h.phone && <div>📞 {h.phone}</div>}
+                          {h.whatsapp && <div>💬 {h.whatsapp}</div>}
+                          {h.email && <div>✉️ {h.email}</div>}
+                        </div>
+                      )}
+                    </td>
+                    <td>
+                      {isEditing ? (
+                        <input type="number" placeholder="Years" value={editData.experience_years} onChange={e => editField('experience_years', e.target.value)}
+                          style={{ background: 'rgba(255,255,255,0.06)', color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', padding: '4px 6px', width: '60px', fontSize: '0.8rem' }} />
+                      ) : (
+                        h.experience_years ? `${h.experience_years}+ yrs` : '—'
+                      )}
+                    </td>
+                    <td>
+                      {isEditing ? (
+                        <select value={editData.status} onChange={e => editField('status', e.target.value)}
+                          style={{ background: 'rgba(255,255,255,0.06)', color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', padding: '4px', fontSize: '0.8rem' }}>
+                          <option value="pending">Pending</option>
+                          <option value="approved">Approved</option>
+                          <option value="rejected">Rejected</option>
+                        </select>
+                      ) : (
+                        <span className={`admin-badge admin-badge-${h.status}`}>{h.status}</span>
+                      )}
+                    </td>
+                    <td>
+                      {isEditing ? (
+                        <div style={{ display: 'flex', gap: '0.4rem' }}>
+                          <button className="admin-btn admin-btn-primary admin-btn-sm" onClick={saveEdit} disabled={actioning !== null}>Save</button>
+                          <button className="admin-btn admin-btn-sm" onClick={() => setEditing(null)} style={{ background: 'rgba(255,255,255,0.06)', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.1)' }}>Cancel</button>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                          <button className="admin-btn admin-btn-sm" onClick={() => startEdit(h)} disabled={actioning !== null}
+                            style={{ background: 'rgba(59,130,246,0.15)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.3)' }}>
+                            <EditRegular fontSize={12} /> Edit
+                          </button>
+                          {h.status === 'pending' && (
+                            <>
+                              <button className="admin-btn admin-btn-primary admin-btn-sm" onClick={() => handleApprove(h)} disabled={actioning !== null}>
+                                <CheckmarkCircleRegular fontSize={12} /> Approve
+                              </button>
+                              <button className="admin-btn admin-btn-danger admin-btn-sm" onClick={() => handleReject(h.id)} disabled={actioning !== null}>
+                                Reject
+                              </button>
+                            </>
+                          )}
+                          {h.status === 'rejected' && (
+                            <button className="admin-btn admin-btn-primary admin-btn-sm" onClick={() => handleApprove(h)} disabled={actioning !== null}>
+                              Re-approve
+                            </button>
+                          )}
+                          <button className="admin-btn admin-btn-danger admin-btn-sm" onClick={() => handleDelete(h.id, h.name)} disabled={actioning !== null}
+                            style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)' }}>
+                            <DismissCircleRegular fontSize={12} />
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         )}
@@ -1625,6 +1958,7 @@ export default function AdminDashboard({ session, profile }) {
           {active === 'settings' && <SettingsSection session={session} />}
           {active === 'hero_page' && <HeroPageSection session={session} />}
           {active === 'submissions' && <SubmissionsSection session={session} />}
+          {active === 'handymen' && <HandymenCMSSection session={session} />}
           {active === 'seo_og' && <SEOSection session={session} />}
           {section?.table && <CrudSection table={section.table} session={session} profile={profile} />}
           {section?.gameTable && <GameConfigSection table={section.gameTable} session={session} />}

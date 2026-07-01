@@ -176,6 +176,8 @@ export default function Auth() {
       if (data?.user) {
         // Profile creation is non-blocking — never let it stop Google login
         try { await ensureProfile(data.user) } catch (e) { console.warn('[Auth] ensureProfile:', e.message) }
+        // Welcome email (fire-and-forget)
+        fetch('/api/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'welcome', to: data.user.email, data: { username: data.user.user_metadata?.name || data.user.user_metadata?.username || data.user.email?.split('@')[0] } }) }).catch(() => {})
         playStepComplete()
         vibrateTap()
         const wasOnboarded = localStorage.getItem('wanda_onboarded')
@@ -261,6 +263,8 @@ export default function Auth() {
       }
 
       playStepComplete(); vibrateTap()
+      // Welcome email (fire-and-forget)
+      fetch('/api/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'welcome', to: email, data: { username: username || email.split('@')[0] } }) }).catch(() => {})
 
       if (data?.session?.user) {
         await ensureProfile(data.session.user)
