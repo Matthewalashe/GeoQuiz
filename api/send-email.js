@@ -1,7 +1,7 @@
 import https from 'https';
 
 var RESEND_API_KEY = process.env.RESEND_API_KEY || '';
-var FROM_EMAIL = 'Matthew Alashe <onboarding@resend.dev>';
+var FROM_EMAIL = 'Matthew Alashe <hello@visitnaija.online>';
 var SITE_URL = 'https://visitnaija.online';
 
 function esc(s) {
